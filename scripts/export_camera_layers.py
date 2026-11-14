@@ -2,6 +2,7 @@
 
 import json
 from pathlib import Path
+import sys
 
 import numpy as np
 from PIL import Image, ImageDraw, ImageFilter
@@ -9,6 +10,28 @@ from PIL import Image, ImageDraw, ImageFilter
 
 ROOT = Path(__file__).resolve().parents[1]
 CAMERAS = Path("public/images/cameras")
+# Contornos nas coordenadas do fundo, com o laço e o puxador em primeiro plano.
+EXITS = {
+    "CAM02": (8, "Recepção Cor-de-Rosa e Nathzinha Distante.png", [
+        (882,234),(889,234),(897,245),(903,222),(911,207),(923,195),(934,195),
+        (944,202),(951,216),(953,235),(962,253),(962,275),(966,291),(975,317),
+        (979,337),(974,345),(969,339),(964,325),(953,316),(951,332),(944,344),
+        (944,361),(941,378),(942,400),(941,416),(946,431),(945,446),(932,448),
+        (927,438),(928,417),(925,402),(925,381),(921,369),(917,378),(917,402),
+        (913,420),(916,430),(914,446),(902,446),(898,439),(901,423),(902,406),
+        (900,380),(897,360),(896,344),(888,333),(889,322),(899,308),(904,292),
+        (900,280),(891,284),(879,278),(881,258),(880,245)
+    ], [[(882,347),(886,341),(897,341),(905,347),(913,345),(926,341),(929,346),
+         (927,358),(918,360),(922,369),(913,372),(903,363),(894,372),(888,369),
+         (892,360),(883,359)]]),
+    "CAM08": (11, "Nathzinha no Estoque Sombrio.png", [
+        (289,430),(290,405),(299,369),(302,341),(310,320),(315,306),(327,294),
+        (344,286),(361,280),(379,281),(389,282),(389,400),(386,419),(385,454),
+        (383,487),(378,518),(367,540),(354,545),(340,541),(329,526),(321,504),
+        (314,481),(306,460),(294,450)
+    ], [[(378,400),(387,399),(398,402),(410,414),(409,489),(401,501),(386,500),
+         (378,492),(377,479),(381,468),(381,426),(376,418)]]),
+}
 # Ordem de pintura conferida contra os frames antigos com múltiplas personagens.
 ORDERS = {
     "CAM01": ("platinada", "original", "yandere", "gotica"),
@@ -178,9 +201,45 @@ def extract_layers(folder, state_folder, base_path, order, camera, shared=None):
     return {"size": [width, height], "layers": layers}
 
 
-def main():
-    catalog = {}
-    for camera, order in ORDERS.items():
+def export_exit_layers(catalog):
+    for camera, (position, filename, outline, obstructions) in EXITS.items():
+        folder = CAMERAS / camera
+        base = read_rgb(folder / "base.webp")
+        height, width, _ = base.shape
+        with Image.open(ROOT / "public/images" / filename) as image:
+            # As duas artes usam o enquadramento do fundo. A do estoque
+            # tem uma coluna extra na borda direita.
+            source = np.asarray(image.convert("RGB").crop((0, 0, width, height)), dtype=np.float32)
+
+        mask = Image.new("L", (width, height))
+        ImageDraw.Draw(mask).polygon(outline, fill=255)
+        mask = mask.filter(ImageFilter.GaussianBlur(3 if camera == "CAM02" else 7))
+        draw = ImageDraw.Draw(mask)
+        for obstruction in obstructions:
+            draw.polygon(obstruction, fill=0)
+        delta = (source - base) * (np.asarray(mask, dtype=np.float32)[..., None] / 255)
+        limit = np.maximum(np.where(delta > 0, 255 - base, base), 1)
+        minimum = np.max(np.abs(delta) / limit, axis=2)
+        strength = np.max(np.abs(delta), axis=2)
+        alpha = np.ceil(np.maximum(minimum, np.minimum(strength / 52, 1)) * 255)
+        rgb = base + delta * 255 / np.maximum(alpha[..., None], 1)
+        rgba = np.rint(np.dstack((rgb, alpha))).clip(0, 255).astype(np.uint8)
+        rgba[alpha == 0] = 0
+        layer = Image.fromarray(rgba)
+        x, y, right, bottom = layer.getbbox()
+        x, y, right, bottom = x - 2, y - 2, right + 2, bottom + 2
+        output = folder / "layers/original-saida.webp"
+        layer.crop((x, y, right, bottom)).save(ROOT / output, lossless=True, method=6)
+        scene = catalog[camera]
+        scene["layers"] = {"original-saida": ["./" + output.as_posix(), x, y, right - x, bottom - y],
+                           **scene["layers"]}
+        scene["outsidePosition"] = position
+
+
+def main(exits_only=False):
+    path = ROOT / "src/data/camera-layers.js"
+    catalog = json.loads(path.read_text(encoding="utf-8").split(" = ", 1)[1].strip().removesuffix(";")) if exits_only else {}
+    for camera, order in (() if exits_only else ORDERS.items()):
         folder = CAMERAS / camera
         states = folder / "states"
         base = folder / "base.webp"
@@ -193,13 +252,14 @@ def main():
             }
         else:
             catalog[camera] = extract_layers(folder / "layers", states, base, order, camera)
+    export_exit_layers(catalog)
     # Um registro por pose; as combinações são montadas pelo jogo.
     entries = ",\n".join(f'  "{key}": {json.dumps(value)}' for key, value in catalog.items())
-    (ROOT / "src/data/camera-layers.js").write_text(
+    path.write_text(
         "// Gerado por scripts/export_camera_layers.py.\n"
         "window.NathGame.cameraLayers = {\n" + entries + "\n};\n", encoding="utf-8"
     )
 
 
 if __name__ == "__main__":
-    main()
+    main(exits_only="--exits-only" in sys.argv[1:])

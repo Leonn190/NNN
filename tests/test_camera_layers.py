@@ -51,12 +51,15 @@ for camera, catalog_entry in catalog.items():
             with Image.open(ROOT / source) as image:
                 assert image.mode == "RGBA" and image.size == (width, height), source
                 alpha = np.asarray(image.getchannel("A"))
-                assert np.any(alpha == 0) and np.any(alpha == 255), source
+                assert np.any(alpha == 0), source
+                if key != "original-saida":
+                    assert np.any(alpha == 255), source
                 assert np.any((alpha > 0) & (alpha < 255)), source
                 assert 0 <= x < x + width <= base.width and 0 <= y < y + height <= base.height, source
                 layers[key] = (image.copy(), (x, y))
         variants = list(old_states.glob("*.webp"))
-        assert len(variants) == (2 if camera == "CAM09" else 2 ** len(layers) - 2)
+        cast_size = len(layers) - int("original-saida" in layers)
+        assert len(variants) == (2 if camera == "CAM09" else 2 ** cast_size - 2)
         for original in variants:
             keys = [poses[original.stem]] if camera == "CAM09" else original.stem.split("-")
             assert set(keys) <= layers.keys(), original

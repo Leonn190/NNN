@@ -50,10 +50,10 @@ window.NathGame.complexLayers = {
       ],
       "platinada+ambiente": [
         "./public/images/cameras/CAM06/layers/platinada+ambiente.webp",
-        1016,
-        403,
-        280,
-        132
+        1013,
+        398,
+        285,
+        140
       ],
       "platinada": [
         "./public/images/cameras/CAM06/layers/platinada.webp",
@@ -74,7 +74,7 @@ window.NathGame.complexLayers = {
         404,
         176,
         238,
-        344
+        308
       ]
     }
   },

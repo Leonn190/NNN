@@ -262,10 +262,7 @@ window.NathGame.localConfig = {
       "leftPanFraction": 0.55,
       "corridorPanFraction": 0.5
     },
-    "unillustratedCameraPositions": [
-      8,
-      11
-    ]
+    "unillustratedCameraPositions": []
   },
   "effects": {
     "cameraAudio": {

@@ -612,6 +612,33 @@ const previewNames = {
   CAM01: 'Shop', CAM02: 'Reception', CAM04: 'Hall', CAM07: 'Arcade', CAM08: 'Stockroom',
   CAM09: 'Service', CAM10: 'Kitchen', CAM11: 'Pickup', CAM12: 'Corridor'
 };
+for (const [id, inside, outside] of [['CAM02', 5, 8], ['CAM08', 10, 11]]) {
+  const { CAMERAS, cameraActorFrame, cameraObservation } = window.NathGame;
+  const cam = CAMERAS.find(camera => camera.id === id);
+  const padrao = position => ({ key: 'padrao', level: 1, position, rule: { artId: 'original' } });
+  const yandere = { key: 'yandere', level: 1, position: inside, rule: { artId: 'yandere' } };
+  const config = {
+    controls: JSON.parse(fs.readFileSync(path.join(root, 'config/controls.json'), 'utf8')),
+    map: { stage: 1 },
+    sanity: { loss: { camera: 0.2, yandereCamera: 0.25 }, cameraLossOverrides: {} }
+  };
+  const sources = frame => Array.from(frame.layers, ([source]) => source.split('/').at(-1));
+  assert.deepEqual(sources(cameraActorFrame(cam, [padrao(inside)], config, isClosed)), ['original.webp']);
+  assert.deepEqual(sources(cameraActorFrame(cam, [padrao(outside)], config, isClosed)), ['original-saida.webp']);
+  const group = [padrao(outside), yandere];
+  const frame = cameraActorFrame(cam, group, config, isClosed);
+  assert.deepEqual(sources(frame), ['original-saida.webp', 'yandere.webp']);
+  const input = { camera: id, gates: new Set(), visibleCameraSource: frame.source,
+    visibleCameraLayers: Array.from(frame.layers, ([source]) => source) };
+  assert.equal(cameraObservation(config, () => group, input).yandereVisible, true);
+  assert.equal(cameraObservation(config, () => [padrao(inside), yandere], input), undefined);
+  const all = [...group, ...['gotica', 'platinada'].map(artId => ({ position: inside, rule: { artId }, level: 1 }))];
+  const allOutside = cameraActorFrame(cam, all, config, isClosed);
+  assert.equal(allOutside.source, cam.image);
+  assert.equal(allOutside.layers.length, 4);
+  assert(sources(allOutside).includes('original-saida.webp'));
+  assert(!sources(allOutside).includes('original.webp'));
+}
 for (const [id, name] of Object.entries(previewNames)) {
   const { CAMERAS, cameraFrame } = window.NathGame;
   const cam = CAMERAS.find(cam => cam.id === id);

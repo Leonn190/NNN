@@ -47,7 +47,7 @@ def register_pose(layers, key, footprint, source, base, scene, folder, previous=
         if scene == "CAM06" and key == "platinada":
             # A refletância termina no piso de forma gradual. Só a borda
             # da região de reflexo é suavizada, fora do matte da personagem.
-            coverage = np.asarray(Image.fromarray(coverage).filter(ImageFilter.GaussianBlur(3)))
+            coverage = np.asarray(Image.fromarray(coverage).filter(ImageFilter.GaussianBlur(5)))
         measured = np.asarray(footprint.crop(box))
         support[..., :3] = measured[..., :3]
         support[..., 3] = np.maximum(support[..., 3], np.rint(measured[..., 3] * (coverage.astype(np.float32) / 255)))

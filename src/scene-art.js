@@ -68,7 +68,7 @@ function hasCameraState(cam, key) {
       && cameraLayerKeys(cam, key).length > 0));
 }
 
-function cameraFrame(cam, key, isGateClosed) {
+function cameraFrame(cam, key, isGateClosed, outside = false) {
   const gates = cam.gateStateImages?.gates;
   const gateKey = gates?.map(id => isGateClosed(id) ? 'closed' : 'open').join('-');
   const empty = cam.gateStateImages?.images ?? cam.image;
@@ -76,8 +76,9 @@ function cameraFrame(cam, key, isGateClosed) {
   const base = gates ? empty[gateKey] : empty;
   const art = gates ? variant?.[gateKey] : variant;
   const scene = cameraLayerScene(cam, gateKey);
-  if (!scene || art) return { key, gateKey, source: art ?? base };
-  const selected = cameraLayerKeys(cam, key);
+  if (!scene || (art && !outside)) return { key, gateKey, source: art ?? base };
+  let selected = key === 'todas' ? cam.allCharacters : cameraLayerKeys(cam, key);
+  if (outside) selected = selected.map(id => id === 'original' ? 'original-saida' : id);
   const layers = selectedLayers(scene, selected);
   return { key, gateKey, source: layers.length ? scene.base ?? base : base, layers, size: scene.size };
 }
@@ -88,7 +89,10 @@ function cameraActorFrame(cam, actors, config, isGateClosed, preview) {
     return { ...cameraFrame(cam, 'maid-saindo', isGateClosed), occupied: true };
   }
   const key = preview ?? cameraStateKey(cam, visibleActors, config.map.stage);
-  const frame = cameraFrame(cam, key, isGateClosed);
+  const outsidePosition = cameraLayerScene(cam)?.outsidePosition;
+  const outside = preview === undefined && outsidePosition !== undefined
+    && visibleActors.some(actor => actor.rule.artId === 'original' && actor.position === outsidePosition);
+  const frame = cameraFrame(cam, key, isGateClosed, outside);
   const variant = characterStateImages(cam)[key];
   const activeActorVisible = visibleActors.some(actor => actor.level !== 0);
   return { ...frame, occupied: Boolean(activeActorVisible
