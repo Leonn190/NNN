@@ -41,7 +41,7 @@ window.NathGame.localConfig = {
         "CAM12"
       ],
       "interval": 24,
-      "reaction": 3.5,
+      "reaction": 3,
       "routes": {
         "CV": 19,
         "CC": 19,
@@ -50,10 +50,10 @@ window.NathGame.localConfig = {
         "EV": 10,
         "ES": 21
       },
-      "audioModifier": -45,
+      "audioModifier": -50,
       "doorChance": [
         70,
-        94
+        98
       ]
     },
     "gotica": {
@@ -92,7 +92,7 @@ window.NathGame.localConfig = {
         "CAM12"
       ],
       "interval": 26,
-      "reaction": 4.5,
+      "reaction": 4,
       "routes": {
         "CV": 30,
         "CC": 30,
@@ -100,7 +100,7 @@ window.NathGame.localConfig = {
         "EC": 10,
         "EV": 10
       },
-      "audioModifier": 60,
+      "audioModifier": 35,
       "staticChance": [
         75,
         99
@@ -143,7 +143,7 @@ window.NathGame.localConfig = {
         "CAM12"
       ],
       "interval": 21,
-      "reaction": 4.5,
+      "reaction": 4,
       "routes": {
         "CV": 22,
         "CC": 22,
@@ -152,8 +152,16 @@ window.NathGame.localConfig = {
         "EV": 8,
         "EE": 24
       },
-      "audioModifier": 60,
-      "firstIntervalFactor": 0.6
+      "audioModifier": 75,
+      "staticChance": [
+        75,
+        99
+      ],
+      "firstIntervalReduction": [
+        0.3,
+        0.6
+      ],
+      "watchedNeighborBonus": 0.1
     },
     "gatinha": {
       "name": "Nathzinha Gatinha",
@@ -183,13 +191,13 @@ window.NathGame.localConfig = {
         "CAM08"
       ],
       "interval": 19,
-      "reaction": 4.5,
+      "reaction": 4,
       "routes": {
         "CV": 48,
         "EL": 26,
         "EV": 26
       },
-      "audioModifier": 30,
+      "audioModifier": 35,
       "hidingPlaces": [
         23,
         24,
@@ -220,9 +228,12 @@ window.NathGame.localConfig = {
         "CAM11"
       ],
       "interval": 29,
-      "reaction": 2.5,
-      "targetBonus": 10,
-      "audioModifier": 30,
+      "reaction": 2,
+      "targetBonus": [
+        10,
+        18
+      ],
+      "audioModifier": 35,
       "initialStationaryAttempts": 1,
       "initialIntervalReduction": 10
     }
@@ -305,14 +316,17 @@ window.NathGame.localConfig = {
       ],
       "volume": 0.32
     },
+    "stockAttackSound": {
+      "files": [
+        "audio/559107__agenta1cr__possessed-laugh.wav",
+        "audio/Risada 1.wav"
+      ],
+      "volume": 0.32
+    },
     "flashlight": {
       "corridorFlickerMs": 160,
       "modifiers": {
         "gotica": {
-          "secondsToMax": 8,
-          "advanceDelta": -0.65
-        },
-        "yandere": {
           "secondsToMax": 8,
           "advanceDelta": -0.65
         },
@@ -902,25 +916,17 @@ window.NathGame.localConfig = {
     "failedIntervalFactor": 0.35,
     "failedModifierRetention": 0.75,
     "routes": {
-      "bonusByLevel": [
-        {
-          "minLevel": 1,
-          "bonus": 22,
-          "perMove": 3,
-          "padraoPerMove": 3.5
-        },
-        {
-          "minLevel": 4,
-          "bonus": 27,
-          "perMove": 4,
-          "padraoPerMove": 4.5
-        },
-        {
-          "minLevel": 8,
-          "bonus": 32,
-          "perMove": 5,
-          "padraoPerMove": 5.5
-        }
+      "bonus": [
+        25,
+        36
+      ],
+      "perMove": [
+        3,
+        5
+      ],
+      "padraoPerMove": [
+        3.5,
+        5.5
       ],
       "definitions": {
         "CV": {
@@ -1110,32 +1116,17 @@ window.NathGame.localConfig = {
       "freeMoves": 1
     },
     "difficulty": {
-      "oddSteps": [
-        1,
-        3,
-        5,
-        7,
-        9,
-        10
-      ],
-      "intervalReductionPerStep": 8,
-      "maidTargetBonusLevels": [
-        2,
-        8
-      ],
-      "maidTargetBonusIncreasePerStep": 40,
-      "abilityLevel": 4,
-      "reactionLevel": 6,
-      "reactionReduction": 11
+      "maxIntervalReduction": 0.5,
+      "maxReactionReduction": 0.2
     }
   },
   "night": {
     "rulesVersion": "1.1.2",
     "clock": {
       "fastSanity": 90,
-      "slowSanity": 10,
+      "slowSanity": 15,
       "fastSecondsPerHour": 60,
-      "slowSecondsPerHour": 240
+      "slowSecondsPerHour": 180
     },
     "startHour": 12,
     "hoursToWin": 6,
@@ -1144,8 +1135,9 @@ window.NathGame.localConfig = {
     "defaultLevel": 0,
     "levels": [
       0,
-      10
+      11
     ],
+    "campaignMaxLevel": 10,
     "campaign": [
       {
         "movementDelay": 40,
@@ -1315,7 +1307,7 @@ window.NathGame.localConfig = {
     "initial": 100,
     "computerDrain": 0.025,
     "gateDrain": 0.3,
-    "radioDrain": 0.05,
+    "radioDrain": 0.06,
     "flashlightDrain": 0.12,
     "eventDrain": {
       "electricalFault": 10
@@ -1331,7 +1323,7 @@ window.NathGame.localConfig = {
       "yandereCamera": 0.25,
       "direct": 0.45,
       "centralGate": 0.12,
-      "closet": 0.52,
+      "closet": 0.6,
       "invasion": 2.5
     },
     "cameraLossOverrides": {
@@ -1354,8 +1346,28 @@ window.NathGame.localConfig = {
       "yandereCameraScare": 15
     },
     "recovery": {
-      "music": 0.2,
+      "music": 0.1,
       "passive": 0.04
+    },
+    "hallucinations": {
+      "blur": {
+        "below": 75,
+        "interval": 20,
+        "chance": 10,
+        "chancePerPoint": 1,
+        "duration": 1.25
+      },
+      "laugh": {
+        "below": 40,
+        "interval": 30,
+        "chance": 40
+      },
+      "apparition": {
+        "below": 30,
+        "interval": 30,
+        "chance": 45,
+        "duration": 1.5
+      }
     },
     "blackoutLossMultiplier": 2
   },
@@ -1381,7 +1393,10 @@ window.NathGame.localConfig = {
   },
   "threats": {
     "yandereCameraScare": {
-      "observationSeconds": 10,
+      "observationSeconds": [
+        8,
+        3
+      ],
       "durationSeconds": 1.21,
       "image": "./public/NNN_Yandere_Jumpscare_1080p.gif"
     },
@@ -1397,14 +1412,15 @@ window.NathGame.localConfig = {
         "intervalReduction": 1,
         "reactionReduction": 0.3
       },
-      "level10": {
+      "maxLevel": {
         "ventChance": 20,
         "roomSeconds": 50,
-        "intervalReduction": 1.5,
+        "intervalReduction": 2,
         "reactionReduction": 0.4
       }
     },
     "attack": {
+      "repeatReactionFactor": 0.92,
       "stay": 5.5,
       "lateStay": 8.5,
       "lateThreshold": 0.8,
@@ -1427,7 +1443,8 @@ window.NathGame.localConfig = {
       "entryDeathAbove": 80,
       "floorPerEntry": 10,
       "growth": 0.8,
-      "closetGrowthFactor": 3,
+      "closetGrowthFactor": 3.25,
+      "litClosetGrowthFactor": 1.625,
       "musicReduction": 2,
       "growthIncreasePerLevel": 10
     }

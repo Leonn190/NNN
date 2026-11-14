@@ -39,12 +39,12 @@
       "CAM12"
     ],
     "interval": 24,
-    "reaction": 3.5,
+    "reaction": 3.0,
     "routes": { "CV": 19, "CC": 19, "EL": 16, "EC": 15, "EV": 10, "ES": 21 },
-    "audioModifier": -45,
+    "audioModifier": -50,
     "doorChance": [
       70,
-      94
+      98
     ]
   },
   "gotica": {
@@ -83,9 +83,9 @@
       "CAM12"
     ],
     "interval": 26,
-    "reaction": 4.5,
+    "reaction": 4.0,
     "routes": { "CV": 30, "CC": 30, "EL": 20, "EC": 10, "EV": 10 },
-    "audioModifier": 60,
+    "audioModifier": 35,
     "staticChance": [
       75,
       99
@@ -128,10 +128,12 @@
       "CAM12"
     ],
     "interval": 21,
-    "reaction": 4.5,
+    "reaction": 4.0,
     "routes": { "CV": 22, "CC": 22, "EL": 10, "EC": 14, "EV": 8, "EE": 24 },
-    "audioModifier": 60,
-    "firstIntervalFactor": 0.6
+    "audioModifier": 75,
+    "staticChance": [75, 99],
+    "firstIntervalReduction": [0.30, 0.60],
+    "watchedNeighborBonus": 0.10
   },
   "gatinha": {
     "name": "Nathzinha Gatinha",
@@ -161,9 +163,9 @@
       "CAM08"
     ],
     "interval": 19,
-    "reaction": 4.5,
+    "reaction": 4.0,
     "routes": { "CV": 48, "EL": 26, "EV": 26 },
-    "audioModifier": 30,
+    "audioModifier": 35,
     "hidingPlaces": [
       23,
       24,
@@ -194,9 +196,9 @@
       "CAM11"
     ],
     "interval": 29,
-    "reaction": 2.5,
-    "targetBonus": 10,
-    "audioModifier": 30,
+    "reaction": 2.0,
+    "targetBonus": [10, 18],
+    "audioModifier": 35,
     "initialStationaryAttempts": 1,
     "initialIntervalReduction": 10
   }

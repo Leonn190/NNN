@@ -9,20 +9,29 @@ function createEffects(config, routes, actors) {
   const noiseRates = Object.entries(noise.rates);
   const { front, back } = config.map;
   const corridor = [front, back];
-  let lure;
+  let audio;
   let readyAt = 0;
   let staticUntil = 0;
   let volumePeak = 0;
   let volumePeakAt = 0;
   const transientVolume = now => volumePeak * Math.exp(-(now - volumePeakAt) / .22);
+  const audibleNeighbors = actor => routes.neighbors.get(actor.position).filter(to => {
+    const edge = routes.connection(actor.position, to);
+    return actor.allowed.has(to) && (!edge.actors || edge.actors.includes(actor.key));
+  });
 
   function startAudio(now, camera) {
     if (!camera || now < readyAt) return false;
     const origins = [...routes.positions.values()].filter(p => p.cameras.includes(camera)).map(p => p.id);
     const distance = routes.distances(origins, () => true, cameraAudio.factors.length - 1, undefined, true);
-    lure = { camera, distance, ends: now + cameraAudio.duration };
+    const stimulus = { camera, distance, ends: now + cameraAudio.duration };
+    audio = stimulus;
     readyAt = now + cameraAudio.cooldown;
-    for (const actor of actors) actor.audioRetention = 1;
+    for (const actor of actors) {
+      const fromDistance = distance.get(actor.position) ?? Infinity;
+      actor.audioStimulus = audibleNeighbors(actor).some(to => (distance.get(to) ?? Infinity) < fromDistance)
+        ? stimulus : null;
+    }
     return true;
   }
 
@@ -63,13 +72,14 @@ function createEffects(config, routes, actors) {
     return { advance, stay: failure * stayShare, abandon: failure * (1 - stayShare) };
   }
 
-  function weight(actor, to, now) {
+  function weight(actor, to) {
     const from = actor.position;
     let result = 1;
-    if (lure && now < lure.ends) {
-      const distance = lure.distance.get(to) ?? Infinity;
-      if (distance < (lure.distance.get(from) ?? Infinity)) {
-        result *= factor(actor.rule.audioModifier * cameraAudio.factors[distance] * actor.audioRetention);
+    const stimulus = actor.audioStimulus;
+    if (stimulus) {
+      const distance = stimulus.distance.get(to) ?? Infinity;
+      if (distance < (stimulus.distance.get(from) ?? Infinity)) {
+        result *= factor(actor.rule.audioModifier * cameraAudio.factors[distance]);
       }
     }
     if (actor.rule.hidingPlaces?.includes(to)) result *= factor(actor.rule.hidingBonus);
@@ -81,7 +91,18 @@ function createEffects(config, routes, actors) {
     staticActive: now => now < staticUntil,
     staticDeadline: now => now < staticUntil ? staticUntil : Infinity,
     triggerStatic: now => { staticUntil = now + config.effects.static.duration; },
-    audioStatus: now => ({ remaining: Math.max(0, readyAt - now), camera: now < lure?.ends ? lure.camera : null }),
+    audioStatus: now => ({ remaining: Math.max(0, readyAt - now), camera: now < audio?.ends ? audio.camera : null,
+      activeRemaining: Math.max(0, (audio?.ends ?? now) - now) }),
+    audioStimulus(actor) {
+      const stimulus = actor.audioStimulus;
+      if (!stimulus) return null;
+      const distance = stimulus.distance.get(actor.position) ?? Infinity;
+      const modifiers = Object.fromEntries(audibleNeighbors(actor).flatMap(to => {
+        const ring = stimulus.distance.get(to) ?? Infinity;
+        return ring < distance ? [[to, actor.rule.audioModifier * cameraAudio.factors[ring]]] : [];
+      }));
+      return { camera: stimulus.camera, modifiers };
+    },
     // HUD gains map continuous rates and brief events onto the same 0–100 scale.
     noiseIntensity: (now, input) => clamp(noiseRate(input) * 12 + transientVolume(now), 0, 100),
     addNoiseEvent(event, now = volumePeakAt) {
@@ -94,12 +115,38 @@ function createEffects(config, routes, actors) {
     },
     retain(actor) {
       const retain = config.movement.failedModifierRetention;
-      actor.audioRetention *= retain;
       actor.noise *= retain;
       actor.light *= retain;
     }
   };
 }
 
-window.NathGame.createEffects = createEffects;
+function createHallucinations(rules, enabled, random, laugh) {
+  const effects = enabled ? Object.entries(rules).map(([key, rule]) => ({
+    key, rule, next: rule.interval, ends: 0
+  })) : [];
+  return {
+    nextDeadline: () => Math.min(...effects.map(effect => effect.next)),
+    resolve(now, sanity, audible) {
+      for (const effect of effects) {
+        if (now < effect.next) continue;
+        const { key, rule } = effect;
+        effect.next += rule.interval;
+        if (now < effect.ends || sanity >= rule.below) continue;
+        const chance = rule.chance + (rule.chancePerPoint ?? 0) * (rule.below - sanity);
+        if (random() * 100 >= chance) continue;
+        if (key === 'laugh') {
+          if (audible) laugh();
+        } else effect.ends = now + rule.duration;
+      }
+    },
+    visual(now) {
+      const active = key => effects.some(effect => effect.key === key && now < effect.ends);
+      return active('apparition') ? 'apparition' : active('blur') ? 'blur' : null;
+    },
+    stop() { effects.length = 0; }
+  };
+}
+
+Object.assign(window.NathGame, { createEffects, createHallucinations });
 })();

@@ -18,6 +18,12 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid #ffd3e8;outline-
 /* Keep a shared field of view on ultrawide displays; body supplies the black bars. */
 .game{position:relative;height:100dvh;width:100vw;max-width:177.777778dvh;container-type:size;overflow:hidden;isolation:isolate;background:#08070d;user-select:none}
 .playfield{position:absolute;inset:0}
+.playfield.sanity-blur :is(.office-scene,.closet-angle,.monitor-frame){filter:blur(5px)}
+.office-apparition{position:absolute;inset:0;z-index:18;pointer-events:none;background:#080509}
+.office-apparition .office-art,.office-apparition .office-character{
+  position:absolute;inset:0;margin:auto;width:100%;height:auto;aspect-ratio:3/1;
+  filter:brightness(.83) contrast(1.25) saturate(.68)
+}
 .title-screen{background:#030203;color:#f5f1f2}
 .title-art{position:absolute;z-index:-1;inset:0;width:100%;height:100%;object-fit:cover;object-position:right center;filter:brightness(.8);pointer-events:none}
 .title-glitch{opacity:0;filter:brightness(.8) contrast(1.1) saturate(1.18)}

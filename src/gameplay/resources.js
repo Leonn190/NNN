@@ -36,9 +36,9 @@ function clockProgress(clock, sanity, rate, seconds) {
 }
 
 function createResources({ night: defaults, sanity: sanityRules, power }, night = defaults) {
-  const { clock, hoursToWin, powerEnabled, sanityEnabled, secondsPerHour } = night;
-  const fastestHour = secondsPerHour ?? clock.fastSecondsPerHour;
-  const dynamicClock = sanityEnabled && secondsPerHour === undefined;
+  const { hoursToWin, powerEnabled, sanityEnabled, secondsPerHour } = night;
+  const fastestHour = secondsPerHour ?? night.clock.fastSecondsPerHour;
+  const clock = { ...night.clock, fastSecondsPerHour: fastestHour };
   let sanity = sanityEnabled ? clampPercent(sanityRules.initial) : 100;
   let energy = powerEnabled ? clampPercent(power.initial) : 100;
   let computerOn = energy > 0;
@@ -75,28 +75,39 @@ function createResources({ night: defaults, sanity: sanityRules, power }, night 
     const drain = energyDrain(input, gates, radio);
     const powerEnds = drain > 0 ? now + energy / drain : Infinity;
     const rate = sanityChange(observation, radio);
-    const progress = seconds => dynamicClock ? clockProgress(clock, sanity, rate, seconds)
+    const progress = seconds => sanityEnabled ? clockProgress(clock, sanity, rate, seconds)
       : seconds / fastestHour;
     const limit = Math.min(until, powerEnds, radioUntil > now ? radioUntil : Infinity,
       flashlightUntil > now ? flashlightUntil : Infinity);
     const duration = limit - now;
     const remaining = hoursToWin - hours;
-    let end = limit;
+    let dt = duration;
     let won = false;
-    if (duration / fastestHour >= remaining - 1e-12 && progress(duration) >= remaining - 1e-12) {
-      let low = 0;
-      let high = duration;
-      for (let i = 0; i < 42; i++) {
-        const mid = (low + high) / 2;
-        if (progress(mid) >= remaining) high = mid;
-        else low = mid;
+    const needsRecovery = sanityEnabled && sanity < clock.slowSanity;
+    const recoveryTime = needsRecovery ? (rate > 0 ? (clock.slowSanity - sanity) / rate : Infinity) : 0;
+    const tolerance = 1e-12;
+    // Find the first instant in this segment when the target hour and sanity threshold are both met.
+    if (recoveryTime <= duration + tolerance && progress(duration) >= remaining - tolerance) {
+      let earliest = Math.min(recoveryTime, duration);
+      if (progress(earliest) < remaining - tolerance) {
+        let high = duration;
+        for (let i = 0; i < 42; i++) {
+          const mid = (earliest + high) / 2;
+          if (progress(mid) >= remaining - tolerance) high = mid;
+          else earliest = mid;
+        }
+        earliest = high;
       }
-      end = now + high;
-      won = true;
+      if (!sanityEnabled || needsRecovery || sanity + rate * earliest >= clock.slowSanity) {
+        dt = earliest;
+        won = true;
+      }
     }
-    const dt = end - now;
-    hours = won ? hoursToWin : hours + progress(dt);
+    const end = dt === duration ? limit : now + dt;
+    hours += progress(dt);
+    if (won) hours = Math.max(hours, hoursToWin);
     if (sanityEnabled) sanity = clampPercent(sanity + rate * dt);
+    if (won && needsRecovery) sanity = Math.max(clock.slowSanity, sanity);
     drainEnergy(end >= powerEnds ? energy : drain * dt, end);
     return { end, radio, won };
   }

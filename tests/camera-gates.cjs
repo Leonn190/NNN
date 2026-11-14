@@ -93,6 +93,7 @@ let frameId = 0;
 let now = 0;
 let characterRules;
 let startingCharacterRules;
+let sanityRules;
 let movement;
 const math = Object.create(Math);
 let randomValue = () => 0;
@@ -150,6 +151,7 @@ const context = vm.createContext({
       startingCharacterRules = structuredClone(data);
     }
     if (url.pathname.endsWith('/threats.json')) data.clown.growthIncreasePerLevel = 0;
+    if (url.pathname.endsWith('/sanity.json')) sanityRules = data;
     return { ok: true, json: async () => data };
   },
   setTimeout(callback, delay) {
@@ -294,7 +296,8 @@ const customStart = (levels, debug = true) => {
   nodes['open-custom'].fire('click');
   const selectors = nodes['custom-levels'].children.map(label => label.children[1]);
   for (const select of selectors) {
-    assert.deepEqual(select.children.map(option => option.value), Array.from({ length: 11 }, (_, level) => String(level)));
+    assert.deepEqual(select.children.map(option => option.value), Array.from({ length: 12 }, (_, level) => String(level)));
+    assert.equal(select.children.at(-1).textContent, 'MAX');
     select.value = String(levels[select.name] ?? 0);
   }
   const button = nodes['custom-debug'];
@@ -316,7 +319,7 @@ assert.deepEqual(debugGroups.map(group => group.dataset.actor), ['padrao', 'goti
 const padraoDebug = debugGroups[0];
 const padraoStatus = padraoDebug.children[1].children[0].children[0];
 assert.equal(padraoDebug.children[0].children[1].textContent, 'Palco');
-assert.match(padraoStatus.textContent, /918\.4 s/);
+assert.match(padraoStatus.textContent, /998\.4 s/);
 const svg = nodes['map-canvas'].children[0];
 const cameras = svg.children.filter(node => node.attrs['data-cam']);
 const gates = svg.children.find(node => node.attrs['aria-label'] === 'Portões').children;
@@ -1136,7 +1139,7 @@ nodes['office-monitor'].fire('click');
 finishCameraLaunch();
 camera('CAM03');
 step(gothicStart + 10);
-step(gothicStart + 8000);
+step(gothicStart + 9000);
 assert.equal(signal.dataset.kind, 'gotica');
 assert.equal(runningAnimations.size, 3);
 assert([...runningAnimations].every(animation => animation.options.duration === 2000 && animation.currentTime > 0));
@@ -1145,7 +1148,7 @@ assert.equal(signal.dataset.kind, 'gotica');
 gate('G04');
 assert.equal(signal.dataset.kind, 'gotica');
 assert.equal(runningAnimations.size, 3);
-step(gothicStart + 10_000);
+step(gothicStart + 11_000);
 assert.equal(signal.hidden, true);
 assert.equal(runningAnimations.size, 0);
 console.log('PASS: Gothic onset follows its simulation event and a concurrent gate reuses the same layers.');
@@ -1199,12 +1202,15 @@ Object.assign(characterRules.padrao, { start: 5, positions: [5, 9, 10, 12], inte
 customStart({ padrao: 1 });
 const approachStart = now;
 const doorCreak = '04_FNAF4_Door_Creak.mp3';
+const laughsPlayed = () => playedSamples.filter(file => /possessed-laugh|Risada 1/.test(file));
+const laughsBeforeApproach = laughsPlayed().length;
 assert(!playedSamples.includes(doorCreak));
 step(approachStart + 10_500);
 assert.deepEqual(visibleOfficeLayers(), [officeLayer('doorway', 'original')]);
 assert.equal(playedSamples.at(-1), doorCreak);
 step(approachStart + 11_000);
 assert.equal(playedSamples.filter(file => file === doorCreak).length, 1);
+assert.equal(laughsPlayed().length, laughsBeforeApproach + 1);
 console.log('PASS: samples for both meow sets, flashlight, closet travel, doorway arrival, win and Shadow attack.');
 Object.assign(characterRules.yandere, {
   start: 19, positions: [19, 21], interval: 10, routes: { EE: 24 }
@@ -1243,7 +1249,7 @@ assert.equal(signal.hidden, true);
 finishCameraLaunch();
 assert.equal(nodes['camera-offline'].hidden, false);
 assert.equal(signal.dataset.kind, 'electrical');
-step(faultStart + 12_000);
+step(faultStart + 13_000);
 assert(!isClosed('G06')); // Physical opening by Padrão during the outage.
 assert(isClosed('G01'));
 assert.equal(nodes['feed-art'].hidden, true);
@@ -1456,10 +1462,10 @@ step(now);
 const stareStart = now;
 const scareArt = nodes['camera-scare'];
 const soundCount = playedSamples.length;
-step(stareStart + 10_000);
+step(stareStart + 8_000);
 assert.equal(scareArt.hidden, true);
 const sanityBeforeScare = movement.snapshot().sanity;
-step(stareStart + 10_001);
+step(stareStart + 8_001);
 assert.equal(scareArt.hidden, false);
 const firstScareUrl = scareArt.src;
 assert(activeScareUrls.has(firstScareUrl));
@@ -1469,7 +1475,7 @@ assert.equal(scream.paused, true);
 assert(movement.snapshot().sanity < sanityBeforeScare - 15);
 assert.equal(movement.snapshot().outcome, null);
 assert(isClosed('G01'));
-step(stareStart + 11_211);
+step(stareStart + 9_211);
 assert.equal(scareArt.hidden, true);
 assert.equal(scareArt.getAttribute('src'), null);
 assert.equal(activeScareUrls.size, 0);
@@ -1494,7 +1500,7 @@ document.hidden = false;
 document.fire('visibilitychange');
 assert.equal(scareArt.hidden, true);
 assert.equal(movement.snapshot().computerOn, true);
-step(now + 10_001);
+step(now + 8_001);
 assert.equal(scareArt.hidden, false);
 assert.notEqual(scareArt.src, firstScareUrl);
 assert.equal(scareDownloads.length, downloadsBefore + 1);
@@ -1516,7 +1522,7 @@ const metalsBefore = metalPlays().length;
 const firstMetalVoice = samples.get('audio/metal01.mp3');
 pressW();
 const litDrain = movement.snapshot({ hud: true }).energyLossPerSecond;
-step(flickerStart + 10_000);
+step(flickerStart + 11_000);
 assert.equal(officeView.getAttribute('data-flashlight-flicker'), '');
 assert.equal(officeLight.attrs['aria-pressed'], 'true');
 assert.deepEqual(Array.from(movement.officeState().back).sort(), ['gotica', 'original']);
@@ -1529,7 +1535,7 @@ assert.equal(flickers.length, 1);
 flickers[0][1].callback();
 assert.equal(officeView.getAttribute('data-flashlight-flicker'), null);
 assert.equal(officeLight.attrs['aria-pressed'], 'true');
-step(flickerStart + 20_000);
+step(flickerStart + 22_000);
 assert.equal(officeView.getAttribute('data-flashlight-flicker'), '');
 assert.equal(metalPlays().length, metalsBefore + 2);
 assert.equal(movement.snapshot({ hud: true }).energyLossPerSecond, litDrain);
@@ -1539,6 +1545,51 @@ nodes['complete-menu'].fire('click');
 assert.equal(firstMetalVoice.paused, true);
 assert.equal(samples.get('audio/metal01.mp3').paused, true);
 console.log('PASS: coalesced corridor flicker and one metal sample per corridor attack.');
+
+customStart({ padrao: 11 });
+assert.match(padraoStatus.textContent, /Nível MAX/);
+
+sanityRules.initial = 20;
+customStart({});
+const hallucinationStart = now;
+const playfield = nodes.playfield;
+const apparition = playfield.children.find(child => child.className === 'office-apparition');
+const previousLaughs = laughsPlayed().length;
+step(hallucinationStart + 20_000);
+assert(playfield.classList.contains('sanity-blur'));
+step(hallucinationStart + 21_250);
+assert(!playfield.classList.contains('sanity-blur'));
+step(hallucinationStart + 30_000);
+assert.equal(laughsPlayed().length, previousLaughs + 1);
+assert.equal(apparition.hidden, false);
+assert.equal(apparition.children.length, 6);
+for (const layer of apparition.children) assert(fs.existsSync(path.join(root, layer.src)));
+assert.deepEqual(Array.from(movement.officeState().room), []);
+step(hallucinationStart + 31_500);
+assert.equal(apparition.hidden, true);
+document.hidden = true;
+document.fire('visibilitychange');
+step(hallucinationStart + 60_000);
+document.hidden = false;
+document.fire('visibilitychange');
+assert.equal(laughsPlayed().length, previousLaughs + 1);
+nodes['complete-menu'].fire('click');
+assert.equal(apparition.hidden, true);
+
+sanityRules.initial = 0;
+customStart({});
+const overtimeStart = now;
+nodes['office-closet'].fire('click');
+step(overtimeStart + 1450);
+step(overtimeStart + 9 * 180_000);
+assert.match(nodes['clock-label'].innerHTML, /^9 /);
+assert.equal(movement.snapshot().outcome, null);
+nodes['closet-exit'].fire('click');
+step(now + 1040);
+step(now + 376_000);
+assert.equal(movement.snapshot().outcome, 'win');
+assert.match(nodes['shift-time'].innerHTML, /^11:\d\d <small>AM/);
+console.log('PASS: layered hallucination and cleanup, hidden-tab laugh suppression, and overtime clock.');
 }
 
 test().catch(error => {

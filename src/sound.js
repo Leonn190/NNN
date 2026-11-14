@@ -57,6 +57,19 @@ class SoundEngine {
     audio.currentTime = 0;
     audio.play().catch(() => {});
   }
+  playExclusiveSample(files, volume) {
+    if (this.exclusiveSample && !this.exclusiveSample.paused) return;
+    const file = files[Math.floor(Math.random() * files.length)];
+    const sample = this.samples.get(file);
+    if (!sample) return;
+    this.exclusiveSample = new Audio(sample.src);
+    this.exclusiveSample.volume = volume;
+    this.exclusiveSample.play().catch(() => {});
+  }
+  stopExclusiveSample() {
+    this.exclusiveSample?.pause();
+    this.exclusiveSample = undefined;
+  }
   setSampleLoop(name, volume) {
     const audio = this.samples.get(sampleFiles[name]);
     if (!audio) return;
@@ -78,6 +91,7 @@ class SoundEngine {
     audio.pause();
   }
   stopSamples() {
+    this.stopExclusiveSample();
     for (const file of this.samples.keys()) this.stopSample(file);
     for (const voices of this.sampleVoices.values()) for (const audio of voices) audio.pause();
   }

@@ -20,12 +20,7 @@ function scenario(overrides = {}, { levels, random = () => .5, gates = [], tune 
     [id, { ...config.characters[id], ...fields }]));
   tune(config);
   const activeLevels = { ...levels };
-  // Unspecified fixtures use their stated interval exactly, with abilities still disabled.
-  for (const [id, actor] of Object.entries(config.characters)) {
-    if (activeLevels[id] !== undefined) continue;
-    activeLevels[id] = 1;
-    actor.interval /= 1 - movement.difficulty.intervalReductionPerStep / 100;
-  }
+  for (const id of Object.keys(config.characters)) activeLevels[id] ??= 1;
   movement.jitter = { min: 0, max: 0 };
   threats.attack.jitter = { min: 0, max: 0 };
   const events = [];
@@ -66,7 +61,7 @@ assert.equal(routes.gate(13, 12), undefined);
   const roster = game.diagnostics();
   assert.deepEqual(roster.map(x => x.position), [1, 1, 1, 3, 16]);
   assert.deepEqual(roster.map(x => x.level), [1, 6, 1, 9, 4]);
-  [22.08, 19.76, 19.32, 10.83, 21.924].forEach((interval, index) => closeTo(roster[index].remaining, interval));
+  [24, 19.5, 14.7, 10.944, 23.9105].forEach((interval, index) => closeTo(roster[index].remaining, interval));
 }
 
 const byRoom = new Map(VENUE.rooms.map(room => [room.id, room.points]));
@@ -159,10 +154,13 @@ for (const [id, crossings] of Object.entries(gateCrossings)) {
   };
   const open = (_, edge) => Boolean(edge);
   const routing = createAttackRoutes(base, routes, () => 0, open, open);
-  assert.deepEqual([1, 3, 4, 7, 8, 10].map(level => routing.bonus(level)), [22, 22, 27, 27, 32, 32]);
-  assert.deepEqual([1, 3, 4, 7, 8, 10].map(level => routing.bonus(level, 2)), [28, 28, 35, 35, 42, 42]);
-  assert.deepEqual([1, 3, 4, 7, 8, 10].map(level => routing.bonus(level, 2, 'padrao')), [29, 29, 36, 36, 43, 43]);
-  assert.equal(routing.bonus(10, 120), 632);
+  for (let level = 1; level <= 11; level++) {
+    const progress = (level - 1) / 10;
+    closeTo(routing.bonus(level), 25 + 11 * progress);
+    closeTo(routing.bonus(level, 2), 31 + 15 * progress);
+    closeTo(routing.bonus(level, 2, 'padrao'), 32 + 15 * progress);
+  }
+  assert.equal(routing.bonus(11, 120), 636);
   for (const [key, weights] of Object.entries(expected)) {
     const rule = base.characters[key];
     const actor = { key, rule, allowed: new Set(rule.positions), position: rule.start };
@@ -196,7 +194,7 @@ for (const [id, crossings] of Object.entries(gateCrossings)) {
     assert.equal(actor('gotica').approach, null);
     assert.equal(actor('gotica').noise, 0);
     assert.equal(actor('gotica').light, 0);
-    assert.equal(actor('gotica').routeBonus, 22 + 3 * time / 10);
+    assert.equal(actor('gotica').routeBonus, 25 + 3 * time / 10);
   }
   at(60);
   assert.equal(actor('gotica').approach, 'approach');
@@ -218,7 +216,7 @@ for (const reason of ['observada', 'lotada']) {
   assert.equal(actor('gatinha').route, 'CV');
   at(15, input);
   assert.equal(actor('gatinha').route, 'EL');
-  assert.equal(actor('gatinha').routeBonus, 22);
+  assert.equal(actor('gatinha').routeBonus, 25);
   closeTo(actor('gatinha').remaining, 3.5);
   assert.deepEqual(output('move'), []);
 }
@@ -228,7 +226,7 @@ for (const reopen of [true, false]) {
     { random: () => 0 });
   at(10);
   assert.equal(actor('gatinha').position, 7);
-  assert.equal(actor('gatinha').routeBonus, 25);
+  assert.equal(actor('gatinha').routeBonus, 28);
   at(11, {}, { type: 'gate', id: 'G02' });
   at(20);
   assert.match(actor('gatinha').stopped, /porta fechada/);
@@ -240,7 +238,7 @@ for (const reopen of [true, false]) {
     at(25);
     assert.equal(actor('gatinha').position, 7);
     assert.equal(actor('gatinha').route, 'EL');
-    assert.equal(actor('gatinha').routeBonus, 22);
+    assert.equal(actor('gatinha').routeBonus, 25);
     closeTo(actor('gatinha').remaining, 3.5);
   }
 }
@@ -264,8 +262,8 @@ for (const reopen of [true, false]) {
   const { at, game, actor, output } = scenario({ gatinha: { start: 7, interval: 10, routes: { CV: 100 } } },
     { random: () => draw });
   const odds = game.debugSnapshot().actors[0].odds;
-  const total = 1.22 + 1 + 1.05 + .25;
-  closeTo(odds['Corredor central — fundo'], 1.22 / total);
+  const total = 1.25 + 1 + 1.05 + .25;
+  closeTo(odds['Corredor central — fundo'], 1.25 / total);
   closeTo(odds['Fundo do salão (CAM 04)'], 1 / total);
   closeTo(odds['Escondida na VIP 2'], 1.05 / total);
   closeTo(odds.Ficar, .25 / total);
@@ -274,29 +272,29 @@ for (const reopen of [true, false]) {
   assert.equal(actor('gatinha').lastReached, 7);
   assert.equal(actor('gatinha').checkpoint, 7);
   const recoveryOdds = game.debugSnapshot().actors[0].odds;
-  closeTo(recoveryOdds['VIP 2'] / recoveryOdds.Recepção, 1.25);
+  closeTo(recoveryOdds['VIP 2'] / recoveryOdds.Recepção, 1.28);
   draw = .99;
   at(20);
-  assert.equal(actor('gatinha').routeBonus, 25);
+  assert.equal(actor('gatinha').routeBonus, 28);
   draw = 0;
   at(40);
   assert.deepEqual(output('move').map(({ to }) => to), [3, 7, 15]);
-  assert.equal(actor('gatinha').routeBonus, 31);
+  assert.equal(actor('gatinha').routeBonus, 34);
   assert.equal(actor('gatinha').routeCompleted, true);
 }
 
-for (const [level, roll, opens] of [[3, .6999, true], [3, .70, false], [4, .9399, true], [4, .94, false]]) {
+for (const [level, roll, opens] of [[1, .6999, true], [1, .70, false], [11, .9799, true], [11, .98, false]]) {
   let draw = 0;
   const { game, at, actor, output } = scenario({ padrao: { start: 1, interval: 10, positions: [1, 19] } },
     { levels: { padrao: level }, random: () => draw, gates: ['G06'] });
   at(0, { camera: 'CAM12' });
-  at(9, { camera: 'CAM12' });
+  at(actor('padrao').remaining, { camera: 'CAM12' });
   assert.equal(actor('padrao').position, 1);
   assert.match(actor('padrao').stopped, /c.mera observada/);
   assert(game.isGateClosed('G06'));
   assert.deepEqual(output('openGate'), []);
   draw = roll;
-  at(10);
+  at(game.snapshot().now + 1);
   assert.equal(game.isGateClosed('G06'), !opens);
   assert.deepEqual(output('openGate'), opens ? ['G06'] : []);
   assert.deepEqual(output('gatesChanged'), opens ? [[{ id: 'G06', closed: false }]] : []);
@@ -317,7 +315,7 @@ for (const [level, roll, opens] of [[3, .6999, true], [3, .70, false], [4, .9399
   const { game, at, actor } = scenario({
     padrao: { start: 1, interval: 10, positions: [1, 2] },
     gotica: { start: 1, interval: 11, positions: [1, 2] },
-    yandere: { start: 1, interval: 11, positions: [1, 19] }
+    yandere: { start: 1, interval: 11 / .7, positions: [1, 19] }
   }, { random: () => .5, gates: ['G06'] });
   at(10, { camera: 'CAM03' });
   assert.equal(actor('padrao').position, 1);
@@ -336,7 +334,7 @@ for (const [tier, chance] of base.characters.gotica.staticChance.entries()) {
   for (const [draw, triggers] of [[(chance - .01) / 100, true], [chance / 100, false]]) {
     let drawCount = 0;
     const { at, game, output, actor } = scenario({ gotica: { start: 1, interval: 10, positions: [1, 2] } },
-      { levels: { gotica: tier ? base.movement.difficulty.abilityLevel : 1 }, random: () => (++drawCount === 3 ? draw : 0) });
+      { levels: { gotica: tier ? 11 : 1 }, random: () => (++drawCount === 3 ? draw : 0) });
     const due = actor('gotica').remaining;
     at(0, { camera: 'CAM03' });
     at(due, { camera: 'CAM03' });
@@ -393,7 +391,7 @@ for (const [tier, chance] of base.characters.gotica.staticChance.entries()) {
   const { game, at, actor } = scenario({
     padrao: { start: 6, interval: 10, routes: { CV: 100 } },
     gotica: { start: 6, interval: 10, routes: { CV: 100 } },
-    yandere: { start: 6, interval: 10, routes: { CV: 100 } },
+    yandere: { start: 6, interval: 10 / .7, routes: { CV: 100 } },
     gatinha: { start: 7, interval: 10, routes: { CV: 100 } }
   }, { random: () => 0 });
   at(10);
@@ -402,6 +400,8 @@ for (const [tier, chance] of base.characters.gotica.staticChance.entries()) {
   assert.match(actor('gatinha').stopped, /lotada/);
   at(20);
   assert.equal(game.officeState().front.length, 2);
+  assert.equal(actor('yandere').position, 15);
+  at(24.29);
   assert.match(actor('yandere').stopped, /lotada/);
 }
 
@@ -418,12 +418,12 @@ for (const [tier, chance] of base.characters.gotica.staticChance.entries()) {
   at(34.999);
   assert.equal(actor('gotica').position, 14);
   at(35);
-  assert.equal(actor('gotica').route, 'EL');
+  assert.equal(actor('gotica').route, null);
   assert.equal(actor('gotica').approach, null);
   assert.equal(actor('gotica').noise, 0);
-  assert.equal(actor('gotica').routeBonus, 22);
-  closeTo(actor('gotica').remaining, 3.5);
-  assert.deepEqual(output('move').map(({ to }) => to), [15, 14, 17]);
+  assert.equal(actor('gotica').routeBonus, 25);
+  closeTo(actor('gotica').remaining, 12.5);
+  assert.deepEqual(output('move').map(({ to }) => to), [15, 14, 15]);
   assert.deepEqual(output('corridorAttack'), ['gotica']);
 }
 
@@ -470,7 +470,7 @@ for (const [tier, chance] of base.characters.gotica.staticChance.entries()) {
   assert.equal(actor('maid').approach, 'approach');
   at(20);
   assert.deepEqual(game.officeState().room, ['maid']);
-  at(22, {}, { type: 'closetEnter' });
+  at(21.99, {}, { type: 'closetEnter' });
   assert(actor('maid').noise > 0);
   at(28.5);
   assert.deepEqual(game.officeState().room, []);
@@ -478,8 +478,8 @@ for (const [tier, chance] of base.characters.gotica.staticChance.entries()) {
   assert.equal(actor('maid').intervalPenalty, 1.25);
 }
 
-for (const [key, reaction] of Object.entries({ padrao: 3.5, gotica: 4.5, yandere: 4.5, gatinha: 4.5, maid: 2.5 })) {
-  for (const level of [5, 6]) {
+for (const [key, reaction] of Object.entries({ padrao: 3, gotica: 4, yandere: 4, gatinha: 4, maid: 2 })) {
+  for (const level of [1, 6, 11]) {
     const { at, actor, output, game } = scenario({
       [key]: { start: key === 'maid' ? 15 : 7, interval: 20, routes: key === 'maid' ? undefined : { CV: 100 },
         initialStationaryAttempts: undefined }
@@ -491,7 +491,7 @@ for (const [key, reaction] of Object.entries({ padrao: 3.5, gotica: 4.5, yandere
       at(time, loud);
     }
     assert.equal(actor(key).position, 13);
-    const deadline = time + reaction * (level === 6 ? .89 : 1);
+    const deadline = time + reaction * (1 - .02 * (level - 1));
     at(deadline - .001, loud);
     assert.equal(game.snapshot().outcome, null);
     at(deadline, loud);
@@ -542,7 +542,7 @@ for (const [key, corridor] of Object.entries(corridorOdds)) {
     }
   }
   actor.noise = 0;
-  const repelled = ['gotica', 'yandere'].includes(key);
+  const repelled = key === 'gotica';
   const attracted = key === 'gatinha';
   const seconds = attracted ? 6 : 8;
   fx.integrate(seconds / 2, { corridorLight: true });
@@ -587,7 +587,7 @@ for (const key of ['gotica', 'yandere', 'gatinha']) {
   let draw = 0;
   const { at, actor, game } = scenario({
     gotica: { start: 7, interval: 10, routes: { CV: 100 } },
-    yandere: { start: 5, interval: 10, routes: { EL: 100 } },
+    yandere: { start: 5, interval: 20 / 1.7, routes: { EL: 100 } },
     gatinha: { start: 7, interval: 15, routes: { CV: 100 } },
     maid: { start: 16, interval: 1000 }
   }, { random: () => draw });
@@ -620,7 +620,7 @@ for (const key of ['gotica', 'yandere', 'gatinha']) {
   at(15.001, quiet);
   assert.equal(debug('gatinha').attackPath, 'corridor');
   assert.equal(debug('gatinha').noise, 0);
-  at(20, quiet);
+  at(20 + 1e-10, quiet);
   assert.equal(actor('gotica').position, 14);
   closeTo(debug('gotica').noise, 16 * decay(9));
   assert.equal(actor('yandere').position, 10);
@@ -651,7 +651,7 @@ for (const key of ['gotica', 'yandere', 'gatinha']) {
   closeTo(debug('yandere').noise, 18 * decay(1));
   assert.equal(debug('gotica').light, 0);
   draw = .99;
-  at(30.001, quiet);
+  at(32, quiet);
   for (const key of ['gotica', 'yandere', 'gatinha']) {
     assert.equal(debug(key).noise, 0);
     assert.equal(debug(key).light, 0);
@@ -659,7 +659,7 @@ for (const key of ['gotica', 'yandere', 'gatinha']) {
     assert.equal(debug(key).attackOdds, null);
   }
   draw = 0;
-  let time = 30.001;
+  let time = 32;
   for (let step = 0; step < 4 && !debug('gotica').attackActive; step++) {
     time += actor('gotica').remaining;
     at(time, { radio: true });
@@ -672,19 +672,19 @@ for (const key of ['gotica', 'yandere', 'gatinha']) {
 {
   const rules = structuredClone(base);
   const actor = {
-    key: 'yandere', rule: rules.characters.yandere, position: 15, noise: 0,
-    light: 0, audioRetention: 1
+    key: 'yandere', rule: rules.characters.yandere, position: 19, noise: 0,
+    light: 0, allowed: new Set([1, 15, 17, 19, 22, 8])
   };
   const fx = createEffects(rules, routes, [actor]);
   assert(fx.startAudio(0, 'CAM03'));
   assert.equal(fx.audioStatus(2.99).camera, 'CAM03');
   assert.equal(fx.audioStatus(3).camera, null);
   assert(!fx.startAudio(9.99, 'CAM12'));
-  closeTo(fx.weight(actor, 19, 2), 1.6); // 19 is one step from the hall.
+  closeTo(fx.weight(actor, 1), 1.75); // 19 is one step from the hall.
   actor.position = 17;
-  closeTo(fx.weight(actor, 15, 2), 1.12); // 17 is out of range, 15 is in ring two.
+  closeTo(fx.weight(actor, 15), 1.15); // 17 is out of range, 15 is in ring two.
   fx.retain(actor);
-  closeTo(fx.weight(actor, 15, 2), 1.09);
+  closeTo(fx.weight(actor, 15), 1.15);
   actor.position = 22;
   closeTo(fx.weight(actor, 8, 2), 1);
   assert(fx.startAudio(10, 'CAM12'));
@@ -704,7 +704,7 @@ for (const key of ['gotica', 'yandere', 'gatinha']) {
   closeTo(actor.noise - before, 4);
   actor.position = 14;
   fx.integrate(30, { corridorLight: true });
-  assert.equal(actor.light, 1);
+  assert.equal(actor.light, 0);
   fx.integrate(40, { radio: true });
   assert.equal(actor.noise, 100);
 }
@@ -725,13 +725,13 @@ for (const key of ['gotica', 'yandere', 'gatinha']) {
   closeTo(corridor.noise, stock.noise * .8);
 }
 
-for (const level of [3, 4, 10]) {
+for (const level of [1, 4, 10, 11]) {
   let draw = 0;
   const { at, actor, game } = scenario({ yandere: { start: 19, interval: 20, routes: { EE: 24 } } },
     { levels: { yandere: level }, random: () => draw });
-  const normal = 20 * (1 - .08 * base.movement.difficulty.oddSteps.filter(step => level >= step).length);
+  const normal = 20 * (1 - .05 * (level - 1));
   const due = actor('yandere').remaining;
-  closeTo(due, normal * (level >= 4 ? .60 : 1));
+  closeTo(due, normal * (.70 - .03 * (level - 1)));
   at(due);
   assert.equal(actor('yandere').position, 21);
   assert(game.electricalFault());
@@ -744,6 +744,108 @@ for (const level of [3, 4, 10]) {
   assert.equal(actor('yandere').freeMoves, 0);
   at(due + normal * 2.25 + .001);
   assert.equal(actor('yandere').route, null);
+}
+
+{
+  const { at, actor, output, game } = scenario({
+    maid: { start: 15, interval: 10, initialStationaryAttempts: undefined }
+  }, { gates: ['G01'], random: () => 0 });
+  at(24.999);
+  assert.equal(actor('maid').position, 14);
+  at(25);
+  assert.equal(actor('maid').position, 15);
+  assert.equal(actor('maid').approach, null);
+  assert.deepEqual(output('corridorAttack'), ['maid']);
+  at(26, {}, { type: 'gate', id: 'G01' });
+  at(37.499);
+  assert.equal(actor('maid').position, 15);
+  at(37.5);
+  assert.equal(actor('maid').position, 14);
+  assert.deepEqual(output('corridorAttack'), ['maid', 'maid']);
+  at(47.5);
+  assert.deepEqual(game.officeState().room, ['maid']);
+}
+
+{
+  const { at, output } = scenario({ gotica: { start: 5, interval: 10, routes: { EL: 100 } } },
+    { random: () => 0 });
+  at(20, { leftLook: true });
+  assert.deepEqual(output('stockAttack'), ['gotica']);
+  at(30, { leftLook: true });
+  at(34, { leftLook: true });
+  at(34.5);
+  at(44.5);
+  assert.deepEqual(output('stockAttack'), ['gotica']);
+  assert.equal(output('invasion').length, 1);
+}
+
+{
+  const { at, actor, game } = scenario({
+    gotica: { start: 19, positions: [19, 1, 18], interval: 12 },
+    padrao: { start: 19, positions: [19, 1, 18], interval: 18 }
+  }, { random: () => 0 });
+  assert(at(0, { camera: 'CAM03' }, { type: 'cameraAudio' }));
+  at(4);
+  assert.equal(game.snapshot().audio.camera, null);
+  assert.equal(actor('gotica').audioCamera, 'CAM03');
+  assert.equal(actor('padrao').audioCamera, 'CAM03');
+  assert(at(10, { camera: 'CAM11' }, { type: 'cameraAudio' }));
+  at(12);
+  assert.equal(actor('gotica').audioCamera, null);
+  assert.equal(actor('padrao').audioCamera, 'CAM11');
+  assert.deepEqual(game.debugSnapshot().actors.find(a => a.key === 'padrao').audio.modifiers, { 18: -50 });
+  at(18);
+  assert.equal(actor('padrao').audioCamera, null);
+}
+
+{
+  const { at, actor, game, output } = scenario({
+    yandere: { start: 1, interval: 10, positions: [1, 2, 19] }
+  }, { random: () => 0 });
+  const watchedChoice = odds => (odds['Corredor da CAM 12'] ?? 0)
+    + (odds['Bloqueio em Corredor da CAM 12 (câmera observada)'] ?? 0);
+  const initial = game.debugSnapshot().actors[0].odds;
+  at(0, { camera: 'CAM12' });
+  closeTo(watchedChoice(game.debugSnapshot().actors[0].odds), watchedChoice(initial) + .10);
+  at(0, { camera: 'CAM12' }, { type: 'gate', id: 'G06' });
+  const { odds } = game.debugSnapshot().actors[0];
+  closeTo(odds['Bloqueio em Corredor da CAM 12 (câmera observada, G06)'], watchedChoice(initial));
+  at(7, { camera: 'CAM04' });
+  assert.equal(actor('yandere').position, 2);
+  assert.deepEqual(output('cameraInterference'), []);
+}
+
+for (const [camera, expected] of [['CAM03', true], ['CAM12', false]]) {
+  const { at, game } = scenario({ yandere: { start: 19, interval: 10, positions: [19, 1] } },
+    { levels: { yandere: 11 }, random: () => 0 });
+  at(0, { camera });
+  at(2, { camera });
+  assert.equal(game.snapshot().static, expected);
+}
+
+{
+  const { createThreats } = window.NathGame;
+  let smores = 0;
+  const threats = createThreats(base, { palhaca: 0 }, () => .5, () => {}, () => smores);
+  const maid = { key: 'maid', reaction: 2 };
+  const gotica = { key: 'gotica', reaction: 4 };
+  threats.enterCloset(0);
+  for (let count = 0; count < 5; count++) {
+    const now = count * 10;
+    threats.invade(maid, now);
+    closeTo(threats.invasionStatus(maid, now).reaction, 2 * .92 ** count);
+    threats.resolve(now + 9, () => {}, assert.fail, false, false);
+  }
+  closeTo(threats.reactionTime(gotica), 4);
+  smores = .4;
+  closeTo(threats.reactionTime(maid), 2 * .92 ** 5 - .4);
+  smores = 2;
+  threats.exitCloset();
+  threats.invade(maid, 50);
+  assert.equal(threats.nextDeadline(50, false, false), 50);
+  let loss;
+  threats.resolve(50, assert.fail, source => { loss = source; }, false, false);
+  assert.equal(loss, 'maid');
 }
 
 for (const key of Object.keys(base.characters).filter(key => key !== 'yandere')) {
@@ -765,12 +867,12 @@ for (const key of Object.keys(base.characters).filter(key => key !== 'yandere'))
   at(11, { radio: true, clownLight: true });
   const lit = game.snapshot().counter;
   at(20, { radio: true });
-  closeTo(game.snapshot().counter, lit);
-  at(27, { radio: false });
-  assert(game.snapshot().counter < 10);
+  closeTo(game.snapshot().counter, lit + 9 * (1.52 * 1.625 - 2));
   at(29, { radio: false });
+  assert(game.snapshot().counter < 10);
+  at(31, { radio: false });
   assert.equal(game.snapshot().floor, 10);
-  at(29, { radio: true }, { type: 'closetExit' });
+  at(31, { radio: true }, { type: 'closetExit' });
   at(49);
   assert.equal(game.snapshot().counter, 10);
 }
@@ -820,7 +922,8 @@ for (const key of Object.keys(base.characters).filter(key => key !== 'yandere'))
     if (from === to) assert.equal(actor.key, 'maid');
     else {
       if (retreat) {
-        assert(base.movement.retreat[retreat].includes(to));
+        assert(base.movement.retreat[retreat].includes(to)
+          || (retreat === 'corridor' && from === base.map.front && to === base.map.back));
         if (retreat === 'office') assert.equal(from, base.map.office);
       } else {
         assert(edge);
@@ -837,7 +940,7 @@ for (const key of Object.keys(base.characters).filter(key => key !== 'yandere'))
     }
   } });
   const input = { radio: true, closet: true };
-  game.reset(levels, input);
+  game.reset(levels, input, { ...base.night, sanityEnabled: false });
   game.advance(0, input, { type: 'closetEnter' });
   for (let time = 0; time <= 1500 && !game.snapshot().outcome; time += 4.25) {
     const action = game.electricalFault() ? { type: 'computerPower' }

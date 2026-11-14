@@ -2,6 +2,8 @@
 'use strict';
 
 const factor = percent => 1 + percent / 100;
+const difficultyProgress = (level, max) => Math.max(0, Math.min(1, (level - 1) / (max - 1)));
+const interpolate = ([first, last], progress) => first + (last - first) * progress;
 const uniform = (random, { min, max }) => min + random() * (max - min);
 function weightedChoices(items, weight) {
   const weights = items.map(item => Math.max(0, weight(item)));
@@ -59,7 +61,7 @@ function createRoutes(map) {
 
 function createAttackRoutes(config, graph, random, passable, clear) {
   const { map, movement } = config;
-  const { definitions, bonusByLevel } = movement.routes;
+  const { definitions, bonus: initialBonus, perMove, padraoPerMove } = movement.routes;
   const permitsEdge = (actor, edge) => edge && (!edge.actors || edge.actors.includes(actor.key));
   function routeOptions(actor) {
     return Object.entries(actor.rule.routes ?? {}).map(([id, weight]) => {
@@ -179,12 +181,13 @@ function createAttackRoutes(config, graph, random, passable, clear) {
   }
 
   function bonus(level, moves = 0, key) {
-    const tier = bonusByLevel.findLast(({ minLevel }) => level >= minLevel);
-    if (!tier) return 0;
-    return tier.bonus + moves * (key === 'padrao' ? tier.padraoPerMove : tier.perMove);
+    if (level <= 0) return 0;
+    const progress = difficultyProgress(level, config.night.levels[1]);
+    return interpolate(initialBonus, progress) + moves * interpolate(key === 'padrao' ? padraoPerMove : perMove, progress);
   }
   return { select, selectionOdds, checkpoint, reach, nextSteps, canNavigate, bonus };
 }
 
-Object.assign(window.NathGame, { factor, uniform, weighted, weightedChoices, drawWeighted, createRoutes, createAttackRoutes });
+Object.assign(window.NathGame, { factor, difficultyProgress, interpolate, uniform, weighted, weightedChoices,
+  drawWeighted, createRoutes, createAttackRoutes });
 })();

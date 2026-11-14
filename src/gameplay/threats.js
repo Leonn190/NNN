@@ -1,18 +1,18 @@
 (() => {
 'use strict';
 
-const { factor, uniform } = window.NathGame;
+const { factor, uniform, difficultyProgress, interpolate } = window.NathGame;
 
-function createSmores(rules, level, random, emit) {
+function createSmores(rules, level, maxLevel, random, emit) {
   if (!rules || level <= 0) return {
     integrate() {}, resolve() {}, nextDeadline: () => Infinity, phase: () => 'idle',
     diagnostics: () => ({ phase: 'disabled' }),
     intervalReduction: () => 0, reactionReduction: () => 0, targetBonusMultiplier: () => 1
   };
 
-  const progress = (level - 1) / 9;
+  const progress = difficultyProgress(level, maxLevel);
   const { ventChance, roomSeconds, intervalReduction, reactionReduction } = Object.fromEntries(
-    Object.entries(rules.level1).map(([key, value]) => [key, value + progress * (rules.level10[key] - value)])
+    Object.entries(rules.level1).map(([key, value]) => [key, interpolate([value, rules.maxLevel[key]], progress)])
   );
   const tolerance = 1e-9;
   const roomSpeed = radio => radio ? 1 : rules.quietRoomSpeed;
@@ -94,6 +94,7 @@ function createThreats(config, levels, random, emit, reactionReduction = () => 0
   const clownEnabled = levels.palhaca > 0;
   const growth = clown.growth * factor(clown.growthIncreasePerLevel * levels.palhaca);
   const invasions = new Map();
+  const invasionCounts = new Map();
   const thresholds = [];
   let hidden = false;
   let counter = clownEnabled ? clown.initial : 0;
@@ -101,8 +102,15 @@ function createThreats(config, levels, random, emit, reactionReduction = () => 0
   let entries = 0;
   let clownDeath = false;
 
+  function reactionTime(actor, previous = invasionCounts.get(actor) ?? 0) {
+    const seconds = actor.reaction * attack.repeatReactionFactor ** previous - reactionReduction();
+    return Number.isFinite(seconds) ? Math.max(0, seconds) : 0;
+  }
+
+  const reactionDeadline = (actor, invasion) => invasion.arrived + reactionTime(actor, invasion.previous);
+
   function protect(invasion, now) {
-    const late = invasion.reactionEnds - reactionReduction() - now <= attack.lateThreshold;
+    const late = reactionDeadline(invasion.actor, invasion) - now <= attack.lateThreshold;
     const stay = late ? attack.lateStay : attack.stay;
     invasion.leaveAt = Math.max(now, invasion.arrived + stay + uniform(random, attack.jitter));
   }
@@ -122,14 +130,16 @@ function createThreats(config, levels, random, emit, reactionReduction = () => 0
   }
 
   function invade(actor, now) {
-    const invasion = { arrived: now, reactionEnds: now + actor.reaction, leaveAt: null };
+    const previous = invasionCounts.get(actor) ?? 0;
+    const invasion = { actor, arrived: now, previous, leaveAt: null };
     invasions.set(actor, invasion);
+    invasionCounts.set(actor, previous + 1);
     if (hidden) protect(invasion, now);
     emit('invasion', actor);
   }
 
   function clownRate(radio, light) {
-    if (hidden && light) return 0;
+    if (hidden && light) return growth * clown.litClosetGrowthFactor - (radio ? clown.musicReduction : 0);
     if (radio) return -clown.musicReduction;
     return growth * (hidden ? clown.closetGrowthFactor : 1);
   }
@@ -150,8 +160,8 @@ function createThreats(config, levels, random, emit, reactionReduction = () => 0
 
   function nextDeadline(now, radio, light) {
     let due = clownDeadline(now, radio, light);
-    for (const invasion of invasions.values()) {
-      due = Math.min(due, hidden ? invasion.leaveAt : invasion.reactionEnds - reactionReduction());
+    for (const [actor, invasion] of invasions) {
+      due = Math.min(due, hidden ? invasion.leaveAt : reactionDeadline(actor, invasion));
     }
     return due;
   }
@@ -160,7 +170,7 @@ function createThreats(config, levels, random, emit, reactionReduction = () => 0
     if (clownEnabled && (clownDeath || clown.max - counter <= Number.EPSILON * clown.max
         || clownDeadline(now, radio, light) <= now)) return lose('palhaca');
     for (const [actor, invasion] of invasions) {
-      if (!hidden && now >= invasion.reactionEnds - reactionReduction()) return lose(actor.key);
+      if (!hidden && now >= reactionDeadline(actor, invasion)) return lose(actor.key);
       if (hidden && now >= invasion.leaveAt) {
         invasions.delete(actor);
         retreat(actor);
@@ -171,19 +181,18 @@ function createThreats(config, levels, random, emit, reactionReduction = () => 0
   const clownStage = () => clownEnabled ? clown.stages.findLastIndex(threshold => counter >= threshold) : -1;
   return {
     enterCloset, exitCloset: () => { hidden = false; },
-    invade, integrate, nextDeadline, resolve, clownStage,
+    invade, integrate, nextDeadline, resolve, clownStage, reactionTime,
     snapshot: () => ({ hidden, counter, floor, clownStage: clownStage() }),
     invasionStatus(actor, now) {
       const invasion = invasions.get(actor);
       if (!invasion) return null;
-      const deadline = hidden ? invasion.leaveAt : invasion.reactionEnds - reactionReduction();
-      return { retreat: hidden, remaining: Math.max(0, deadline - now) };
+      const deadline = hidden ? invasion.leaveAt : reactionDeadline(actor, invasion);
+      return { retreat: hidden, remaining: Math.max(0, deadline - now), reaction: reactionTime(actor, invasion.previous) };
     },
     clownStatus: (radio, light) => !clownEnabled ? 'dormindo'
       : clownDeath || counter >= clown.max ? 'ataque'
-      : hidden && light ? 'contida pela lanterna'
-      : radio ? (counter > floor ? 'recuando com a música' : 'no piso')
-      : 'avançando'
+      : clownRate(radio, light) > 0 ? (hidden && light ? 'avançando sob a lanterna' : 'avançando')
+      : clownRate(radio, light) < 0 && counter > floor ? 'recuando com a música' : 'no piso'
   };
 }
 

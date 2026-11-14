@@ -20,7 +20,7 @@ function createNightMenu(config, { prepareShift, startShift, onEnter }) {
   let debug = false;
   const fields = $('#custom-levels');
   const settings = config.controls.menuMusic;
-  const { campaign, levels: [min, max], defaultLevel, ...defaults } = config.night;
+  const { campaign, campaignMaxLevel, levels: [min, max], defaultLevel, ...defaults } = config.night;
   const progressKey = 'nnn.campaign.completed';
   let completed = readProgress();
   let pendingShift;
@@ -53,7 +53,8 @@ function createNightMenu(config, { prepareShift, startShift, onEnter }) {
     select.name = id;
     for (let level = min; level <= max; level++) {
       const option = document.createElement('option');
-      option.value = option.textContent = String(level);
+      option.value = String(level);
+      option.textContent = level === max ? 'MAX' : option.value;
       select.append(option);
     }
     select.value = String(defaultLevel);
@@ -136,7 +137,7 @@ function createNightMenu(config, { prepareShift, startShift, onEnter }) {
     const entry = campaign[number - 1];
     if (!entry || number > completed + 1) return;
     const { levels, ...rules } = entry;
-    play({ number, label: `NOITE ${number}`, levels, rules: { ...defaults, ...rules } }, options);
+    play({ number, label: `NOITE ${number}`, levels, rules: { ...defaults, ...rules, maxLevel: campaignMaxLevel } }, options);
   }
 
   introTitle.addEventListener('animationend', event => {

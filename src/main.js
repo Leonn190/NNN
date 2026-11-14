@@ -81,7 +81,8 @@ const CLOWN_RIGHT_IMAGE = './public/images/jumpscares/palhaca-direita.gif';
 const CLOWN_BOTTOM_IMAGE = './public/images/jumpscares/palhaca-baixo.gif';
 const SHADOW_IMAGE = config.shadow.jumpscare;
 const JUMPSCARE_AUDIO = './public/audio/jumpscares/';
-const { corridorAttackSound, flashlight } = config.effects;
+const { corridorAttackSound, stockAttackSound, flashlight } = config.effects;
+const attackSamples = [...corridorAttackSound.files, ...stockAttackSound.files];
 const corridorSoundVoices = Object.keys(config.characters).length;
 const cameraScareImage = config.threats.yandereCameraScare.image;
 const MONITOR_TRANSITION_MS = { boot: 6500, shutdown: 2000 };
@@ -171,6 +172,31 @@ const officeLayers = ['doorway', 'room'].flatMap(location => OFFICE.characters.m
   dom.officeCharacters.append(image);
   return { location, character, image };
 }));
+const officeApparition = document.createElement('div');
+officeApparition.className = 'office-apparition';
+officeApparition.hidden = true;
+officeApparition.setAttribute('aria-hidden', 'true');
+const apparitionBackground = document.createElement('img');
+apparitionBackground.className = 'office-art';
+apparitionBackground.alt = '';
+officeApparition.append(apparitionBackground);
+for (const character of OFFICE.characters) {
+  const image = document.createElement('img');
+  image.className = 'office-character';
+  image.alt = '';
+  image.src = officeCharacterImage('room', character);
+  officeApparition.append(image);
+}
+dom.playfield.append(officeApparition);
+
+function renderHallucination(effect) {
+  dom.playfield.classList.toggle('sanity-blur', effect === 'blur');
+  officeApparition.hidden = effect !== 'apparition';
+  if (!officeApparition.hidden) {
+    const background = movement.isGateClosed(OFFICE.gate) ? OFFICE.images.closed : OFFICE.images.dark;
+    setImageSource(apparitionBackground, background);
+  }
+}
 const closetComposition = createSceneComposition(dom.closetScene, dom.closetDoorArt, dom.closetExtra);
 const cameraComposition = createSceneComposition(dom.feedScene, dom.feedArt, dom.feedLayers);
 
@@ -244,6 +270,13 @@ const movement = createMovement(config, {
     } else if (event === 'corridorAttack') {
       const { files, volume } = corridorAttackSound;
       sound.playSample(files[Math.floor(Math.random() * files.length)], volume, corridorSoundVoices);
+    } else if (event === 'stockAttack' || event === 'hallucinationLaugh') {
+      const { files, volume } = stockAttackSound;
+      if (event === 'stockAttack') {
+        sound.playSample(files[Math.floor(Math.random() * files.length)], volume, corridorSoundVoices);
+      } else if (!state.complete && !dom.game.hidden && !dom.game.inert && !document.hidden) {
+        sound.playExclusiveSample(files, volume);
+      }
     } else if (event === 'cameraScareStart') {
       nextHudUpdate = 0;
       dom.cameraScare.hidden = false;
@@ -533,9 +566,15 @@ function updateMovementDebug() {
     setText(target, positions.get(actor.target)?.name ?? '—');
     const required = positions.get(actor.required)?.name ?? '—';
     const progress = actor.completed ? 'concluída' : positions.get(actor.lastReached)?.name ?? '—';
+    const bonus = actor.bonus === null ? '' : ` · bônus +${actor.bonus.toFixed(2)}%`;
     const routeDetails = actor.route !== 'Sem rota' && actor.bonus !== null
-      ? ` · início ${required} · progresso ${progress} · bônus +${actor.bonus}%` : '';
-    setText(status, actor.status + routeDetails);
+      ? ` · início ${required} · progresso ${progress}` : '';
+    const level = actor.level === config.night.levels[1] ? 'MAX' : actor.level;
+    const reaction = actor.reaction === null ? '' : ` · reação ${actor.reaction.toFixed(3)} s`;
+    const modifiers = Object.entries(actor.audio?.modifiers ?? {}).map(([id, modifier]) =>
+      `${positions.get(Number(id)).name} ${modifier > 0 ? '+' : ''}${modifier}%`);
+    const audio = actor.audio ? ` · áudio pendente ${actor.audio.camera} (${modifiers.join(', ')})` : '';
+    setText(status, `Nível ${level} · ${actor.status}${routeDetails}${bonus}${reaction}${audio}`);
     renderDebugOdds(routes, actor.routeOdds, 'Sorteio de rota');
     renderDebugOdds(odds, actor.odds);
     renderDebugOdds(expiry, actor.expiryOdds, 'Se expirar');
@@ -989,26 +1028,32 @@ function playCameraAudio() {
   announce(`Som reproduzido em ${CAMERAS[state.cameraIndex].id}.`);
 }
 
-function clockHour(elapsedHours) {
-  return (state.shift.rules.startHour + elapsedHours) % 12 || 12;
+function clockDisplay(progress) {
+  // A startHour of 12 represents midnight in the shift configuration.
+  const elapsed = state.shift.rules.startHour - 12 + 24 + progress;
+  const minuteOfDay = Math.floor(elapsed * 60 + 1e-10) % (24 * 60);
+  return { hour: Math.floor(minuteOfDay / 60) % 12 || 12, period: minuteOfDay < 12 * 60 ? 'AM' : 'PM',
+    minutes: String(minuteOfDay % 60).padStart(2, '0') };
 }
 
 function updateClockUI(progress) {
-  const hours = Math.min(state.shift.rules.hoursToWin, Math.floor(progress + 1e-12));
-  const label = clockHour(hours);
+  const { hour, period } = clockDisplay(Math.floor(progress + 1e-12));
+  const label = `${hour} <small>${period}</small>`;
   if (clockLabel === label) return;
   clockLabel = label;
-  dom.clock.innerHTML = `${label} <small>AM</small>`;
+  dom.clock.innerHTML = label;
 }
 
 function finishShift() {
   stopShift();
   releaseShiftImages();
-  const { number, rules: { hoursToWin } } = state.shift;
+  const { number } = state.shift;
   const campaignComplete = number === config.night.campaign.length;
   if (number) menu.recordWin(number);
-  updateClockUI(hoursToWin);
-  $('#shift-time').innerHTML = `${clockHour(hoursToWin)}:00 <small>AM</small>`;
+  const { hours } = movement.snapshot();
+  updateClockUI(hours);
+  const { hour, minutes, period } = clockDisplay(hours);
+  $('#shift-time').innerHTML = `${hour}:${minutes} <small>${period}</small>`;
   $('#shift-result').textContent = campaignComplete ? 'Campanha concluída.' : 'O turno terminou.';
   $('#shift-message').textContent = campaignComplete ? 'Você sobreviveu às nove noites.' : 'Noite concluída.';
   dom.nextShift.hidden = !number || campaignComplete;
@@ -1020,6 +1065,7 @@ function finishShift() {
 function stopShift() {
   state.complete = true;
   movement.stop();
+  renderHallucination(null);
   clearTimeout(toastTimeout);
   dom.toast.classList.remove('show');
   clearCameraInterference();
@@ -1191,7 +1237,7 @@ function prepareShift(shift) {
   clearTimeout(toastTimeout);
   dom.toast.classList.remove('show');
   dom.threatAlert.hidden = true;
-  sound.preloadSamples(corridorAttackSound.files);
+  sound.preloadSamples(attackSamples);
   sound.stopSamples();
   state.computerMode = 'desktop';
   clearMonitorTransition();
@@ -1358,15 +1404,15 @@ function updateAudioControl(audio = movement.snapshot().audio) {
   const disabled = !online || audio.remaining > 0;
   if (dom.cameraAudio.disabled !== disabled) dom.cameraAudio.disabled = disabled;
   setText(dom.cameraAudio, !online ? 'ÁUDIO INDISPONÍVEL'
-    : audio.camera ? `▸ SOM ATIVO · ${audio.camera} · ${Math.ceil(audio.remaining)}s`
+    : audio.camera ? `▸ SOM ATIVO · ${audio.camera} · ${Math.ceil(audio.activeRemaining)}s`
     : audio.remaining > 0 ? `ÁUDIO RECARREGANDO · ${Math.ceil(audio.remaining)}s`
     : '▸ REPRODUZIR SOM NESTA CÂMERA');
 }
 
-function advanceGame(now, action, measure = false) {
+function advanceGame(now, action, measure = false, hallucinationsAudible = !document.hidden) {
   if (state.complete || dom.game.hidden) return false;
   const start = measure ? performance.now() : 0;
-  const accepted = movement.advance((now - state.startedAt) / 1000, gameInput, action);
+  const accepted = movement.advance((now - state.startedAt) / 1000, gameInput, action, { hallucinationsAudible });
   const integrated = measure ? performance.now() : 0;
   if (!state.complete) {
     renderGameFrame(movement.snapshot({ hud: now >= nextHudUpdate }), now);
@@ -1400,6 +1446,7 @@ function renderGameFrame(frame, now) {
     }
   }
   syncMovement(now);
+  renderHallucination(frame.hallucination);
   updateClockUI(frame.hours);
   renderResourceState(frame);
   if (!frame.radioAvailable && radioPlayback) stopRadio();
@@ -1643,13 +1690,14 @@ document.addEventListener('visibilitychange', () => {
   state.lastFrame = performance.now();
   resetPerformance();
   if (document.hidden) {
+    sound.stopExclusiveSample();
     clearFlashlight();
     clearCameraInterference();
     imageCache.cancelPending();
   } else if (state.mode === 'cameras' && !state.complete) {
     updateCameraFeed(CAMERAS[state.cameraIndex]);
   }
-  advanceGame(performance.now());
+  advanceGame(performance.now(), undefined, false, false);
   if (!state.complete || (dom.game.dataset.defeat && dom.game.dataset.defeat !== 'over')) requestGameFrame();
 });
 dom.officeMonitor.addEventListener('click', openComputer);
@@ -2033,7 +2081,7 @@ function warmShiftImages(levels) {
 const menu = createNightMenu(config, {
   prepareShift,
   startShift,
-  onEnter: () => sound.preloadSamples(corridorAttackSound.files)
+  onEnter: () => sound.preloadSamples(attackSamples)
 });
 dom.game.style.setProperty('--shadow-manifest-duration', `${config.shadow.manifestSeconds}s`);
 dom.game.style.setProperty('--shadow-found-duration', `${config.shadow.foundSeconds}s`);

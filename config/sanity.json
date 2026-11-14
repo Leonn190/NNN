@@ -5,7 +5,7 @@
     "yandereCamera": 0.25,
     "direct": 0.45,
     "centralGate": 0.12,
-    "closet": 0.52,
+    "closet": 0.60,
     "invasion": 2.50
   },
   "cameraLossOverrides": {
@@ -15,8 +15,13 @@
   },
   "eventLoss": { "closetEnter": 2, "electricalFault": 5, "yandereCameraScare": 15 },
   "recovery": {
-    "music": 0.20,
+    "music": 0.10,
     "passive": 0.04
+  },
+  "hallucinations": {
+    "blur": { "below": 75, "interval": 20, "chance": 10, "chancePerPoint": 1, "duration": 1.25 },
+    "laugh": { "below": 40, "interval": 30, "chance": 40 },
+    "apparition": { "below": 30, "interval": 30, "chance": 45, "duration": 1.5 }
   },
   "blackoutLossMultiplier": 2
 }

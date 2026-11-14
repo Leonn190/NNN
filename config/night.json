@@ -2,9 +2,9 @@
   "rulesVersion": "1.1.2",
   "clock": {
     "fastSanity": 90,
-    "slowSanity": 10,
+    "slowSanity": 15,
     "fastSecondsPerHour": 60,
-    "slowSecondsPerHour": 240
+    "slowSecondsPerHour": 180
   },
   "startHour": 12,
   "hoursToWin": 6,
@@ -13,8 +13,9 @@
   "defaultLevel": 0,
   "levels": [
     0,
-    10
+    11
   ],
+  "campaignMaxLevel": 10,
   "campaign": [
     {
       "movementDelay": 40, "maxClosedGates": 0, "secondsPerHour": 50,
