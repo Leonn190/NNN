@@ -689,7 +689,9 @@ for (const id of ['CAM05', 'CAM06']) {
     const actors = cam.allCharacters.filter((_, index) => mask & (1 << index));
     const key = mask === total - 1 ? 'todas' : actors.join('-') || 'vazia';
     assert(preview(key), `${id} ${key}`);
-    const expected = mask === total - 1 ? [] : Object.entries(catalog)
+    const fullFrame = cam.characterStateImages[key];
+    if (fullFrame) assert.equal(nodes['feed-art'].src, gateKey ? fullFrame[gateKey] : fullFrame);
+    const expected = fullFrame ? [] : Object.entries(catalog)
       .filter(([name]) => name.split('+').every(actor => actor === 'ambiente' || actors.includes(actor)))
       .map(([, [source]]) => source);
     assert.deepEqual(feedLayers(), expected, `${id} ${key}`);

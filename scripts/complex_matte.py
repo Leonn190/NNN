@@ -12,8 +12,10 @@ def artwork_mask(size, artwork):
     def polygon(points, fill):
         draw.polygon([(x * mask.width / 100, y * mask.height / 100) for x, y in points], fill=fill)
 
-    if "outline" in artwork:
+    if artwork.get("outline"):
         polygon(artwork["outline"], 255)
+    for region in artwork.get("include", []):
+        polygon(region, 255)
     for hole in artwork.get("holes", []):
         polygon(hole, 0)
     return np.asarray(mask.resize(size, Image.Resampling.BOX))
@@ -54,6 +56,13 @@ def pose_matte(source, base, initial, artwork, guide=None):
     original = rgb.astype(np.float32)
     contrast = np.max(np.abs(original - background), axis=2)
     matte = np.where(inner_distance > 1.5, 1, boundary * np.clip(contrast / 15, 0, 1))
+    if artwork.get("include"):
+        # Partes conferidas na referência, como joelhos e botas com pouca
+        # separação do fundo, ficam opacas no interior e mantêm a borda.
+        core = artwork_mask((width, height), {"outline": [], "include": artwork["include"],
+                                             "holes": artwork.get("holes", [])})
+        core = cv2.erode(core, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5)))
+        matte = np.maximum(matte, np.where(initial > 0, core / 255, 0))
     # Recupera a cor do primeiro plano apenas na penumbra, com limite de
     # correção para preservar as cores da roupa e dos fios.
     foreground = original + np.clip((original - background) * (1 - matte[..., None])

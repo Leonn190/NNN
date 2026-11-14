@@ -2,11 +2,12 @@
 
 import argparse
 import json
+import shutil
 from itertools import combinations, product
 from pathlib import Path
 
 import numpy as np
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageFilter
 from complex_matte import artwork_mask, pose_matte
 
 from export_camera_layers import CAMERAS, ROOT, opaque_interior, read_rgb
@@ -17,6 +18,7 @@ from export_office_states import CHARACTERS as CLOSET_CAST, load
 
 CAST = ("original", "yandere", "gotica", "platinada", "maid")
 SIMPLE_GATES = ("open-open", "open-closed", "closed-open", "closed-closed")
+VIP_FALLBACKS = ("yandere", "yandere-gotica", "yandere-maid", "yandere-gotica-maid")
 SILHOUETTES = json.loads(Path(__file__).with_name("complex_silhouettes.json").read_text(encoding="utf-8"))
 def register_pose(layers, key, footprint, source, base, scene, folder, previous=(), guide=None, fixed=False):
     x, y, right, bottom = footprint.getbbox()
@@ -42,6 +44,10 @@ def register_pose(layers, key, footprint, source, base, scene, folder, previous=
     patches = SILHOUETTES["environment"].get(scene, {}).get(key, [])
     for patch in patches:
         coverage = artwork_mask(initial.shape[::-1], {"outline": patch})
+        if scene == "CAM06" and key == "platinada":
+            # A refletância termina no piso de forma gradual. Só a borda
+            # da região de reflexo é suavizada, fora do matte da personagem.
+            coverage = np.asarray(Image.fromarray(coverage).filter(ImageFilter.GaussianBlur(3)))
         measured = np.asarray(footprint.crop(box))
         support[..., :3] = measured[..., :3]
         support[..., 3] = np.maximum(support[..., 3], np.rint(measured[..., 3] * (coverage.astype(np.float32) / 255)))
@@ -205,20 +211,27 @@ def write_catalog(camera, entry):
                     "window.NathGame.complexLayers = " + json.dumps(current, indent=2) + ";\n", encoding="utf-8")
 
 
-def run(camera, output):
+def sample_references(references, keys, quick):
+    if not quick:
+        return references
+    return [reference for reference in references if reference[0] in {"vazia", *keys}]
+
+
+def run(camera, output, quick=False):
     scene = camera_scene(camera)
     references = camera_references(camera, "", CAST)
     base = open_rgba(references[0][1])
+    references = sample_references(references, ("original", "original-gotica-platinada-maid"), quick)
     report = compare(base, scene, references, output / f"{camera}.jpg" if output else None)
     print(camera, len(report), sorted(report.items(), key=lambda entry: entry[1]["mean"], reverse=True)[:5])
     if output:
         (output / f"{camera}.json").write_text(json.dumps(report, indent=2), encoding="utf-8")
         isolated_sheet(scene, output / f"{camera}-isolado.jpg")
-    verify_camera(camera, report, 32)
+    verify_camera(camera, report, 3 if quick else 32)
     write_catalog(camera, scene)
 
 
-def vip_scene(output):
+def vip_scene(output, quick=False):
     catalog = {}
     for gate in SIMPLE_GATES:
         scene = camera_scene("CAM05", gate, catalog.values())
@@ -246,14 +259,19 @@ def vip_scene(output):
             scene["layers"][key] = save_layer(
                 source, CAMERAS / "CAM05/layers" / gate / f"{key}.webp",
                 [previous["layers"][key] for previous in catalog.values()])
-        report = compare(base, scene, references,
-                         output / f"CAM05-{gate}.jpg" if output else None)
-        verify_camera("CAM05", report, 16)
-        print("CAM05", gate, len(report), sorted(report.items(), key=lambda entry: entry[1]["mean"], reverse=True)[:3])
-        if output:
-            (output / f"CAM05-{gate}.json").write_text(json.dumps(report, indent=2), encoding="utf-8")
+        if not quick or not catalog:
+            references = sample_references(references, ("original", "original-yandere-maid"), quick)
+            report = compare(base, scene, references, output / f"CAM05-{gate}.jpg" if output else None)
+            verify_camera("CAM05", report, 3 if quick else 16)
+            print("CAM05", gate, len(report), sorted(report.items(), key=lambda entry: entry[1]["mean"], reverse=True)[:3])
+            if output:
+                (output / f"CAM05-{gate}.json").write_text(json.dumps(report, indent=2), encoding="utf-8")
         catalog[gate] = scene
     write_catalog("CAM05", catalog)
+    for gate in SIMPLE_GATES:
+        for key in VIP_FALLBACKS:
+            relative = CAMERAS / "CAM05/states" / gate / f"{key}.webp"
+            shutil.copyfile(ROOT / "reserva" / relative, ROOT / relative)
     if output:
         isolated_sheet(catalog["open-open"], output / "CAM05-isolado.jpg")
 
@@ -374,14 +392,15 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("scene", choices=["CAM06", "CAM03", "CAM05", "closet"])
     parser.add_argument("--report", type=Path)
+    parser.add_argument("--quick", action="store_true", help="Compara fundo, uma pose e um grupo nos VIPs")
     args = parser.parse_args()
     if args.report:
         args.report.mkdir(parents=True, exist_ok=True)
     if args.scene == "CAM03":
         stage_scene(args.report)
     elif args.scene == "CAM05":
-        vip_scene(args.report)
+        vip_scene(args.report, args.quick)
     elif args.scene == "closet":
         closet_scene(args.report)
     else:
-        run(args.scene, args.report)
+        run(args.scene, args.report, args.quick)

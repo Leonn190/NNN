@@ -50,10 +50,10 @@ window.NathGame.complexLayers = {
       ],
       "platinada+ambiente": [
         "./public/images/cameras/CAM06/layers/platinada+ambiente.webp",
-        1019,
-        410,
-        272,
-        120
+        1016,
+        403,
+        280,
+        132
       ],
       "platinada": [
         "./public/images/cameras/CAM06/layers/platinada.webp",
@@ -166,10 +166,10 @@ window.NathGame.complexLayers = {
         ],
         "yandere": [
           "./public/images/cameras/CAM05/layers/open-open/yandere.webp",
-          862,
-          490,
-          202,
-          236
+          853,
+          489,
+          233,
+          242
         ],
         "original+ambiente": [
           "./public/images/cameras/CAM05/layers/open-open/original+ambiente.webp",
@@ -244,10 +244,10 @@ window.NathGame.complexLayers = {
         ],
         "yandere": [
           "./public/images/cameras/CAM05/layers/open-open/yandere.webp",
-          862,
-          490,
-          202,
-          236
+          853,
+          489,
+          233,
+          242
         ],
         "original+ambiente": [
           "./public/images/cameras/CAM05/layers/open-open/original+ambiente.webp",
@@ -322,10 +322,10 @@ window.NathGame.complexLayers = {
         ],
         "yandere": [
           "./public/images/cameras/CAM05/layers/open-open/yandere.webp",
-          862,
-          490,
-          202,
-          236
+          853,
+          489,
+          233,
+          242
         ],
         "original+ambiente": [
           "./public/images/cameras/CAM05/layers/open-open/original+ambiente.webp",
@@ -400,10 +400,10 @@ window.NathGame.complexLayers = {
         ],
         "yandere": [
           "./public/images/cameras/CAM05/layers/open-open/yandere.webp",
-          862,
-          490,
-          202,
-          236
+          853,
+          489,
+          233,
+          242
         ],
         "original+ambiente": [
           "./public/images/cameras/CAM05/layers/open-open/original+ambiente.webp",

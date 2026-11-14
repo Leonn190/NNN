@@ -100,11 +100,13 @@ const CAMERAS = [
       "gates": ["G04", "G05"],
       "images": VIP1_GATE_IMAGES
     },
-    "characterStateImages": {
-      "todas": Object.fromEntries(Object.keys(VIP1_GATE_IMAGES).map(gates => [
-        gates, `./public/images/cameras/CAM05/states/${gates}/todas.webp`
+    // A cadeira deixa uma emenda visível nos estados da Yandere sem a Padrão.
+    "characterStateImages": Object.fromEntries(['todas', 'yandere', 'yandere-gotica',
+      'yandere-maid', 'yandere-gotica-maid'].map(key => [key,
+      Object.fromEntries(Object.keys(VIP1_GATE_IMAGES).map(gates => [
+        gates, `./public/images/cameras/CAM05/states/${gates}/${key}.webp`
       ]))
-    },
+    ])),
     "technical": "./public/images/cameras/CAM05/technical.png",
     "renderAvailable": true
   },
