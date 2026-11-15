@@ -1473,7 +1473,7 @@ console.log('PASS: nine campaign intros and wins, fixed start time, retry, conti
 
 customStart({});
 const blackoutStart = now;
-assert.equal(nodes['energy-meter'].style.getPropertyValue('--meter-color'), 'rgb(95, 218, 125)');
+assert.equal(nodes['energy-meter'].style.getPropertyValue('--meter-color'), 'rgb(83, 217, 130)');
 radioButton.fire('click');
 radio.fire('playing');
 nodes['office-monitor'].fire('click');

@@ -361,12 +361,12 @@ for (const [sanity, seconds] of [[100, 60], [90, 60], [70, 105], [50, 150], [30,
 const dynamic = scenario({ input: { closet: true }, tune: config => { config.sanity.initial = 70; } });
 dynamic.at(10, { radio: true });
 near(dynamic.state().hours, Math.log(118.5 / 105) / 1.35);
-near(dynamic.state().energy, 100 - .025 * 60 * dynamic.state().hours);
+near(dynamic.state().energy, 100 - base.power.computerDrain * base.power.computerIdleFactor * 60 * dynamic.state().hours);
 const first = dynamic.state().hours;
 const firstEnergy = dynamic.state().energy;
 dynamic.at(20);
 near(dynamic.state().hours - first, Math.log(118.5 / 115.35) / .315);
-near(dynamic.state().energy, firstEnergy - .085 * 60 * (dynamic.state().hours - first));
+near(dynamic.state().energy, firstEnergy - (base.power.computerDrain * base.power.computerIdleFactor + base.power.radioDrain) * 60 * (dynamic.state().hours - first));
 
 const fastThreshold = scenario({ input: { closet: true }, tune(config) {
   config.sanity.initial = 91;
@@ -375,7 +375,7 @@ fastThreshold.at(10);
 const fastTime = 1 / .6;
 const fastHours = fastTime / 60 + Math.log(71.25 / 60) / 1.35;
 near(fastThreshold.state().hours, fastHours);
-near(fastThreshold.state().energy, 100 - .025 * 60 * fastHours);
+near(fastThreshold.state().energy, 100 - base.power.computerDrain * base.power.computerIdleFactor * 60 * fastHours);
 
 const pausedClock = scenario({ input: { closet: true }, tune(config) {
   config.sanity.initial = 11;
@@ -383,7 +383,8 @@ const pausedClock = scenario({ input: { closet: true }, tune(config) {
 pausedClock.at(10, { radio: true });
 const pausedHours = Math.log(240 / 237.75) / 1.35;
 near(pausedClock.state().hours, pausedHours);
-near(pausedClock.state().energy, 100 - .025 * (60 * pausedHours + (10 - 1 / .6) / 4));
+near(pausedClock.state().energy,
+  100 - base.power.computerDrain * base.power.computerIdleFactor * (60 * pausedHours + (10 - 1 / .6) / 4));
 const recoveryAt = 10 + 5 / .14;
 pausedClock.at(recoveryAt - .001, { radio: true });
 near(pausedClock.state().hours, pausedHours);
