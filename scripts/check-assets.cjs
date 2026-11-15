@@ -50,7 +50,7 @@ async function dynamicAssets() {
   const game = scope.window.NathGame;
 
   function verifyData(data, origin) {
-    if (typeof data === 'string' && data.startsWith('./public/')) reference(data, origin);
+    if (typeof data === 'string' && /^(?:\.\/)?public\//.test(data)) reference(data, origin);
     if (data && typeof data === 'object') {
       for (const [key, value] of Object.entries(data)) verifyData(value, `${origin} → ${key}`);
     }
@@ -58,6 +58,7 @@ async function dynamicAssets() {
   assert.deepEqual(Array.from(game.CAMERAS, cam => cam.id),
     Array.from({ length: 12 }, (_, i) => 'CAM' + String(i + 1).padStart(2, '0')));
   for (const cam of game.CAMERAS) verifyData(cam, 'src/data/game-data.js → ' + cam.id);
+  verifyData(game.OFFICE.images, 'src/data/game-data.js → OFFICE.images');
   verifyData(game.cameraLayers, 'src/data/camera-layers.js');
   verifyData(game.complexLayers, 'src/data/complex-layers.js');
 

@@ -24,9 +24,10 @@ function configAssets(config) {
   const assets = [];
   function visit(value, file, keys = []) {
     if (typeof value === 'string') {
-      if (!mediaExtension.test(value) && !/^(?:\.\/)?(?:public|audio|images)\//.test(value)) return;
+      const assetField = keys.some(key => /^(?:file|files|image|sound|radioTracks)$/.test(key));
+      if (!assetField && !mediaExtension.test(value) && !/^(?:\.\/)?(?:public|audio|images)\//.test(value)) return;
       const url = keys[0] === 'radioTracks' ? 'audio/radio/' + value : value;
-      const relative = url.replace(/^\.\//, '');
+      const relative = decodeURIComponent(url.split(/[?#]/)[0]).replace(/^\.\//, '');
       assets.push({ file: relative.startsWith('public/') ? relative : 'public/' + relative,
         origin: [file, ...keys].join(' → ') });
     } else if (value && typeof value === 'object') {

@@ -23,6 +23,9 @@ jobs:
     steps:
       - name: Baixar repositório
         uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
       - name: Configurar Pages
         id: pages
         uses: actions/configure-pages@v5
@@ -30,7 +33,10 @@ jobs:
         if: failure() && steps.pages.outcome == 'failure'
         run: echo "::error::Confira Settings > Pages > Build and deployment > Source > GitHub Actions no repositório e execute o workflow novamente."
       - name: Preparar apenas os arquivos do jogo
-        run: node scripts/package-pages.cjs
+        run: |
+          node scripts/sync-local-config.cjs --check
+          node scripts/package-pages.cjs
+          node scripts/check-assets.cjs dist
       - name: Enviar arquivos estáticos
         uses: actions/upload-pages-artifact@v3
         with:
