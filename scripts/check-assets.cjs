@@ -130,12 +130,24 @@ function checkCase(files, label) {
   }
 }
 
+function checkPublicLayout(files) {
+  for (const file of files) {
+    if (/^public\/[^/]+$/.test(file)) errors.add(`public/: arquivo solto na raiz: ${file}`);
+    if (!/^public\/(?:images|audio)\//.test(file)) continue;
+    const filename = path.posix.basename(file);
+    if (/[A-Z\s\u0080-\uffff]/u.test(filename)) {
+      errors.add(`public/: nome de mídia sem padronização: ${file}`);
+    }
+  }
+}
+
 async function check() {
   await dynamicAssets();
   checkLegacyPaths();
   const repoFiles = new Set(['.nojekyll', ...sourceFiles,
     ...['outros', 'public', 'reserva'].flatMap(directory => listFiles(root, directory))]);
   checkCase(repoFiles, 'Repositório');
+  checkPublicLayout(repoFiles);
 
   const destination = process.argv[2] ? path.resolve(process.argv[2]) : null;
   const selected = new Set(publicationFiles());

@@ -44,24 +44,23 @@ NNN/
 │   │   │       ├── technical.png    # Imagem de fallback da planta
 │   │   │       └── states/          # WebPs de personagens e portões
 │   │   └── branding/                # Ícone do site
-│   ├── audio/                       # menu, radio, cameras, characters, effects e jumpscares
-│   ├── reference/
-│   │   └── maps/                    # Imagens da planta V7/V8
-│   └── models/                      # Reserva para futuros modelos 3D
+│   └── audio/                       # menu, radio, cameras, characters, effects e jumpscares
 ├── scripts/                         # Publicação, validação, configuração e exportação de arte
 ├── tests/                           # Suítes Node e verificações de arte em Python
-├── docs/                            # Guia de assets e relatório gerado do mapa
+├── docs/                            # Guia de assets, nota 3D e mapa gerado
 ├── reserva/                         # Renders históricos e referências dos exportadores/testes
 └── outros/                          # Arquivos de produção e documentação
-    ├── arte/                        # Referências, PNGs de origem e quadros da Shadow
+    ├── arte/                        # PNGs de origem, referências e jumpscares originais
     ├── audio/                       # Áudio original do rádio
     ├── documentacao/               # V8, checklist, manifesto e hashes
     ├── identidade_visual/          # Bíblia visual, paleta e materiais
-    ├── planta/                     # Fonte técnica em JSON/Python/SVG
+    ├── planta/                     # Fonte técnica e imagens de referência da planta
     └── prompts/                     # Prompt mestre + 12 prompts de câmera
 ```
 
-O arquivo `outros/documentacao/MAPEAMENTO_ORIGINAIS.json` registra a importação dos **60 arquivos originais** do ZIP V8, com os caminhos e hashes SHA-256 da época.
+O arquivo `outros/documentacao/MAPEAMENTO_ORIGINAIS.json` registra a importação dos **60 arquivos originais** do ZIP V8, com os caminhos e hashes SHA-256 da época. Os valores `destino_v1` desse manifesto são históricos e não representam necessariamente os caminhos atuais.
+
+As três imagens de referência da planta ficam em `outros/planta/referencias/`, não em `public/`, pois não são carregadas pelo jogo. Alguns PNGs mestres continuam em `public/images/` para os exportadores e testes de composição; o empacotamento de Pages exclui esses mestres. Modelos 3D ainda não existem; veja `docs/modelos-3d.md`.
 
 As imagens do menu, do computador, da Shadow e da Palhaça usam WebP sem perdas. Os PNGs correspondentes ficam em `outros/arte/`, com a mesma estrutura e extensão `.png`. O arquivo `outros/arte/shadow/jumpscare-frames.zip` guarda os 48 quadros e a animação usada em `public/images/jumpscares/shadow.webp`. As faixas de `public/audio/radio/` são as versões usadas pelo jogo, com as gravações de origem em `outros/audio/radio/`.
 
@@ -245,6 +244,6 @@ O mapa da interface usa os **polígonos das salas, aberturas, posições e azimu
 ## Observações
 
 - As referências com personagens ficam em `outros/arte/cameras/CAMxx/` e as artes individuais em `outros/arte/animatronics/`. As máscaras do palco e os recortes do salão ficam em `outros/arte/cameras/CAM03/`. Use `python scripts/compose_cam03.py <pasta>` para recompor as seis variantes parciais do palco e `python scripts/compose_cam03.py --salao <pasta>` para exportar as 19 cenas com personagens fora do palco.
-- O pacote V8 não incluía arquivos 3D `.glb`/`.gltf`; `public/models/` foi preparado sem modelos inventados.
+- O pacote V8 não incluía arquivos 3D `.glb`/`.gltf`; `docs/modelos-3d.md` registra essa ausência, sem manter uma pasta pública vazia.
 - O áudio usa amostras locais e efeitos sintetizados no navegador. O primeiro clique ou tecla libera a reprodução.
 - A sala do escritório é uma **imagem panorâmica pré-renderizada**, não um cenário 3D em tempo real.
