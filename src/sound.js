@@ -28,6 +28,7 @@ class SoundEngine {
     this.ambient = null;
     this.samples = new Map();
     this.sampleVoices = new Map();
+    this.pannedSamples = new Map();
     this.tones = new Set();
     this.active = false;
   }
@@ -56,6 +57,28 @@ class SoundEngine {
     audio.volume = volume;
     audio.currentTime = 0;
     audio.play().catch(() => {});
+  }
+  playPannedSample(name, volume, pan) {
+    const context = this.context;
+    const file = sampleFiles[name] ?? name;
+    const sample = this.samples.get(file);
+    if (!sample || window.location?.protocol === 'file:' || !this.enabled
+        || context?.state !== 'running' || !context.createStereoPanner) {
+      this.playSample(name, volume);
+      return;
+    }
+    let voice = this.pannedSamples.get(file);
+    if (!voice) {
+      const audio = new Audio(sample.src);
+      const panner = context.createStereoPanner();
+      context.createMediaElementSource(audio).connect(panner).connect(context.destination);
+      voice = { audio, panner };
+      this.pannedSamples.set(file, voice);
+    }
+    voice.panner.pan.value = pan;
+    voice.audio.volume = volume;
+    voice.audio.currentTime = 0;
+    voice.audio.play().catch(() => {});
   }
   playExclusiveSample(files, volume) {
     if (this.exclusiveSample && !this.exclusiveSample.paused) return;
@@ -95,6 +118,7 @@ class SoundEngine {
     this.stopExclusiveSample();
     for (const file of this.samples.keys()) this.stopSample(file);
     for (const voices of this.sampleVoices.values()) for (const audio of voices) audio.pause();
+    for (const { audio } of this.pannedSamples.values()) audio.pause();
   }
   setInvasionLoop(active, { file, volume, fadeOutSeconds }) {
     const audio = this.samples.get(file);

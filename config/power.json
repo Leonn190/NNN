@@ -1,6 +1,7 @@
 {
   "initial": 100,
   "computerDrain": 0.025,
+  "computerIdleFactor": 0.50,
   "gateDrain": 0.30,
   "radioDrain": 0.06,
   "flashlightDrain": 0.12,

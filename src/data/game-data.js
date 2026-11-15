@@ -864,7 +864,7 @@ const VENUE = {
       "at": 4.4,
       "start": 18.7,
       "end": 20.0,
-      "type": "livre"
+      "type": "portao"
     },
     {
       "id": "P05",

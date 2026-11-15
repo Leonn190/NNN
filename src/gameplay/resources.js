@@ -78,8 +78,10 @@ function createResources({ night: defaults, sanity: sanityRules, power }, night 
     drainEnergy(power.eventDrain[event] ?? 0, now);
   }
 
+  const computerDrain = input => computerOn
+    ? power.computerDrain * (input.computer || input.camera ? 1 : power.computerIdleFactor) : 0;
   const energyDrain = (input, gates, radio) => powerEnabled && energy > 0
-    ? (computerOn ? power.computerDrain : 0) + gates.size * power.gateDrain
+    ? computerDrain(input) + gates.size * power.gateDrain
       + (radio ? power.radioDrain : 0) + (input.flashlight ? power.flashlightDrain : 0) : 0;
   const sanityChange = (observation, radio) => sanityEnabled
     ? sanityRate(sanityRules, { ...observation, radio, blackout: energy === 0 }) : 0;

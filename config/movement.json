@@ -12,7 +12,9 @@
   "routes": {
     "bonus": [25, 36],
     "perMove": [3, 5],
-    "padraoPerMove": [3.5, 5.5],
+    "padraoPerMove": [4, 6],
+    "huntBonus": 20,
+    "blockedProgressRetention": 0.50,
     "definitions": {
       "CV": { "objective": "corridor", "target": 15, "paths": [[6, 15], [7, 15]] },
       "CC": { "objective": "corridor", "target": 15, "paths": [[19, 18, 15], [19, 18, 17, 15]] },
@@ -50,7 +52,7 @@
     "freeMoves": 1
   },
   "difficulty": {
-    "maxIntervalReduction": 0.50,
+    "maxIntervalReduction": 0.55,
     "maxReactionReduction": 0.20
   }
 }

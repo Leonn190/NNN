@@ -22,13 +22,18 @@
     "volume": 0.32
   },
   "stockAttackSound": {
-    "files": ["audio/559107__agenta1cr__possessed-laugh.wav", "audio/Risada 1.wav", "risada 2.mp3"],
+    "files": ["audio/Risada 1.wav", "risada 2.mp3"],
     "volume": 0.32
   },
+  "yandereSabotageSound": { "file": "audio/Erro.ogg", "volume": 0.45 },
+  "yandereSurpriseSound": { "file": "audio/risada yandere.wav", "volume": 0.32 },
+  "padraoInvasionSound": { "files": ["audio/P1.ogg", "audio/P2.ogg"], "volume": 0.45 },
+  "clownWarningSound": { "volume": 0.45, "pan": 1 },
   "invasion": { "file": "Invasão.ogg", "volume": 0.45, "fadeOutSeconds": 1, "flashMs": 120 },
   "closetVentSound": { "file": "audio/closet-vent.mp3", "volume": 0.45 },
   "flashlight": {
     "corridorFlickerMs": 160,
+    "corridorIntervalFactor": 1.25,
     "modifiers": {
       "gotica": { "secondsToMax": 8, "advanceDelta": -0.65 },
       "gatinha": { "secondsToMax": 6, "advanceDelta": 0.65 }
@@ -47,7 +52,8 @@
       "closetEnter": 5,
       "closetExit": 5,
       "flashlightOn": 8,
-      "computerOn": 12
+      "computerOn": 12,
+      "workshopDoorClose": 8
     },
     "corridorMultiplier": 0.8,
     "decay": 3,

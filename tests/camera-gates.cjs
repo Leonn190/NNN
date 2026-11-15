@@ -334,8 +334,9 @@ const cameras = svg.children.filter(node => node.attrs['data-cam']);
 const gates = svg.children.find(node => node.attrs['aria-label'] === 'Portões').children;
 const camera = id => cameras.find(node => node.attrs['data-cam'] === id).fire('click');
 const gate = id => gates.find(node => node.attrs['data-gate'] === id).fire('click');
-const isClosed = id => gates.find(node => node.attrs['data-gate'] === id).attrs['aria-pressed'] === 'true';
-const mapOfficeGate = gates.find(node => node.attrs['data-gate'] === 'G01');
+const isClosed = id => id === 'G01' ? movement.isGateClosed(id)
+  : gates.find(node => node.attrs['data-gate'] === id).attrs['aria-pressed'] === 'true';
+assert(!gates.some(node => node.attrs['data-gate'] === 'G01'));
 assert(!svg.children.some(node => node.attrs.class === 'map-tracking'));
 assert(!svg.children.some(node => node.attrs['data-actor']));
 assert.doesNotMatch(html + css, /Painel Geral|systems-view|locator-|restart-all|animatronic-marker/i);
@@ -528,9 +529,6 @@ assert.equal(signal.hidden, true);
 assert.equal(runningAnimations.size, 0);
 // Unrelated gates leave CAM05 alone. A fourth closure reopens the latest
 // previous closure, and the feed must update in the same interaction.
-gate('G01');
-assert.equal(mapOfficeGate.attrs['aria-disabled'], 'true');
-assert(!isClosed('G01'));
 gate('G09'); gate('G02'); assert.equal(signal.hidden, true);
 gate('G04'); check('closed-open');
 gate('G03'); check('open-open'); assert(!isClosed('G04')); assertGatePulse();
@@ -578,12 +576,11 @@ assert.equal(chimes.paused, true);
 assert(gates.every(node => node.attrs['aria-pressed'] === 'false'));
 nodes['office-monitor'].fire('click'); finishCameraLaunch(); camera('CAM05'); check('open-open'); office('dark');
 // G01 controls the office, and the flashlight cannot reveal a closed gate.
-gate('G01'); office('dark');
 nodes['monitor-exit'].fire('click');
 officeGate.fire('click'); office('closed');
 pressW(); office('closed');
 nodes['office-monitor'].fire('click');
-gate('G01'); office('closed');
+office('closed');
 nodes['monitor-exit'].fire('click');
 officeGate.fire('click'); office('dark');
 nodes['office-monitor'].fire('click');
@@ -997,9 +994,6 @@ office('dark');
 nodes['office-monitor'].fire('click');
 step(smoresStart + 15_030);
 finishCameraLaunch();
-const beforeMapGate = playedSamples.length;
-gate('G01');
-assert(!playedSamples.slice(beforeMapGate).includes('SFXBible_12478.ogg'));
 nodes['monitor-exit'].fire('click');
 assert.equal(ventArt.hidden, true);
 assert.equal(roomArt.hidden, false);
@@ -1311,7 +1305,6 @@ officeGate.fire('click');
 nodes['office-monitor'].fire('click');
 finishCameraLaunch();
 camera('CAM05');
-gate('G01');
 gate('G06');
 step(faultStart + 8000);
 assert.match(html, /id="camera-offline"[^>]*><strong>SEM SINAL/);
@@ -1324,8 +1317,6 @@ assert.equal(signal.hidden, false);
 assert.equal(runningAnimations.size, 0);
 assert(gates.every(node => node.attrs['aria-disabled'] === 'true' && node.attrs.tabindex === '-1'));
 assert.equal(officeGate.disabled, true);
-gate('G01');
-gates.find(node => node.attrs['data-gate'] === 'G01').fire('keydown', { key: 'Enter' });
 assert(isClosed('G01') && isClosed('G06'));
 assert.equal(radio.paused, false);
 
@@ -1366,10 +1357,7 @@ assert.equal(nodes['camera-offline'].hidden, true);
 assert.equal(nodes['feed-art'].hidden, false);
 assert.equal(nodes['camera-audio'].disabled, false);
 assert.match(nodes['feed-art'].src, /CAM12\/states\/open\//);
-assert(gates.filter(node => node !== mapOfficeGate)
-  .every(node => node.attrs['aria-disabled'] === 'false' && node.attrs.tabindex === '0'));
-assert(isClosed('G01'));
-gate('G01');
+assert(gates.every(node => node.attrs['aria-disabled'] === 'false' && node.attrs.tabindex === '0'));
 assert(isClosed('G01'));
 nodes['monitor-exit'].fire('click');
 officeGate.fire('click');
@@ -1550,7 +1538,6 @@ for (const image of layerNodes()) {
   image.naturalWidth = 100;
   image.onload();
 }
-gate('G01');
 step(now);
 const stareStart = now;
 const scareArt = nodes['camera-scare'];

@@ -62,20 +62,15 @@ function makeCameraMap({ canvas, onSelect, onToggleGate }) {
       x2: X(horizontal ? end : at),
       y2: Y(horizontal ? at : end),
     };
-    if (type === 'portao') {
+    if (type === 'portao' && id !== OFFICE.gate) {
       const label = `Portão ${id}`;
-      const interactive = id !== OFFICE.gate;
       const gate = makeSvg('g', {
-        class: 'map-gate', 'data-gate': id, tabindex: interactive ? '0' : '-1', role: 'button',
+        class: 'map-gate', 'data-gate': id, tabindex: '0', role: 'button',
         'aria-label': label, 'aria-pressed': 'false',
       });
       gate.append(makeSvg('title', {}, label));
-      if (interactive) {
-        gate.append(makeSvg('line', {...coords, class: 'gate-hit-area'}));
-        bindMapButton(gate, () => { if (gate.getAttribute('aria-disabled') !== 'true') onToggleGate(id); });
-      } else {
-        gate.setAttribute('aria-disabled', 'true');
-      }
+      gate.append(makeSvg('line', {...coords, class: 'gate-hit-area'}));
+      bindMapButton(gate, () => { if (gate.getAttribute('aria-disabled') !== 'true') onToggleGate(id); });
       gate.append(makeSvg('line', {...coords, class: 'gate-line'}));
       gateNodes.set(id, gate);
       gateLayer.append(gate);
@@ -145,10 +140,12 @@ function makeCameraMap({ canvas, onSelect, onToggleGate }) {
     clearAudioPulses() {
       for (const node of cameraNodes.values()) node.classList.remove('audio-pulse');
     },
-    setGate(id, closed) { setGateClosed(gateNodes.get(id), closed); },
+    setGate(id, closed) {
+      const gate = gateNodes.get(id);
+      if (gate) setGateClosed(gate, closed);
+    },
     setGateControls(enabled) {
-      for (const [id, gate] of gateNodes) {
-        if (id === OFFICE.gate) continue;
+      for (const gate of gateNodes.values()) {
         gate.setAttribute('aria-disabled', String(!enabled));
         gate.setAttribute('tabindex', enabled ? '0' : '-1');
       }

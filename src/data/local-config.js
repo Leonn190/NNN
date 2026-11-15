@@ -323,11 +323,29 @@ window.NathGame.localConfig = {
     },
     "stockAttackSound": {
       "files": [
-        "audio/559107__agenta1cr__possessed-laugh.wav",
         "audio/Risada 1.wav",
         "risada 2.mp3"
       ],
       "volume": 0.32
+    },
+    "yandereSabotageSound": {
+      "file": "audio/Erro.ogg",
+      "volume": 0.45
+    },
+    "yandereSurpriseSound": {
+      "file": "audio/risada yandere.wav",
+      "volume": 0.32
+    },
+    "padraoInvasionSound": {
+      "files": [
+        "audio/P1.ogg",
+        "audio/P2.ogg"
+      ],
+      "volume": 0.45
+    },
+    "clownWarningSound": {
+      "volume": 0.45,
+      "pan": 1
     },
     "invasion": {
       "file": "Invasão.ogg",
@@ -341,6 +359,7 @@ window.NathGame.localConfig = {
     },
     "flashlight": {
       "corridorFlickerMs": 160,
+      "corridorIntervalFactor": 1.25,
       "modifiers": {
         "gotica": {
           "secondsToMax": 8,
@@ -365,7 +384,8 @@ window.NathGame.localConfig = {
         "closetEnter": 5,
         "closetExit": 5,
         "flashlightOn": 8,
-        "computerOn": 12
+        "computerOn": 12,
+        "workshopDoorClose": 8
       },
       "corridorMultiplier": 0.8,
       "decay": 3,
@@ -818,8 +838,8 @@ window.NathGame.localConfig = {
       {
         "from": 15,
         "to": 16,
-        "type": "free",
-        "openingId": "P04"
+        "type": "gate",
+        "gateId": "P04"
       },
       {
         "from": 15,
@@ -934,6 +954,7 @@ window.NathGame.localConfig = {
     "back": 15,
     "leftApproach": 10,
     "closetVent": 26,
+    "workshopGate": "P04",
     "capacities": {
       "12": 1,
       "14": 2,
@@ -962,9 +983,11 @@ window.NathGame.localConfig = {
         5
       ],
       "padraoPerMove": [
-        3.5,
-        5.5
+        4,
+        6
       ],
+      "huntBonus": 20,
+      "blockedProgressRetention": 0.5,
       "definitions": {
         "CV": {
           "objective": "corridor",
@@ -1165,7 +1188,7 @@ window.NathGame.localConfig = {
       "freeMoves": 1
     },
     "difficulty": {
-      "maxIntervalReduction": 0.5,
+      "maxIntervalReduction": 0.55,
       "maxReactionReduction": 0.2
     }
   },
@@ -1355,6 +1378,7 @@ window.NathGame.localConfig = {
   "power": {
     "initial": 100,
     "computerDrain": 0.025,
+    "computerIdleFactor": 0.5,
     "gateDrain": 0.3,
     "radioDrain": 0.06,
     "flashlightDrain": 0.12,
@@ -1423,14 +1447,14 @@ window.NathGame.localConfig = {
   "shadow": {
     "name": "Nathzinha Shadow",
     "firstLevel": {
-      "sanityLimit": 40,
-      "chance": 10,
-      "searchSeconds": 10
+      "sanityLimit": 45,
+      "chance": 9,
+      "searchSeconds": 15
     },
     "lastLevel": {
-      "sanityLimit": 60,
-      "chance": 15,
-      "searchSeconds": 7.5
+      "sanityLimit": 65,
+      "chance": 12,
+      "searchSeconds": 10
     },
     "chancePerSanityPoint": 1,
     "manifestSeconds": 1.15,
@@ -1447,11 +1471,27 @@ window.NathGame.localConfig = {
         3
       ],
       "durationSeconds": 1.21,
-      "image": "./public/NNN_Yandere_Jumpscare_1080p.gif"
+      "image": "./public/NNN_Yandere_Jumpscare_1080p.gif",
+      "sound": "audio/jumpscares/yandere especial.ogg"
+    },
+    "yandereSurprise": {
+      "inactivity": {
+        "min": 55,
+        "max": 65
+      },
+      "warningSeconds": 1,
+      "firstLevel": 5,
+      "secondLevel": 8,
+      "uses": {
+        "first": 1,
+        "second": 2,
+        "max": 3
+      }
     },
     "smores": {
       "name": "Smores",
-      "radioSeconds": 15,
+      "radioSeconds": 18,
+      "radioResetSeconds": 2.5,
       "silenceSeconds": 10,
       "ignoredSeconds": 15,
       "finalSeconds": 10,
@@ -1478,7 +1518,7 @@ window.NathGame.localConfig = {
       }
     },
     "attack": {
-      "repeatReactionFactor": 0.92,
+      "repeatReactionFactor": 0.9,
       "stay": 5.5,
       "lateStay": 8.5,
       "lateThreshold": 0.8,
@@ -1500,11 +1540,14 @@ window.NathGame.localConfig = {
       ],
       "entryDeathAbove": 80,
       "floorPerEntry": 10,
-      "growth": 0.8,
+      "growth": [
+        0.85,
+        1.65
+      ],
+      "warningAt": 80,
       "closetGrowthFactor": 3.25,
       "litClosetGrowthFactor": 1.625,
-      "musicReduction": 2,
-      "growthIncreasePerLevel": 10
+      "musicReduction": 2
     }
   }
 };

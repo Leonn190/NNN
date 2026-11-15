@@ -2,7 +2,7 @@
 'use strict';
 
 const factor = percent => 1 + percent / 100;
-const difficultyProgress = (level, max) => Math.max(0, Math.min(1, (level - 1) / (max - 1)));
+const difficultyProgress = (level, max) => Math.max(0, Math.min(1, (level - 1) / Math.max(1, max - 1)));
 const interpolate = ([first, last], progress) => first + (last - first) * progress;
 const uniform = (random, { min, max }) => min + random() * (max - min);
 function weightedChoices(items, weight) {
@@ -109,7 +109,7 @@ function createAttackRoutes(config, graph, random, passable, clear) {
       if (required === null) return;
     } else if (!distances(actor, target, usable).has(actor.position)) return;
     return { route: { id, objective, target, required, paths: variants?.filter(path => path[0] === required),
-      index: 0, lastReached: null, completed: false, moves: 0 }, weight };
+      index: 0, lastReached: null, completed: false, moves: actor.retainedRouteMoves ?? 0 }, weight };
   }
 
   function selectionOdds(actor, exclude) {
@@ -123,11 +123,13 @@ function createAttackRoutes(config, graph, random, passable, clear) {
     return eligible.map(({ route, weight }) => ({ route, probability: weight / total }));
   }
 
-  function select(actor, exclude) {
+  function select(actor, exclude, retainedMoves = actor.retainedRouteMoves ?? 0) {
     const options = selectionOdds(actor, exclude);
     const selected = weighted(random, options, option => option.probability);
     if (!selected) return;
     actor.route = selected.route;
+    actor.route.moves = retainedMoves;
+    actor.retainedRouteMoves = 0;
     actor.lastRoute = selected.route.id;
   }
 

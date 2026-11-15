@@ -1,7 +1,7 @@
 (() => {
 'use strict';
 
-const { factor, uniform, difficultyProgress, interpolate } = window.NathGame;
+const { uniform, difficultyProgress, interpolate } = window.NathGame;
 
 function createSmores(rules, level, maxLevel, random, emit) {
   if (!rules || level <= 0) return {
@@ -18,6 +18,7 @@ function createSmores(rules, level, maxLevel, random, emit) {
   const roomSpeed = radio => radio ? 1 : rules.quietRoomSpeed;
   let phase = 'idle';
   let radioTime = 0;
+  let radioOffTime = 0;
   let silenceTime = 0;
   let ignoredTime = 0;
   let retreatReady = false;
@@ -31,7 +32,15 @@ function createSmores(rules, level, maxLevel, random, emit) {
   }
 
   function integrate(dt, radio) {
-    if (phase === 'idle') radioTime = radio ? radioTime + dt : 0;
+    if (phase === 'idle') {
+      if (radio) {
+        radioOffTime = 0;
+        radioTime += dt;
+      } else if (radioTime > 0) {
+        radioOffTime += dt;
+        if (radioOffTime >= rules.radioResetSeconds - tolerance) radioTime = 0;
+      }
+    }
     if (phase === 'vent') {
       if (!looking) ignoredTime += dt;
       if (!retreatReady) {
@@ -58,7 +67,7 @@ function createSmores(rules, level, maxLevel, random, emit) {
         radioTime = 0;
         if (random() * 100 < ventChance) setPhase('pre-vent');
       }
-      if (!radio) radioTime = 0;
+      if (radio) radioOffTime = 0;
     }
     if (phase === 'pre-vent') {
       if (ventOpportunity) {
@@ -102,10 +111,10 @@ function createSmores(rules, level, maxLevel, random, emit) {
   };
 }
 
-function createThreats(config, levels, random, emit, reactionReduction = () => 0) {
+function createThreats(config, levels, random, emit, reactionReduction = () => 0, maxLevel = config.night.levels[1]) {
   const { attack, clown } = config.threats;
   const clownEnabled = levels.palhaca > 0;
-  const growth = clown.growth * factor(clown.growthIncreasePerLevel * levels.palhaca);
+  const growth = interpolate(clown.growth, difficultyProgress(levels.palhaca, maxLevel));
   const invasions = new Map();
   const invasionCounts = new Map();
   const thresholds = [];
@@ -159,7 +168,12 @@ function createThreats(config, levels, random, emit, reactionReduction = () => 0
 
   function integrate(dt, input) {
     if (!clownEnabled) return;
-    const next = Math.max(floor, Math.min(clown.max, counter + dt * clownRate(input.radio, input.clownLight)));
+    const rate = clownRate(input.radio, input.clownLight);
+    let next = Math.max(floor, Math.min(clown.max, counter + dt * rate));
+    if (rate > 0 && counter < clown.warningAt && clown.warningAt - next <= 1e-9) {
+      next = Math.max(next, clown.warningAt);
+      emit('clownWarning');
+    }
     for (const threshold of thresholds) {
       if (counter <= threshold && next > threshold) floor = Math.max(floor, threshold);
     }
@@ -173,6 +187,10 @@ function createThreats(config, levels, random, emit, reactionReduction = () => 0
 
   function nextDeadline(now, radio, light) {
     let due = clownDeadline(now, radio, light);
+    if (clownEnabled && counter < clown.warningAt) {
+      const rate = clownRate(radio, light);
+      if (rate > 0) due = Math.min(due, now + (clown.warningAt - counter) / rate);
+    }
     for (const [actor, invasion] of invasions) {
       due = Math.min(due, hidden ? invasion.leaveAt : reactionDeadline(actor, invasion));
     }

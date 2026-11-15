@@ -50,7 +50,7 @@ const dom = {
   tech: $('#technical-feed'), cameraScare: $('#camera-scare'),
   techArt: $('#technical-art'), techNumber: $('#technical-number'),
   camNumber: $('#cam-number'), cameraOffline: $('#camera-offline'), cameraAudio: $('#camera-audio'),
-  static: $('#camera-static'), threatAlert: $('#threat-alert'),
+  static: $('#camera-static'),
   closeDesktop: $('#close-desktop'), openStart: $('#open-start'), startMenu: $('#start-menu'),
   taskTime: $('#task-time'), taskDate: $('#task-date'),
   clock: $('#clock-label'),
@@ -81,10 +81,12 @@ const CLOWN_RIGHT_IMAGE = './public/images/jumpscares/palhaca-direita.gif';
 const CLOWN_BOTTOM_IMAGE = './public/images/jumpscares/palhaca-baixo.gif';
 const SHADOW_IMAGE = config.shadow.jumpscare;
 const JUMPSCARE_AUDIO = './public/audio/jumpscares/';
-const { corridorAttackSound, stockAttackSound, flashlight, invasion, closetVentSound } = config.effects;
-const attackSamples = [...corridorAttackSound.files, ...stockAttackSound.files, invasion.file, closetVentSound.file];
+const { corridorAttackSound, stockAttackSound, flashlight, invasion, closetVentSound, clownWarningSound,
+  yandereSabotageSound, yandereSurpriseSound, padraoInvasionSound } = config.effects;
+const { image: cameraScareImage, sound: cameraScareSound } = config.threats.yandereCameraScare;
+const attackSamples = [...corridorAttackSound.files, ...stockAttackSound.files, invasion.file, closetVentSound.file,
+  yandereSabotageSound.file, yandereSurpriseSound.file, ...padraoInvasionSound.files, cameraScareSound];
 const corridorSoundVoices = Object.keys(config.characters).length;
-const cameraScareImage = config.threats.yandereCameraScare.image;
 const MONITOR_TRANSITION_MS = { boot: 6500, shutdown: 2000 };
 const CAMERA_LAUNCH_MS = 1500;
 let computerTransitionTimer;
@@ -254,7 +256,7 @@ const map = makeCameraMap({
   }
 });
 const movement = createMovement(config, {
-  emit(event, value) {
+  emit(event, value, surprise) {
     if (event === 'move') {
       movementChanged = true;
       officeChanged ||= officePositions.has(value.from) || officePositions.has(value.to);
@@ -273,16 +275,26 @@ const movement = createMovement(config, {
     } else if (event === 'stockAttack' || event === 'hallucinationLaugh') {
       const { files, volume } = stockAttackSound;
       if (event === 'stockAttack') {
+        if (surprise) return;
         sound.playSample(files[Math.floor(Math.random() * files.length)], volume, corridorSoundVoices);
       } else if (!state.complete && !dom.game.hidden && !dom.game.inert && !document.hidden) {
         sound.playExclusiveSample(files, volume);
       }
+    } else if (event === 'clownWarning') {
+      sound.playPannedSample('doorCreak', clownWarningSound.volume, clownWarningSound.pan);
+    } else if (event === 'yandereSabotage') {
+      sound.playSample(yandereSabotageSound.file, yandereSabotageSound.volume, corridorSoundVoices);
+      if (value) sound.playSample(yandereSurpriseSound.file, yandereSurpriseSound.volume);
+    } else if (event === 'invasion' && value.key === 'padrao') {
+      const { files, volume } = padraoInvasionSound;
+      sound.playSample(files[Math.floor(Math.random() * files.length)], volume);
     } else if (event === 'cameraScareStart') {
       nextHudUpdate = 0;
       dom.cameraScare.hidden = false;
       if (cameraScareBlob) cameraScareUrl = URL.createObjectURL(cameraScareBlob);
       const replaySource = cameraScarePlays ? `${cameraScareImage}?replay=${cameraScarePlays % 2}` : cameraScareImage;
       dom.cameraScare.src = cameraScareUrl ?? replaySource;
+      sound.playSample(cameraScareSound, controls.jumpscare.volume);
       cameraScarePlays++;
       cameraApp.panel.inert = true;
     } else if (event === 'cameraScareEnd') {
@@ -478,6 +490,7 @@ function clearCorridorFlicker() {
 function clearCameraScare() {
   dom.cameraScare.hidden = true;
   clearImageSource(dom.cameraScare);
+  sound.stopSample(cameraScareSound);
   if (cameraScareUrl) URL.revokeObjectURL(cameraScareUrl);
   cameraScareUrl = undefined;
   cameraApp.panel.inert = false;
@@ -1251,7 +1264,6 @@ function prepareShift(shift) {
   $('#night-mode').textContent = shift.label;
   clearTimeout(toastTimeout);
   dom.toast.classList.remove('show');
-  dom.threatAlert.hidden = true;
   sound.preloadSamples(attackSamples);
   sound.stopSamples();
   state.computerMode = 'desktop';
@@ -1482,20 +1494,11 @@ function renderGameFrame(frame, now) {
     renderResources(frame);
     renderVolume(frame.noiseIntensity);
     updateAudioControl(frame.audio);
-    renderWarnings(frame);
   }
   if (debugEnabled() && now >= nextDebugUpdate) {
     nextDebugUpdate = now + 150;
     updateMovementDebug();
   }
-}
-
-function renderWarnings(frame) {
-  const warnings = [];
-  if (state.officeRoom.size) warnings.push(frame.hidden ? 'AGUARDE NO ARMÁRIO' : 'INVASÃO · ENTRE NO ARMÁRIO');
-  setText(dom.threatAlert, warnings.join(' / '));
-  const hidden = warnings.length === 0;
-  if (dom.threatAlert.hidden !== hidden) dom.threatAlert.hidden = hidden;
 }
 
 const energyLossStops = [0, .12, .32, .65, .95];

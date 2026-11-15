@@ -51,7 +51,7 @@
     {"from": 12, "to": 13, "type": "free", "openingId": "P02"},
     {"from": 14, "to": 13, "type": "gate", "gateId": "G01", "oneWay": true},
     {"from": 14, "to": 15, "type": "room"},
-    {"from": 15, "to": 16, "type": "free", "openingId": "P04"},
+    {"from": 15, "to": 16, "type": "gate", "gateId": "P04"},
     {"from": 15, "to": 17, "type": "free", "openingId": "P07"},
     {"from": 15, "to": 18, "type": "free", "openingId": "P10"},
     {"from": 16, "to": 17, "type": "free", "openingId": "P06"},
@@ -72,6 +72,7 @@
   "back": 15,
   "leftApproach": 10,
   "closetVent": 26,
+  "workshopGate": "P04",
   "capacities": {
     "12": 1,
     "14": 2,
