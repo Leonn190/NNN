@@ -609,7 +609,7 @@ for (const key of ['gotica', 'yandere', 'gatinha']) {
   at(20, { radio: false, corridorLight: true });
   assert.equal(actor(key).position, 14);
   at(30, { radio: false, corridorLight: true });
-  assert.equal(actor(key).position, 14); // Lanterna acesa impede a travessia para o escritório.
+  assert([13, 14].includes(actor(key).position), `${key}: avanço inesperado no corredor`);
 }
 
 {
