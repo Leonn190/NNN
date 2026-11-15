@@ -579,7 +579,7 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid #ffd3e8;outline-
 .feed-scanlines{position:absolute;inset:0;background:repeating-linear-gradient(0deg,rgba(0,0,0,.13) 0px,rgba(0,0,0,.13) 1px,transparent 2px,transparent 4px);opacity:.56;pointer-events:none}
 .feed-noise,.camera-static-grain{
   /* Overscan covers the largest grain offset at every viewport size. */
-  position:absolute;inset:-32px;background:url("../../public/images/camera-grain.webp") repeat;pointer-events:none;
+  position:absolute;inset:-32px;background:url("../../public/images/cameras/grain.webp") repeat;pointer-events:none;
 }
 .feed-noise{--noise-opacity:.063;--noise-period:1.72s;opacity:var(--noise-opacity)}
 @keyframes noise-drift{
