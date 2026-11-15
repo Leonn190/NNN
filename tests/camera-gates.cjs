@@ -1075,7 +1075,7 @@ for (let attempt = 0; attempt < 7; attempt++) {
   assert.equal(nodes.playfield.inert, true);
   const chosen = scare.src;
   const source = chosen.split('?')[0];
-  const audio = attempt === 5 ? 'palhaça.ogg' : 'scream.wav';
+  const audio = attempt === 5 ? 'palhaca.ogg' : 'scream.wav';
   assert.equal(decodeURI(scream.src), `./public/audio/jumpscares/${audio}`);
   assert(fs.existsSync(path.join(root, decodeURI(scream.src))));
   if (attempt === 5) {
@@ -1149,7 +1149,7 @@ for (const closetState of ['door', 'lit', 'turning']) {
   assert.equal(nodes.game.dataset.closetTransition, undefined);
   assert.equal(closetBeam.hidden, true);
   assert.equal(scare.src.split('?')[0], bottomGif);
-  assert.match(decodeURI(scream.src), /palhaça\.ogg$/);
+  assert.match(decodeURI(scream.src), /palhaca\.ogg$/);
   if (closetState !== 'door') assert.notEqual(scare.src, bottomGif);
   step(scareStart + 110);
   assert.equal(phase(), 'scare');
@@ -1295,7 +1295,7 @@ Object.assign(characterRules.padrao, { start: 5, positions: [5, 9, 10, 12], inte
 customStart({ padrao: 1 });
 const approachStart = now;
 const doorCreak = 'audio/effects/doors/porta-rangendo.mp3';
-const laughsPlayed = () => playedSamples.filter(file => /possessed-laugh|risada-1/.test(file));
+const laughsPlayed = () => playedSamples.filter(file => /^audio\/effects\/invasion\/estoque\/risada-[12]\./.test(file));
 const laughsBeforeApproach = laughsPlayed().length;
 assert(!playedSamples.includes(doorCreak));
 step(approachStart + 10_500);
