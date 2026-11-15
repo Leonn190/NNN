@@ -6,9 +6,9 @@ const root = path.resolve(__dirname, '..');
 const destination = path.resolve(process.argv[2] ?? path.join(root, 'dist'));
 const files = [
   '.nojekyll', 'index.html',
-  'public/images/Anúncio Vintage de Contratação Animatrônica.png',
-  'public/images/Smores nas Frestas do Escritório.png',
-  'public/NNN_Yandere_Jumpscare_1080p.gif',
+  'public/images/intro/anuncio-contratacao.png',
+  'public/images/office/closet/smores-frestas.png',
+  'public/images/jumpscares/yandere-camera.gif',
 
 ];
 

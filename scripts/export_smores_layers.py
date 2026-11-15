@@ -8,12 +8,13 @@ from PIL import Image, ImageChops, ImageDraw, ImageFilter
 ROOT = Path(__file__).resolve().parents[1]
 IMAGES = ROOT / "public" / "images"
 OFFICE = IMAGES / "office"
+SOURCES = ROOT / "outros/arte/office/smores"
 BASE = Image.open(OFFICE / "master.png").convert("RGB")
 OUTPUT = OFFICE / "characters"
 
 
 def extract(source, name, outline, low, high, solid_below=None, core=()):
-    frame = Image.open(IMAGES / source).convert("RGB").resize(BASE.size, Image.Resampling.LANCZOS)
+    frame = Image.open(SOURCES / source).convert("RGB").resize(BASE.size, Image.Resampling.LANCZOS)
     red, green, blue = ImageChops.difference(frame, BASE).split()
     difference = ImageChops.lighter(ImageChops.lighter(red, green), blue)
     difference = difference.point(lambda value: round(255 * max(0, min(1, (value - low) / (high - low)))))
@@ -39,9 +40,9 @@ def extract(source, name, outline, low, high, solid_below=None, core=()):
 
 
 if __name__ == "__main__":
-    extract("Smores na Ventilação do Escritório.png", "vent",
+    extract("duto.png", "vent",
             [(1498, 80), (1610, 80), (1611, 168), (1498, 168)], low=8, high=31)
-    extract("Smores no Escritório Neon Rosa.png", "room", [
+    extract("sala.png", "room", [
         (946, 357), (956, 328), (978, 294), (999, 289), (1033, 311),
         (1071, 300), (1102, 277), (1130, 303), (1145, 365), (1180, 461),
         (1210, 477), (1237, 505), (1240, 546), (1228, 587), (1224, 609),

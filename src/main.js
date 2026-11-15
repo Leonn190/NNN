@@ -94,7 +94,7 @@ const CLOWN_ART = './public/images/office/closet/clown/';
 const SMORES_ART = {
   vent: './public/images/office/characters/smores-vent.webp',
   room: './public/images/office/characters/smores-room.webp',
-  closet: './public/images/Smores nas Frestas do Escritório.png'
+  closet: './public/images/office/closet/smores-frestas.png'
 };
 const SMORES_VENT_CENTER = 1554;
 const CLOWN_PHASES = [

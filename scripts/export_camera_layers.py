@@ -10,9 +10,10 @@ from PIL import Image, ImageDraw, ImageFilter
 
 ROOT = Path(__file__).resolve().parents[1]
 CAMERAS = Path("public/images/cameras")
+SOURCES = ROOT / "outros/arte/cameras"
 # Contornos nas coordenadas do fundo, com o laço e o puxador em primeiro plano.
 EXITS = {
-    "CAM02": (8, "Recepção Cor-de-Rosa e Nathzinha Distante.png", [
+    "CAM02": (8, "padrao-saida.png", [
         (882,234),(889,234),(897,245),(903,222),(911,207),(923,195),(934,195),
         (944,202),(951,216),(953,235),(962,253),(962,275),(966,291),(975,317),
         (979,337),(974,345),(969,339),(964,325),(953,316),(951,332),(944,344),
@@ -24,7 +25,7 @@ EXITS = {
     ], [[(882,347),(886,341),(897,341),(905,347),(913,345),(926,341),(929,346),
          (927,358),(918,360),(922,369),(913,372),(903,363),(894,372),(888,369),
          (892,360),(883,359)]]),
-    "CAM08": (11, "Nathzinha no Estoque Sombrio.png", [
+    "CAM08": (11, "padrao-saida.png", [
         (289,430),(290,405),(299,369),(302,341),(310,320),(315,306),(327,294),
         (344,286),(361,280),(379,281),(389,282),(389,400),(386,419),(385,454),
         (383,487),(378,518),(367,540),(354,545),(340,541),(329,526),(321,504),
@@ -46,8 +47,8 @@ ORDERS = {
 }
 MAID_FILES = {"maid": "01-maid-sentada", "maid-saindo": "02-maid-saindo"}
 SERVICE_SOURCES = {
-    "maid-retorno": "Nathzinha Maid na Sala de Manutenção.png",
-    "yandere": "Tchauzinho na Sala de Manutenção.png",
+    "maid-retorno": "maid-retorno.png",
+    "yandere": "yandere.png",
 }
 # Silhuetas desenhadas sobre as referências de 836 × 470. Os vãos entre
 # braços e pernas deixam passar o fundo vazio.
@@ -168,7 +169,7 @@ def extract_layers(folder, state_folder, base_path, order, camera, shared=None):
     layers = {}
     covered = np.zeros((height, width), dtype=bool)
     for key in order:
-        source_path = (Path("public/images") / SERVICE_SOURCES[key] if maid_scene and key in SERVICE_SOURCES
+        source_path = (SOURCES / camera / SERVICE_SOURCES[key] if maid_scene and key in SERVICE_SOURCES
                        else state_folder / f"{MAID_FILES[key] if maid_scene else key}.webp")
         source = read_rgb(source_path)
         if source.shape != base.shape:
@@ -242,7 +243,7 @@ def export_exit_layers(catalog):
         folder = CAMERAS / camera
         base = read_rgb(folder / "base.webp")
         height, width, _ = base.shape
-        with Image.open(ROOT / "public/images" / filename) as image:
+        with Image.open(SOURCES / camera / filename) as image:
             # As duas artes usam o enquadramento do fundo. A do estoque
             # tem uma coluna extra na borda direita.
             source = np.asarray(image.convert("RGB").crop((0, 0, width, height)), dtype=np.float32)

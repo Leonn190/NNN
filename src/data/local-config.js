@@ -1505,7 +1505,7 @@ window.NathGame.localConfig = {
         3
       ],
       "durationSeconds": 1.21,
-      "image": "./public/NNN_Yandere_Jumpscare_1080p.gif",
+      "image": "./public/images/jumpscares/yandere-camera.gif",
       "sound": "audio/jumpscares/yandere-camera.ogg"
     },
     "yandereSurprise": {

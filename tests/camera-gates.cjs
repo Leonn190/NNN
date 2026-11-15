@@ -138,7 +138,7 @@ const context = vm.createContext({
   },
   console: { warn: message => warnings.push(message), info() {}, error: console.error },
   async fetch(url) {
-    if (url === './public/NNN_Yandere_Jumpscare_1080p.gif') {
+    if (url === './public/images/jumpscares/yandere-camera.gif') {
       const blob = {};
       scareDownloads.push(blob);
       return { ok: true, blob: async () => blob };
@@ -1011,7 +1011,7 @@ assert.equal(invasionAudio.paused, false);
 const hidingAt = now;
 nodes['office-closet'].fire('click');
 step(smoresStart + 19_500);
-assert.match(closetArt.src, /Smores nas Frestas/);
+assert.match(closetArt.src, /smores-frestas/);
 assert.equal(nodes['closet-extra'].hidden, true);
 step(hidingAt + 1000);
 const invasionFade = [...pendingTimers.values()].find(timer => timer.delay === 20);
