@@ -10,10 +10,12 @@
   "failedIntervalFactor": 0.35,
   "failedModifierRetention": 0.75,
   "routes": {
-    "bonus": [25, 36],
+    "bonus": [25, 40],
+    "padraoBonus": [32, 48],
     "perMove": [3, 5],
     "padraoPerMove": [4, 6],
-    "huntBonus": 20,
+    "huntBonus": 25,
+    "huntPenalty": 20,
     "blockedProgressRetention": 0.50,
     "definitions": {
       "CV": { "objective": "corridor", "target": 15, "paths": [[6, 15], [7, 15]] },

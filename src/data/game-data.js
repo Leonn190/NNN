@@ -165,7 +165,7 @@ const CAMERAS = [
     "angle": 332,
     "fov": 82,
     "image": "./public/images/cameras/CAM09/base.webp",
-    "allCharacters": ["maid"],
+    "allCharacters": ["yandere", "maid"],
     "technical": "./public/images/cameras/CAM09/technical.png",
     "renderAvailable": true
   },

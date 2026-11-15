@@ -62,7 +62,18 @@ assert.equal(routes.gate(13, 12), undefined);
   const roster = game.diagnostics();
   assert.deepEqual(roster.map(x => x.position), [1, 1, 1, 3, 16]);
   assert.deepEqual(roster.map(x => x.level), [1, 6, 1, 9, 4]);
-  [24, 19.5, 14.7, 10.944, 23.9105].forEach((interval, index) => closeTo(roster[index].remaining, interval));
+  [23, 18.85, 14.7, 10.2144, 24.2985].forEach((interval, index) => closeTo(roster[index].remaining, interval));
+}
+
+{
+  const { actor } = scenario(base.characters, { levels: { padrao: 11, gatinha: 11, yandere: 11, maid: 11, gotica: 11 } });
+  closeTo(actor('padrao').remaining, 23 * .45);
+  closeTo(actor('yandere').remaining, 21 * .45 * .40);
+  closeTo(actor('gatinha').remaining, 19 * .45 * .95);
+  closeTo(actor('maid').remaining, 30 * .45 * .90);
+  const attackRoutes = createAttackRoutes(base, routes);
+  closeTo(attackRoutes.bonus(6, 2, 'gotica'), 32.5 + 8);
+  closeTo(attackRoutes.bonus(6, 2, 'padrao'), 40 + 10);
 }
 
 const byRoom = new Map(VENUE.rooms.map(room => [room.id, room.points]));
@@ -162,11 +173,11 @@ for (const [id, crossings] of Object.entries(gateCrossings)) {
   const routing = createAttackRoutes(base, routes, () => 0, open, open);
   for (let level = 1; level <= 11; level++) {
     const progress = (level - 1) / 10;
-    closeTo(routing.bonus(level), 25 + 11 * progress);
-    closeTo(routing.bonus(level, 2), 31 + 15 * progress);
-    closeTo(routing.bonus(level, 2, 'padrao'), 32 + 15 * progress);
+    closeTo(routing.bonus(level), 25 + 15 * progress);
+    closeTo(routing.bonus(level, 2), 31 + 19 * progress);
+    closeTo(routing.bonus(level, 2, 'padrao'), 40 + 20 * progress);
   }
-  assert.equal(routing.bonus(11, 120), 636);
+  assert.equal(routing.bonus(11, 120), 640);
   for (const [key, weights] of Object.entries(expected)) {
     const rule = base.characters[key];
     const actor = { key, rule, allowed: new Set(rule.positions), position: rule.start, lastRoute: 'CV' };
@@ -251,7 +262,7 @@ for (const reopen of [true, false]) {
     at(25);
     assert.equal(actor('gatinha').position, 7);
     assert.equal(actor('gatinha').route, 'EL');
-    assert.equal(actor('gatinha').routeBonus, 25);
+    assert.equal(actor('gatinha').routeBonus, 25 + 3 * base.movement.routes.blockedProgressRetention);
     closeTo(actor('gatinha').remaining, 3.5);
   }
 }
@@ -275,8 +286,8 @@ for (const reopen of [true, false]) {
   const { at, game, actor, output } = scenario({ gatinha: { start: 7, interval: 10, routes: { CV: 100 } } },
     { random: () => draw });
   const odds = game.debugSnapshot().actors[0].odds;
-  const total = 1.25 + 1 + 1.05 + .25;
-  closeTo(odds['Corredor central — fundo'], 1.25 / total);
+  const total = 1.50 + 1 + 1.05 + .25;
+  closeTo(odds['Corredor central — fundo'], 1.50 / total);
   closeTo(odds['Fundo do salão (CAM 04)'], 1 / total);
   closeTo(odds['Escondida na VIP 2'], 1.05 / total);
   closeTo(odds.Ficar, .25 / total);
@@ -285,7 +296,7 @@ for (const reopen of [true, false]) {
   assert.equal(actor('gatinha').lastReached, 7);
   assert.equal(actor('gatinha').checkpoint, 7);
   const recoveryOdds = game.debugSnapshot().actors[0].odds;
-  closeTo(recoveryOdds['VIP 2'] / recoveryOdds.Recepção, 1.28);
+  closeTo(recoveryOdds['VIP 2'] / recoveryOdds.Recepção, 1.53);
   draw = .99;
   at(20);
   assert.equal(actor('gatinha').routeBonus, 28);
@@ -378,7 +389,7 @@ for (const [tier, chance] of base.characters.gotica.staticChance.entries()) {
   assert.notEqual(actor('maid').position, 16);
   for (let t = 25; t < 60; t++) {
     at(t);
-    assert(![10, 12, 16].includes(actor('maid').position));
+    assert(![10, 12].includes(actor('maid').position));
   }
   assert(!base.characters.maid.positions.includes(10) && !base.characters.maid.positions.includes(12));
 }
@@ -480,7 +491,6 @@ for (const [tier, chance] of base.characters.gotica.staticChance.entries()) {
 {
   const { at, game, actor } = scenario({ maid: { start: 15, interval: 10, initialStationaryAttempts: undefined } },
     { random: () => 0 });
-  assert.equal(actor('maid').approach, 'approach');
   at(20);
   assert.deepEqual(game.officeState().room, ['maid']);
   at(21.99, {}, { type: 'closetEnter' });
@@ -873,6 +883,12 @@ for (const view of ['office', 'cameras', 'closet-door']) {
   at(0, input, view === 'closet-door' ? { type: 'closetEnter' } : undefined);
   at(20, input);
   at(30, input);
+  if (view === 'closet-door') {
+    assert.deepEqual(output('loss'), ['palhaca']);
+    assert.equal(output('invasion').length, 0);
+    assert.equal(game.debugSnapshot().actors.find(actor => actor.key === 'yandere').invasions, 0);
+    continue;
+  }
   assert.equal(output('invasion').length, 2);
   assert(game.officeState().invasionActive);
   assert.equal(game.officeState().flash, view === 'office');
@@ -938,25 +954,33 @@ for (const [camera, expected] of [['CAM03', true], ['CAM12', false]]) {
   const { createThreats } = window.NathGame;
   let smores = 0;
   const threats = createThreats(base, { palhaca: 0 }, () => .5, () => {}, () => smores);
-  const maid = { key: 'maid', reaction: 2 };
-  const gotica = { key: 'gotica', reaction: 4 };
-  threats.enterCloset(0);
-  for (let count = 0; count < 5; count++) {
-    const now = count * 10;
-    threats.invade(maid, now);
-    closeTo(threats.invasionStatus(maid, now).reaction, 2 * .92 ** count);
-    threats.resolve(now + 9, () => {}, assert.fail, false, false);
+  for (const key of ['gotica', 'yandere', 'gatinha', 'maid', 'padrao']) {
+    const actor = { key, reaction: 4 };
+    const factors = key === 'padrao' ? [1, .75, .70, .65, .60, ...Array.from({ length: 14 }, (_, i) =>
+      Math.max(.05, .55 - .05 * i))] : [1, .75];
+    factors.forEach((factor, count) => {
+      const now = count * 10;
+      assert.equal(threats.invade(actor, now), undefined);
+      closeTo(threats.invasionStatus(actor, now).reaction, 4 * factor);
+      threats.enterCloset(now);
+      threats.resolve(now + 9, () => {}, assert.fail, false, false);
+      threats.exitCloset();
+      assert.equal(threats.invasionCount(actor), count + 1);
+    });
+    if (key !== 'padrao') {
+      threats.enterCloset(20);
+      assert.equal(threats.invade(actor, 20), key);
+      threats.exitCloset();
+    }
   }
-  closeTo(threats.reactionTime(gotica), 4);
   smores = .4;
-  closeTo(threats.reactionTime(maid), 2 * .92 ** 5 - .4);
-  smores = 2;
-  threats.exitCloset();
-  threats.invade(maid, 50);
-  assert.equal(threats.nextDeadline(50, false, false), 50);
-  let loss;
-  threats.resolve(50, assert.fail, source => { loss = source; }, false, false);
-  assert.equal(loss, 'maid');
+  closeTo(threats.reactionTime({ key: 'padrao', reaction: 4 }), .2);
+  const secondNight = createThreats(base, { palhaca: 0 }, () => .5, () => {}, () => smores);
+  const maid = { key: 'maid', reaction: 4 };
+  assert.equal(secondNight.invade(maid, 0), undefined);
+  closeTo(secondNight.reactionTime(maid, 0), 3.6);
+  secondNight.enterCloset(0);
+  assert.equal(secondNight.invade({ key: 'gotica', reaction: 4 }, 1), undefined);
 }
 
 for (const key of Object.keys(base.characters).filter(key => key !== 'yandere')) {

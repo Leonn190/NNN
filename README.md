@@ -174,14 +174,14 @@ O temporizador de permanência de cada invasora conta desde a entrada dela no co
 | CAM06 | VIP 2 lavanda | Sala vazia e 31 variantes com as Nathzinhas |
 | CAM07 | Fliperama | Sala vazia e quinze variantes com as Nathzinhas |
 | CAM08 | Estoque | Novo estoque vazio e quinze variantes com as Nathzinhas |
-| CAM09 | Área de serviço | Área de manutenção vazia, Maid sentada e Maid junto à saída |
+| CAM09 | Área de serviço | Área de manutenção vazia, Maid sentada, Maid junto à saída, Maid retornando e Yandere |
 | CAM10 | Cozinha | Cozinha vazia sem HUD na arte e quinze variantes com as Nathzinhas |
 | CAM11 | Área de retirada | Balcão vazio e quinze variantes com as Nathzinhas |
 | CAM12 | Corredor de serviço, leste | 16 combinações de personagens e portão G06 |
 
 Cada câmera reúne o fundo, o PNG mestre e a planta técnica em `public/images/cameras/CAMxx/`. Todas as câmeras usam recortes WebP de `layers/` sobre o fundo da câmera nas combinações parciais. As câmeras com portão buscam a vista aberta vazia em `states/` (por exemplo, `CAM04/states/open/vazia.webp`). O fundo fechado padrão fica em `base.webp`. Os quadros `todas.webp` continuam disponíveis nos locais originais.
 
-As variantes substituídas estão em `reserva/public/images/cameras/`. Para reexportar os recortes e seu catálogo de posições, rode `python -B scripts/export_camera_layers.py` com Pillow e NumPy. A CAM09 usa contornos por pose e máscaras de sombra de contato. As duas poses usam a parede, o piso e a iluminação da câmera vazia.
+As variantes substituídas estão em `reserva/public/images/cameras/`. Para reexportar os recortes e seu catálogo de posições, rode `python -B scripts/export_camera_layers.py` com Pillow e NumPy. A CAM09 usa contornos por pose e máscaras de sombra de contato, sobre o fundo da câmera vazia.
 
 O jogo pode selecionar a variante da loja com `NathGame.setCam01ShopState('original-platinada')` e a da recepção com `NathGame.setCam02ReceptionState('original-platinada')`. Use `todas` para mostrar as quatro e `vazia` para restaurar a sala vazia.
 
@@ -197,7 +197,7 @@ A CAM07 tem 16 combinações com a Padrão, a Yandere, a Gótica e a Platinada. 
 
 A CAM08 usa a nova imagem do estoque, guardada como `CAM08/master.png`, para as 16 combinações com a Padrão, a Yandere, a Gótica e a Platinada. Selecione uma com `NathGame.setCam08StockroomState('gotica-platinada')`, `todas` ou `vazia`.
 
-A CAM09 alterna a pose da Maid conforme a movimentação. Use `NathGame.setCam09ServiceState('maid')` para a prévia sentada, `maid-saindo` para a pose na porta e `vazia` para o fundo. `todas` abre a prévia sentada.
+A CAM09 comporta a Maid ou a Yandere. Use `NathGame.setCam09ServiceState('maid')` para a prévia sentada, `maid-saindo` para a pose na porta, `maid-retorno` para o retorno, `yandere` para a Yandere e `vazia` para o fundo. `todas` abre a prévia sentada.
 
 A CAM10 usa a nova arte da cozinha sem HUD como base para as 16 combinações da Padrão, da Yandere, da Gótica e da Maid preto e branco. Selecione uma com `NathGame.setCam10KitchenState('yandere-maid')`, `todas` ou `vazia`.
 

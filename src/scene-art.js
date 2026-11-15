@@ -41,7 +41,7 @@ function cameraLayerKeys(cam, key) {
   if (typeof key !== 'string') return [];
   if (cam.id === 'CAM09') {
     if (key === 'todas') return ['maid'];
-    return key === 'maid' || key === 'maid-saindo' ? [key] : [];
+    return ['maid', 'maid-saindo', 'maid-retorno', 'yandere'].includes(key) ? [key] : [];
   }
   if (cam.id === 'CAM03') {
     const positions = /^palco-(.+)--salao-(.+)$/.exec(key);
@@ -77,7 +77,7 @@ function cameraFrame(cam, key, isGateClosed, outside = false) {
   const art = gates ? variant?.[gateKey] : variant;
   const scene = cameraLayerScene(cam, gateKey);
   if (!scene || (art && !outside)) return { key, gateKey, source: art ?? base };
-  let selected = key === 'todas' ? cam.allCharacters : cameraLayerKeys(cam, key);
+  let selected = key === 'todas' && cam.id !== 'CAM09' ? cam.allCharacters : cameraLayerKeys(cam, key);
   if (outside) selected = selected.map(id => id === 'original' ? 'original-saida' : id);
   const layers = selectedLayers(scene, selected);
   return { key, gateKey, source: layers.length ? scene.base ?? base : base, layers, size: scene.size };
@@ -85,8 +85,12 @@ function cameraFrame(cam, key, isGateClosed, outside = false) {
 
 function cameraActorFrame(cam, actors, config, isGateClosed, preview) {
   const visibleActors = actors.filter(actor => !config.controls.unillustratedCameraPositions.includes(actor.position));
-  if (preview === undefined && cam.id === 'CAM09' && visibleActors.some(actor => actor.stage > 0)) {
-    return { ...cameraFrame(cam, 'maid-saindo', isGateClosed), occupied: true };
+  if (preview === undefined && cam.id === 'CAM09') {
+    const actor = visibleActors.find(actor => actor.level !== 0) ?? visibleActors[0];
+    const key = !actor ? 'vazia' : actor.rule.artId === 'yandere' ? 'yandere'
+      : actor.leftStart ? 'maid-retorno' : actor.stage > 0 ? 'maid-saindo' : 'maid';
+    const frame = cameraFrame(cam, key, isGateClosed);
+    return { ...frame, occupied: Boolean(actor && actor.level !== 0 && frame.layers?.length) };
   }
   const key = preview ?? cameraStateKey(cam, visibleActors, config.map.stage);
   const outsidePosition = cameraLayerScene(cam)?.outsidePosition;
@@ -122,7 +126,8 @@ function cameraObservation(config, cameraActors, input) {
       && (frame.layers.length !== input.visibleCameraLayers.length
         || frame.layers.some(([source], index) => source !== input.visibleCameraLayers[index]))) return;
 
-  const illustrated = frame.key === 'todas' ? cam.allCharacters : frame.key.split('-');
+  const illustrated = cam.id === 'CAM09' ? cameraLayerKeys(cam, frame.key).map(key => key.split('-')[0])
+    : frame.key === 'todas' ? cam.allCharacters : frame.key.split('-');
   const { loss, cameraLossOverrides } = config.sanity;
   let cameraLoss = loss.camera;
   let yandereVisible = false;

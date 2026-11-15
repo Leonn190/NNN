@@ -133,13 +133,7 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid #ffd3e8;outline-
 .scene-hotspot{position:absolute;border:0;background:transparent}
 .scene-hotspot:focus-visible{outline:none}
 .monitor-hotspot{left:22.3%;top:51.5%;width:16.1%;height:30.7%}
-.office-power {
-  left: calc(100% * 806 / 2172);
-  top: calc(100% * 562 / 724);
-  width: calc(100% * 26 / 2172);
-  height: calc(100% * 21 / 724);
-}
-:is(.office-power, .desktop-power):focus-visible { outline: 2px solid #ffe2f4; }
+.desktop-power:focus-visible { outline: 2px solid #ffe2f4; }
 .office-monitor-off {
   position: absolute;
   left: calc(100% * 480 / 2172);

@@ -14,15 +14,24 @@ catalog_js = (ROOT / "src/data/camera-layers.js").read_text(encoding="utf-8")
 catalog = json.loads(catalog_js.split(" = ", 1)[1].strip().removesuffix(";"))
 assert set(catalog) == {"CAM01", "CAM02", "CAM04", "CAM07", "CAM08", "CAM09", "CAM10", "CAM11", "CAM12"}
 poses = {"01-maid-sentada": "maid", "02-maid-saindo": "maid-saindo"}
+service_sources = {
+    "Nathzinha Maid na Sala de Manutenção": "maid-retorno",
+    "Tchauzinho na Sala de Manutenção": "yandere",
+}
+poses.update(service_sources)
 pose_regions = {
     "maid": (1230, 135, 1450, 441),
     "maid-saindo": (790, 231, 1115, 694),
+    "maid-retorno": (815, 190, 1020, 875),
+    "yandere": (808, 220, 1035, 890),
 }
 # Pontos em coordenadas da arte original, longe da penumbra. Conferem
 # rosto, vestido, mãos e botas independentemente do alpha exportado.
 pose_details = {
     "maid": [(1380, 203), (1376, 312), (1323, 386), (1216, 402), (1450, 440)],
     "maid-saindo": [(855, 248), (1036, 399), (725, 360), (875, 602), (1068, 719)],
+    "maid-retorno": [(925, 254), (917, 521), (951, 794)],
+    "yandere": [(933, 295), (919, 530), (897, 861)],
 }
 
 
@@ -60,6 +69,8 @@ for camera, catalog_entry in catalog.items():
         variants = list(old_states.glob("*.webp"))
         cast_size = len(layers) - int("original-saida" in layers)
         assert len(variants) == (2 if camera == "CAM09" else 2 ** cast_size - 2)
+        if camera == "CAM09":
+            variants.extend(ROOT / "public/images" / f"{name}.png" for name in service_sources)
         for original in variants:
             keys = [poses[original.stem]] if camera == "CAM09" else original.stem.split("-")
             assert set(keys) <= layers.keys(), original
@@ -93,5 +104,5 @@ for camera, catalog_entry in catalog.items():
                 assert diff.mean() < 0.006, original
             checked += 1
 
-assert checked == 126
-print(f"PASS: {checked} variantes arquivadas comparadas com a composição e os recortes WebP.")
+assert checked == 128
+print(f"PASS: {checked} referências comparadas com a composição e os recortes WebP.")

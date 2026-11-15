@@ -58,24 +58,30 @@ class SoundEngine {
     audio.currentTime = 0;
     audio.play().catch(() => {});
   }
-  playPannedSample(name, volume, pan) {
+  playPannedSample(name, volume, pan, polyphony = 1) {
     const context = this.context;
     const file = sampleFiles[name] ?? name;
     const sample = this.samples.get(file);
-    if (!sample || window.location?.protocol === 'file:' || !this.enabled
-        || context?.state !== 'running' || !context.createStereoPanner) {
-      this.playSample(name, volume);
-      return;
+    if (!sample) return;
+    const spatial = window.location?.protocol !== 'file:' && this.enabled
+      && context?.state === 'running' && Boolean(context.createStereoPanner);
+    if (!spatial && polyphony === 1) return this.playSample(name, volume);
+    if (!this.pannedSamples.has(file)) this.pannedSamples.set(file, []);
+    const voices = this.pannedSamples.get(file);
+    const compatible = voices.filter(({ panner }) => Boolean(panner) === spatial);
+    let voice = compatible.find(({ audio }) => audio.paused);
+    if (!voice && compatible.length >= polyphony) {
+      if (polyphony > 1) return;
+      [voice] = compatible;
     }
-    let voice = this.pannedSamples.get(file);
     if (!voice) {
       const audio = new Audio(sample.src);
-      const panner = context.createStereoPanner();
-      context.createMediaElementSource(audio).connect(panner).connect(context.destination);
+      const panner = spatial ? context.createStereoPanner() : null;
+      if (panner) context.createMediaElementSource(audio).connect(panner).connect(context.destination);
       voice = { audio, panner };
-      this.pannedSamples.set(file, voice);
+      voices.push(voice);
     }
-    voice.panner.pan.value = pan;
+    if (voice.panner) voice.panner.pan.value = pan;
     voice.audio.volume = volume;
     voice.audio.currentTime = 0;
     voice.audio.play().catch(() => {});
@@ -118,7 +124,7 @@ class SoundEngine {
     this.stopExclusiveSample();
     for (const file of this.samples.keys()) this.stopSample(file);
     for (const voices of this.sampleVoices.values()) for (const audio of voices) audio.pause();
-    for (const { audio } of this.pannedSamples.values()) audio.pause();
+    for (const voices of this.pannedSamples.values()) for (const { audio } of voices) audio.pause();
   }
   setInvasionLoop(active, { file, volume, fadeOutSeconds }) {
     const audio = this.samples.get(file);

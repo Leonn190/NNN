@@ -22,9 +22,19 @@ function scenario({ levels, input, draws = [], tune = () => {}, nightNumber } = 
     const { levels: campaignLevels, ...rules } = config.night.campaign[nightNumber - 1];
     game.reset(campaignLevels, input, { ...config.night, ...rules });
   } else game.reset(levels, input);
+  let currentInput = input;
+  function at(time, next = {}, action) {
+    currentInput = action?.type === 'computerPower' && !next.closet ? { ...next, computerInterface: true } : next;
+    return game.advance(time, currentInput, action);
+  }
   return { game, events, calls: () => calls, state: game.snapshot, hud: () => game.snapshot({ hud: true }),
-    at: (time, next = {}, action) => game.advance(time, next, action),
-    returnAt: (time, source = 'computer') => game.advance(time, { view: 'office' }, { type: 'returnToOffice', source }) };
+    at,
+    returnAt(time, source = 'computer') {
+      if (source === 'computer' && !currentInput?.computerInterface) {
+        at(game.snapshot().now, { ...currentInput, view: 'cameras', computerInterface: true });
+      }
+      return at(time, { view: 'office' }, { type: 'returnToOffice', source });
+    } };
 }
 
 const campaignLevels = {
@@ -62,13 +72,13 @@ for (const [index, entry] of base.night.campaign.entries()) {
     assert.equal(test.state().sanity, 100);
     assert(test.game.camerasAvailable());
     assert.equal(test.game.isGateClosed('G01'), nightNumber === 2);
-    test.at(10, input, { type: 'computerPower' });
+    test.at(10, { ...input, closet: false }, { type: 'computerPower' });
     assert.equal(test.state().computerOn, false);
-    test.at(10, input, { type: 'computerPower' });
+    test.at(10, { ...input, closet: false }, { type: 'computerPower' });
     assert.equal(test.state().computerOn, true);
     assert.equal(test.state().radioAvailable, true);
   }
-  const watching = { computer: true, radio: true };
+  const watching = { computer: true, computerInterface: true, radio: true };
   const encounter = scenario({ nightNumber, input: watching, tune(config) {
     config.sanity.initial = 20;
     config.power.initial = 100;
@@ -84,14 +94,15 @@ for (const [index, entry] of base.night.campaign.entries()) {
   encounter.returnAt(delay - .01);
   assert.equal(encounter.state().shadow.phase, 'inactive');
   encounter.at(delay, watching);
-  encounter.at(delay + 15, watching);
+  const radioSeconds = base.threats.smores.radioSeconds;
+  encounter.at(delay + radioSeconds, watching);
   near(encounter.state().hours, nightNumber >= 4
     ? clockProgress(base.night.clock, 20, .14, delay - .01)
       + clockProgress(base.night.clock, 20 + .14 * (delay - .01), .04, .01)
-      + clockProgress(base.night.clock, 20 + .14 * (delay - .01) + .0004, .14, 15) : (delay + 15) / secondsPerHour);
-  near(encounter.game.diagnostics()[0].remaining, actors[0].remaining - 15);
+      + clockProgress(base.night.clock, 20 + .14 * (delay - .01) + .0004, .14, radioSeconds) : (delay + radioSeconds) / secondsPerHour);
+  near(encounter.game.diagnostics()[0].remaining, actors[0].remaining - radioSeconds);
   assert.equal(encounter.game.officeState().smores, nightNumber >= 6 ? 'vent' : 'idle');
-  encounter.returnAt(delay + 15);
+  encounter.returnAt(delay + radioSeconds);
   assert.equal(encounter.state().shadow.phase, nightNumber >= 7 ? 'manifested' : 'inactive');
 
   const gates = scenario({ nightNumber });
@@ -107,7 +118,7 @@ const firstYandereMove = scenario({ nightNumber: 2, tune(config) {
   config.movement.jitter = { min: 0, max: 0 };
 } });
 const yandere = () => firstYandereMove.game.diagnostics().find(actor => actor.key === 'yandere');
-const firstInterval = 5 * .70 * .52;
+const firstInterval = 5 * .67 * .52;
 near(yandere().remaining, firstInterval);
 firstYandereMove.at(40 + firstInterval - .001);
 assert.equal(yandere().position, 19);
@@ -127,7 +138,8 @@ const progress = cadences.map(interval => {
 });
 assert(progress[0].moves.length > 0);
 for (const { frame, moves } of progress) {
-  assert.equal(frame.now, 170);
+  assert.equal(frame.now, progress[0].frame.now);
+  assert.equal(frame.outcome, progress[0].frame.outcome);
   for (const key of ['hours', 'energy', 'sanity']) near(frame[key], progress[0].frame[key]);
   assert.deepEqual(moves, progress[0].moves);
 }
@@ -286,10 +298,11 @@ const clown = scenario({ levels: { palhaca: 1 } });
 clown.at(0, { view: 'closet-back', closet: true, clownLight: true }, { type: 'closetEnter' });
 clown.at(2);
 near(clown.state().sanity, 95.90);
-near(clown.state().counter, 1 + 2 * .88 * 1.625);
+const clownGrowth = base.threats.clown.growth[0];
+near(clown.state().counter, 1 + 2 * clownGrowth * 1.625);
 for (const [hidden, radio, clownLight, rate] of [
-  [false, true, false, -2], [true, false, false, .88 * 3.25], [true, false, true, .88 * 1.625],
-  [true, true, false, -2], [true, true, true, .88 * 1.625 - 2]
+  [false, true, false, -2], [true, false, false, clownGrowth * 3.25], [true, false, true, clownGrowth * 1.625],
+  [true, true, false, clownGrowth * 3.25 - 2], [true, true, true, clownGrowth * 1.625 - 2]
 ]) {
   const test = scenario({ levels: { palhaca: 1 } });
   test.at(5, { radio, clownLight }, hidden ? { type: 'closetEnter' } : undefined);

@@ -15,7 +15,9 @@
   "smores": {
     "name": "Smores",
     "radioSeconds": 18,
-    "radioResetSeconds": 2.5,
+    "radioResetSeconds": { "min": 2, "max": 4 },
+    "roomSoundSeconds": 4.5,
+    "roomSoundChance": 0.65,
     "silenceSeconds": 10,
     "ignoredSeconds": 15,
     "finalSeconds": 10,
@@ -26,7 +28,9 @@
   },
   "closetVent": { "waitSeconds": 15, "lightSeconds": { "min": 1.5, "max": 3.5 } },
   "attack": {
-    "repeatReactionFactor": 0.90,
+    "secondReactionFactor": 0.75,
+    "padraoReactionStep": 0.05,
+    "padraoMinReactionFactor": 0.05,
     "stay": 5.5,
     "lateStay": 8.5,
     "lateThreshold": 0.8,

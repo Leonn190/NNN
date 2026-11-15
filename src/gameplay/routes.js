@@ -61,7 +61,7 @@ function createRoutes(map) {
 
 function createAttackRoutes(config, graph, random, passable, clear) {
   const { map, movement } = config;
-  const { definitions, bonus: initialBonus, perMove, padraoPerMove } = movement.routes;
+  const { definitions, bonus: initialBonus, padraoBonus, perMove, padraoPerMove } = movement.routes;
   const permitsEdge = (actor, edge) => edge && (!edge.actors || edge.actors.includes(actor.key));
   function routeOptions(actor) {
     const { routes, firstRoutes } = actor.rule;
@@ -77,7 +77,7 @@ function createAttackRoutes(config, graph, random, passable, clear) {
   function canNavigate(actor, id) {
     return actor.allowed.has(id) && id !== map.office && id !== map.front && id !== map.left
       && (id !== map.closetVent || (actor.route?.objective === 'closetVent' && actor.position === actor.route.lastReached))
-      && !(actor.rule.initialStationaryAttempts !== undefined && id === actor.rule.start)
+      && !(actor.stage < actor.rule.initialStationaryAttempts && id === actor.rule.start)
       && !(actor.route?.id === 'CC' && id === map.leftApproach);
   }
 
@@ -188,7 +188,8 @@ function createAttackRoutes(config, graph, random, passable, clear) {
   function bonus(level, moves = 0, key) {
     if (level <= 0) return 0;
     const progress = difficultyProgress(level, config.night.levels[1]);
-    return interpolate(initialBonus, progress) + moves * interpolate(key === 'padrao' ? padraoPerMove : perMove, progress);
+    const padrao = key === 'padrao';
+    return interpolate(padrao ? padraoBonus : initialBonus, progress) + moves * interpolate(padrao ? padraoPerMove : perMove, progress);
   }
   return { select, selectionOdds, checkpoint, reach, nextSteps, canNavigate, bonus };
 }

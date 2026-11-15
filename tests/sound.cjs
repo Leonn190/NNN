@@ -135,3 +135,39 @@ test('invasions share a loop that fades, resumes and cleans up on shift stop', (
   assert.equal(sound.invasionFade, undefined);
   assert.equal(sample.paused, true);
 });
+
+test('spatial gate closures overlap with independent pan and preserve the central gate sample', ({ mock }) => {
+  const previousAudio = global.Audio;
+  global.Audio = class {
+    paused = true;
+    constructor(src) { this.src = src; }
+    async play() { this.paused = false; }
+    pause() { this.paused = true; }
+  };
+  try {
+    const sound = new SoundEngine();
+    sound.enabled = true;
+    sound.context = new AudioContext();
+    sound.context.state = 'running';
+    mock.method(sound.context, 'createMediaElementSource', () => new AudioNode());
+    sound.preloadSamples();
+    const file = 'SFXBible_12478.ogg';
+    sound.playSample('officeGateClose');
+    sound.playPannedSample('officeGateClose', .31, -.82, 2);
+    sound.playPannedSample('officeGateClose', .19, .14, 2);
+    sound.playPannedSample('officeGateClose', .13, .08, 2);
+    assert.deepEqual(sound.pannedSamples.get(file).map(({ audio, panner }) => [audio.volume, panner.pan.value]),
+      [[.31, -.82], [.19, .14]]);
+    assert.equal(sound.samples.get(file).volume, .45);
+    sound.context.state = 'suspended';
+    sound.playPannedSample('officeGateClose', .07, .42, 2);
+    const fallback = sound.pannedSamples.get(file).at(-1);
+    assert.equal(fallback.panner, null);
+    assert.equal(fallback.audio.volume, .07);
+    assert.equal(sound.samples.get(file).volume, .45);
+    sound.stopSamples();
+    assert(sound.pannedSamples.get(file).every(({ audio }) => audio.paused));
+  } finally {
+    global.Audio = previousAudio;
+  }
+});

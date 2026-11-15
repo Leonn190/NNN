@@ -38,7 +38,7 @@ const dom = {
   playfield: $('#playfield'), scareArt: $('#jumpscare-art'),
   gameOver: $('#game-over'), returnToMenu: $('#return-to-menu'), scareSound: $('#jumpscare-sound'),
   officeScene: $('#office-scene'), officeMonitor: $('#office-monitor'), officeArt: $('#office-art'),
-  officePower: $('#office-power'), desktopPower: $('#desktop-power'), shutdownDesktop: $('#shutdown-desktop'),
+  desktopPower: $('#desktop-power'), shutdownDesktop: $('#shutdown-desktop'),
   officeCharacters: $('#office-characters'), corridorCharacters: $('#corridor-characters'),
   smoresVent: $('#smores-vent'), smoresRoom: $('#smores-room'), invasionFlash: $('#invasion-flash'),
   officeCloset: $('#office-closet'), officeRadio: $('#office-radio'),
@@ -82,10 +82,10 @@ const CLOWN_BOTTOM_IMAGE = './public/images/jumpscares/palhaca-baixo.gif';
 const SHADOW_IMAGE = config.shadow.jumpscare;
 const JUMPSCARE_AUDIO = './public/audio/jumpscares/';
 const { corridorAttackSound, stockAttackSound, flashlight, invasion, closetVentSound, clownWarningSound,
-  yandereSabotageSound, yandereSurpriseSound, padraoInvasionSound } = config.effects;
+  yandereSabotageSound, yandereSurpriseSound, padraoInvasionSound, mapGateCloseSound, smoresRoomSound } = config.effects;
 const { image: cameraScareImage, sound: cameraScareSound } = config.threats.yandereCameraScare;
 const attackSamples = [...corridorAttackSound.files, ...stockAttackSound.files, invasion.file, closetVentSound.file,
-  yandereSabotageSound.file, yandereSurpriseSound.file, ...padraoInvasionSound.files, cameraScareSound];
+  yandereSabotageSound.file, yandereSurpriseSound.file, ...padraoInvasionSound.files, cameraScareSound, smoresRoomSound.file];
 const corridorSoundVoices = Object.keys(config.characters).length;
 const MONITOR_TRANSITION_MS = { boot: 6500, shutdown: 2000 };
 const CAMERA_LAUNCH_MS = 1500;
@@ -307,6 +307,9 @@ const movement = createMovement(config, {
     } else if (event === 'smores') {
       officeChanged = true;
       if (value === 'vent') sound.playSample('vent');
+      if (value === 'idle') sound.stopSample(smoresRoomSound.file);
+    } else if (event === 'smoresRoomSound') {
+      sound.playSample(smoresRoomSound.file, smoresRoomSound.volume);
     } else if (event === 'closetVent') {
       sound.playSample(closetVentSound.file, closetVentSound.volume);
     } else if (event === 'gatesChanged') {
@@ -314,6 +317,10 @@ const movement = createMovement(config, {
         map.setGate(id, closed);
         changedGates.add(id);
         if (id === OFFICE.gate && closed && state.mode === 'office') sound.playSample('officeGateClose');
+        const spatial = mapGateCloseSound[id];
+        if (closed && spatial) {
+          sound.playPannedSample('officeGateClose', spatial.volume, spatial.pan, Object.keys(mapGateCloseSound).length + 1);
+        }
       }
     } else if (event === 'cameraInterference') {
       goticaStaticAt = state.startedAt + value * 1000;
@@ -585,7 +592,8 @@ function updateMovementDebug() {
     const routeDetails = actor.route !== 'Sem rota' && actor.bonus !== null
       ? ` · início ${required} · progresso ${progress}` : '';
     const level = actor.level === config.night.levels[1] ? 'MAX' : actor.level;
-    const reaction = actor.reaction === null ? '' : ` · reação ${actor.reaction.toFixed(3)} s`;
+    const reaction = actor.reaction === null ? '' : ` · invasões ${actor.invasions} · ${actor.instantInvasion
+      ? 'próxima invasão letal' : `reação ${actor.reaction.toFixed(3)} s`}`;
     const modifiers = Object.entries(actor.audio?.modifiers ?? {}).map(([id, modifier]) =>
       `${positions.get(Number(id)).name} ${modifier > 0 ? '+' : ''}${modifier}%`);
     const audio = actor.audio ? ` · áudio pendente ${actor.audio.camera} (${modifiers.join(', ')})` : '';
@@ -733,13 +741,16 @@ function openComputer() {
 
 function closeComputer() {
   if (dom.desktop.hidden || state.complete) return;
+  const now = performance.now();
+  advanceGame(now);
+  if (state.complete) return;
   setMode('office');
-  advanceGame(performance.now(), { type: 'returnToOffice', source: 'computer' });
+  advanceGame(now);
   dom.officeMonitor.focus({ preventScroll: true });
 }
 
 function toggleComputerPower() {
-  if (state.complete || state.closetTransition || !dom.cameraScare.hidden) return;
+  if (dom.desktop.hidden || state.complete || state.closetTransition || !dom.cameraScare.hidden) return;
   const now = performance.now();
   if (state.monitorTransition) {
     advanceGame(now);
@@ -1424,6 +1435,7 @@ function gameInput() {
     closetVentLight: !document.hidden && !state.closetTransition && !dom.closetBeam.hidden,
     flashlight: (office && state.flashlight) || (closet && !dom.closetBeam.hidden),
     radio: state.radioPlaying,
+    computerInterface: !dom.desktop.hidden,
     computer: !dom.desktop.hidden && !dom.computerScreen.inert,
     viewMoving: (office && state.pan !== state.targetPan) || (closet && state.closetPan !== state.closetTarget)
   };
@@ -1554,10 +1566,8 @@ function renderResourceState({ energy, blackout, computerOn, radioAvailable, fla
     updateOfficeView();
   }
   dom.computerScreen.inert = !computerOn || Boolean(state.monitorTransition);
-  dom.officePower.disabled = dom.desktopPower.disabled = blackout;
-  for (const button of [dom.officePower, dom.desktopPower]) {
-    button.setAttribute('aria-pressed', String(computerOn));
-  }
+  dom.desktopPower.disabled = blackout;
+  dom.desktopPower.setAttribute('aria-pressed', String(computerOn));
   dom.officeRadio.disabled = !radioAvailable;
   if (dom.closetLight.disabled !== !flashlightAvailable) {
     dom.closetLight.disabled = !flashlightAvailable;
@@ -1730,7 +1740,6 @@ document.addEventListener('visibilitychange', () => {
   if (!state.complete || (dom.game.dataset.defeat && dom.game.dataset.defeat !== 'over')) requestGameFrame();
 });
 dom.officeMonitor.addEventListener('click', openComputer);
-dom.officePower.addEventListener('click', toggleComputerPower);
 dom.desktopPower.addEventListener('click', toggleComputerPower);
 dom.shutdownDesktop.addEventListener('click', toggleComputerPower);
 $('#monitor-exit').addEventListener('click', closeComputer);
@@ -1956,7 +1965,7 @@ dom.office.addEventListener('pointermove', event => {
     state.targetPan = Math.max(-maxPanShift(), Math.min(maxPanShift(), state.targetPan + change));
     return;
   }
-  if ([dom.officeRadio, dom.officeGate, dom.officeLight, dom.officePower].includes(event.target)) {
+  if ([dom.officeRadio, dom.officeGate, dom.officeLight].includes(event.target)) {
     state.targetPan = state.pan;
     return;
   }

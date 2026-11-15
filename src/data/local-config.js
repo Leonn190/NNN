@@ -40,7 +40,7 @@ window.NathGame.localConfig = {
         "CAM11",
         "CAM12"
       ],
-      "interval": 24,
+      "interval": 23,
       "reaction": 3,
       "routes": {
         "CV": 19,
@@ -124,6 +124,7 @@ window.NathGame.localConfig = {
         13,
         14,
         15,
+        16,
         17,
         18,
         19,
@@ -138,6 +139,7 @@ window.NathGame.localConfig = {
         "CAM06",
         "CAM07",
         "CAM08",
+        "CAM09",
         "CAM10",
         "CAM11",
         "CAM12"
@@ -232,7 +234,7 @@ window.NathGame.localConfig = {
         "CAM10",
         "CAM11"
       ],
-      "interval": 29,
+      "interval": 30,
       "reaction": 2,
       "targetBonus": [
         10,
@@ -346,6 +348,32 @@ window.NathGame.localConfig = {
     "clownWarningSound": {
       "volume": 0.45,
       "pan": 1
+    },
+    "mapGateCloseSound": {
+      "G09": {
+        "volume": 0.31,
+        "pan": -0.82
+      },
+      "G04": {
+        "volume": 0.13,
+        "pan": 0.08
+      },
+      "G02": {
+        "volume": 0.19,
+        "pan": 0.14
+      },
+      "G05": {
+        "volume": 0.07,
+        "pan": 0.42
+      },
+      "G03": {
+        "volume": 0.09,
+        "pan": 0.58
+      }
+    },
+    "smoresRoomSound": {
+      "file": "smores.wav",
+      "volume": 0.45
     },
     "invasion": {
       "file": "Invasão.ogg",
@@ -958,7 +986,8 @@ window.NathGame.localConfig = {
     "capacities": {
       "12": 1,
       "14": 2,
-      "15": 3
+      "15": 3,
+      "16": 1
     },
     "maxClosedMapGates": 3
   },
@@ -976,7 +1005,11 @@ window.NathGame.localConfig = {
     "routes": {
       "bonus": [
         25,
-        36
+        40
+      ],
+      "padraoBonus": [
+        32,
+        48
       ],
       "perMove": [
         3,
@@ -986,7 +1019,8 @@ window.NathGame.localConfig = {
         4,
         6
       ],
-      "huntBonus": 20,
+      "huntBonus": 25,
+      "huntPenalty": 20,
       "blockedProgressRetention": 0.5,
       "definitions": {
         "CV": {
@@ -1491,7 +1525,12 @@ window.NathGame.localConfig = {
     "smores": {
       "name": "Smores",
       "radioSeconds": 18,
-      "radioResetSeconds": 2.5,
+      "radioResetSeconds": {
+        "min": 2,
+        "max": 4
+      },
+      "roomSoundSeconds": 4.5,
+      "roomSoundChance": 0.65,
       "silenceSeconds": 10,
       "ignoredSeconds": 15,
       "finalSeconds": 10,
@@ -1518,7 +1557,9 @@ window.NathGame.localConfig = {
       }
     },
     "attack": {
-      "repeatReactionFactor": 0.9,
+      "secondReactionFactor": 0.75,
+      "padraoReactionStep": 0.05,
+      "padraoMinReactionFactor": 0.05,
       "stay": 5.5,
       "lateStay": 8.5,
       "lateThreshold": 0.8,

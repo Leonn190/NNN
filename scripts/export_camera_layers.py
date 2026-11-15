@@ -39,12 +39,16 @@ ORDERS = {
     "CAM04": ("original", "yandere", "gotica", "platinada"),
     "CAM07": ("original", "yandere", "gotica", "platinada"),
     "CAM08": ("original", "gotica", "yandere", "platinada"),
-    "CAM09": ("maid", "maid-saindo"),
+    "CAM09": ("maid", "maid-saindo", "maid-retorno", "yandere"),
     "CAM10": ("gotica", "maid", "original", "yandere"),
     "CAM11": ("maid", "gotica", "original", "yandere"),
     "CAM12": ("original", "yandere", "gotica"),
 }
 MAID_FILES = {"maid": "01-maid-sentada", "maid-saindo": "02-maid-saindo"}
+SERVICE_SOURCES = {
+    "maid-retorno": "Nathzinha Maid na Sala de Manutenção.png",
+    "yandere": "Tchauzinho na Sala de Manutenção.png",
+}
 # Silhuetas desenhadas sobre as referências de 836 × 470. Os vãos entre
 # braços e pernas deixam passar o fundo vazio.
 MAID_OUTLINES = {
@@ -73,12 +77,43 @@ MAID_OUTLINES = {
         (455, 176), (443, 171), (428, 180), (399, 185), (374, 189), (358, 189),
         (344, 188), (337, 184),
     ],
+    "maid-retorno": [
+        (431, 106), (437, 96), (452, 87), (470, 85), (485, 88), (498, 101),
+        (499, 120), (494, 139), (500, 155), (500, 180), (511, 198), (510, 218),
+        (518, 234), (524, 250), (532, 249), (540, 267), (543, 288), (539, 297),
+        (534, 279), (530, 289), (526, 282), (527, 268), (515, 258), (517, 274),
+        (509, 286), (496, 297), (492, 321), (488, 349), (483, 390), (486, 416),
+        (487, 437), (480, 445), (469, 444), (460, 438), (449, 447), (438, 444),
+        (434, 435), (437, 411), (432, 375), (429, 352), (425, 327), (423, 300),
+        (413, 289), (401, 277), (403, 264), (414, 246), (424, 227), (427, 203),
+        (422, 187), (415, 199), (408, 217), (398, 218), (391, 209), (392, 185),
+        (385, 179), (386, 169), (379, 139), (382, 137), (389, 155), (385, 130),
+        (388, 128), (394, 149), (391, 126), (395, 126), (400, 149), (400, 132),
+        (403, 133), (408, 153), (412, 144), (415, 145), (414, 156), (406, 174),
+        (413, 178), (416, 167), (421, 157), (427, 144), (429, 129),
+    ],
+    "yandere": [
+        (407, 168), (413, 143), (419, 120), (431, 104), (443, 102), (454, 112),
+        (471, 111), (485, 115), (490, 120), (501, 117), (510, 126), (513, 145),
+        (513, 170), (511, 186), (518, 204), (511, 219), (510, 232), (505, 252),
+        (504, 272), (508, 281), (501, 291), (497, 312), (488, 332), (483, 348),
+        (477, 368), (475, 387), (471, 401), (473, 424), (470, 435), (461, 441),
+        (451, 454), (440, 454), (430, 445), (426, 431), (426, 408), (429, 390),
+        (426, 365), (426, 354), (432, 340), (431, 328), (426, 316), (427, 300),
+        (422, 290), (413, 283), (415, 269), (423, 256), (432, 246), (438, 236),
+        (430, 225), (421, 226), (415, 234), (407, 233), (402, 222), (402, 198),
+        (398, 183), (394, 175), (381, 161), (382, 158), (394, 166), (382, 154),
+        (384, 151), (398, 163), (386, 149), (389, 147), (403, 160), (396, 150),
+        (399, 150), (407, 160),
+    ],
 }
 # Sombras locais na parede/porta e junto aos pés. O fator limita a
 # contribuição da iluminação distinta do quadro de referência.
 MAID_SHADOWS = {
     "maid": [(601, 194, 739, 239), (654, 83, 732, 185)],
     "maid-saindo": [(340, 111, 417, 204), (412, 270, 479, 317), (476, 299, 556, 378)],
+    "maid-retorno": [(340, 344, 451, 414), (425, 422, 493, 452)],
+    "yandere": [(454, 354, 568, 425), (423, 412, 482, 458)],
 }
 # Fora dessas linhas ficam reflexos, penumbras ou detalhes de cenário
 # alterados pela arte original. Mantém sua contribuição no quadro com
@@ -133,8 +168,9 @@ def extract_layers(folder, state_folder, base_path, order, camera, shared=None):
     layers = {}
     covered = np.zeros((height, width), dtype=bool)
     for key in order:
-        name = MAID_FILES[key] if maid_scene else key
-        source = read_rgb(state_folder / f"{name}.webp")
+        source_path = (Path("public/images") / SERVICE_SOURCES[key] if maid_scene and key in SERVICE_SOURCES
+                       else state_folder / f"{MAID_FILES[key] if maid_scene else key}.webp")
+        source = read_rgb(source_path)
         if source.shape != base.shape:
             raise ValueError(f"{folder}/{key}: dimensões divergentes")
 
