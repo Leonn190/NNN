@@ -19,6 +19,7 @@
       "EL": { "objective": "stock", "target": 10, "paths": [[5, 9, 10]] },
       "EC": { "objective": "stock", "target": 10, "paths": [[19, 18, 15, 10], [19, 18, 17, 15, 10]] },
       "EV": { "objective": "stock", "target": 10, "paths": [[6, 15, 10], [7, 15, 10]] },
+      "AR": { "objective": "closetVent", "target": 26, "paths": [[3, 26]] },
       "ES": { "objective": "stock", "target": 10, "paths": [[8, 11, 10], [22, 11, 10]] },
       "EE": { "objective": "electrical", "target": 21 }
     }
@@ -32,8 +33,10 @@
       "padrao": { "approach": [0.45, 0.80], "entry": [0.60, 0.98] }
     },
     "stock": {
-      "approach": [0.20, 0.94],
-      "entry": [0.40, 0.99]
+      "approach": [0.25, 0.94],
+      "entry": [0.50, 0.99],
+      "observationPenalty": 0.35,
+      "minimumObservedAdvance": 0.05
     },
     "stayShare": 0.30
   },

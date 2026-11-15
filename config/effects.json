@@ -22,9 +22,11 @@
     "volume": 0.32
   },
   "stockAttackSound": {
-    "files": ["audio/559107__agenta1cr__possessed-laugh.wav", "audio/Risada 1.wav"],
+    "files": ["audio/559107__agenta1cr__possessed-laugh.wav", "audio/Risada 1.wav", "risada 2.mp3"],
     "volume": 0.32
   },
+  "invasion": { "file": "Invasão.ogg", "volume": 0.45, "fadeOutSeconds": 1, "flashMs": 120 },
+  "closetVentSound": { "file": "audio/closet-vent.mp3", "volume": 0.45 },
   "flashlight": {
     "corridorFlickerMs": 160,
     "modifiers": {

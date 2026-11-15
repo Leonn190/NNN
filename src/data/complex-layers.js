@@ -465,6 +465,10 @@ window.NathGame.complexLayers = {
     }
   },
   "closet": {
+    "vent": {
+      "empty": "./public/images/office/closet/layers/vent-empty.webp",
+      "gatinha": "./public/images/office/closet/layers/vent-gatinha.webp"
+    },
     "size": [
       1671,
       941

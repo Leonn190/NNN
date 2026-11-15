@@ -19,9 +19,11 @@ function createSmores(rules, level, maxLevel, random, emit) {
   let phase = 'idle';
   let radioTime = 0;
   let silenceTime = 0;
+  let ignoredTime = 0;
   let retreatReady = false;
   let looking = false;
   let roomRemaining = 0;
+  const entrySeconds = rules.ignoredSeconds + rules.finalSeconds;
 
   function setPhase(next) {
     phase = next;
@@ -30,15 +32,22 @@ function createSmores(rules, level, maxLevel, random, emit) {
 
   function integrate(dt, radio) {
     if (phase === 'idle') radioTime = radio ? radioTime + dt : 0;
-    if (phase === 'vent' && !retreatReady) {
-      silenceTime = radio ? 0 : silenceTime + dt;
-      retreatReady = silenceTime >= rules.silenceSeconds - tolerance;
+    if (phase === 'vent') {
+      if (!looking) ignoredTime += dt;
+      if (!retreatReady) {
+        silenceTime = radio ? 0 : silenceTime + dt;
+        retreatReady = silenceTime >= rules.silenceSeconds - tolerance;
+      }
     }
     if (phase === 'room') roomRemaining -= dt * roomSpeed(radio);
   }
 
   function nextDeadline(now, radio) {
     if (phase === 'idle' && radio) return now + (rules.radioSeconds - radioTime);
+    if (phase === 'vent' && !looking) {
+      const threshold = ignoredTime < rules.ignoredSeconds - tolerance ? rules.ignoredSeconds : entrySeconds;
+      return now + Math.max(0, threshold - ignoredTime);
+    }
     if (phase === 'room') return now + roomRemaining / roomSpeed(radio);
     return Infinity;
   }
@@ -55,6 +64,7 @@ function createSmores(rules, level, maxLevel, random, emit) {
       if (ventOpportunity) {
         looking = Boolean(input.smoresLooking);
         silenceTime = 0;
+        ignoredTime = 0;
         retreatReady = false;
         setPhase('vent');
       }
@@ -62,14 +72,15 @@ function createSmores(rules, level, maxLevel, random, emit) {
     }
     if (phase === 'vent') {
       if (radio) silenceTime = 0;
-      if (looking && !input.smoresLooking) {
-        if (retreatReady) setPhase('idle');
-        else if (radio) {
-          roomRemaining = roomSeconds;
-          setPhase('room');
-        }
+      const lookedAway = looking && !input.smoresLooking;
+      if (ignoredTime >= entrySeconds - tolerance || (lookedAway && !retreatReady && radio)) {
+        roomRemaining = roomSeconds;
+        setPhase('room');
+      } else if (lookedAway && retreatReady) {
+        setPhase('idle');
       }
       looking = Boolean(input.smoresLooking);
+      if (looking) ignoredTime = 0;
     } else if (phase === 'room' && roomRemaining <= tolerance) {
       setPhase('idle');
     }
@@ -79,6 +90,8 @@ function createSmores(rules, level, maxLevel, random, emit) {
     integrate, nextDeadline, resolve, phase: () => phase,
     diagnostics: radio => ({
       phase, looking, retreatReady, radio,
+      ignoredRemaining: phase === 'vent' && !looking ? Math.max(0, entrySeconds - ignoredTime) : null,
+      finalApproach: phase === 'vent' && ignoredTime >= rules.ignoredSeconds - tolerance,
       remaining: phase === 'idle' && radio ? Math.max(0, rules.radioSeconds - radioTime)
         : phase === 'vent' ? Math.max(0, rules.silenceSeconds - silenceTime)
         : phase === 'room' ? Math.max(0, roomRemaining / roomSpeed(radio)) : null
@@ -129,9 +142,9 @@ function createThreats(config, levels, random, emit, reactionReduction = () => 0
     return true;
   }
 
-  function invade(actor, now) {
+  function invade(actor, now, visibleAt = now) {
     const previous = invasionCounts.get(actor) ?? 0;
-    const invasion = { actor, arrived: now, previous, leaveAt: null };
+    const invasion = { actor, arrived: visibleAt, previous, leaveAt: null };
     invasions.set(actor, invasion);
     invasionCounts.set(actor, previous + 1);
     if (hidden) protect(invasion, now);
@@ -181,6 +194,9 @@ function createThreats(config, levels, random, emit, reactionReduction = () => 0
   const clownStage = () => clownEnabled ? clown.stages.findLastIndex(threshold => counter >= threshold) : -1;
   return {
     enterCloset, exitCloset: () => { hidden = false; },
+    delayReactions(seconds) {
+      for (const invasion of invasions.values()) invasion.arrived += seconds;
+    },
     invade, integrate, nextDeadline, resolve, clownStage, reactionTime,
     snapshot: () => ({ hidden, counter, floor, clownStage: clownStage() }),
     invasionStatus(actor, now) {
@@ -196,7 +212,7 @@ function createThreats(config, levels, random, emit, reactionReduction = () => 0
   };
 }
 
-function createApproach(map, effects, random) {
+function createApproach(map, effects, random, observingLeft = () => false) {
   const stages = {
     corridor: [map.back, map.front, map.office],
     stock: [map.leftApproach, map.left, map.office]
@@ -213,7 +229,7 @@ function createApproach(map, effects, random) {
   function options(actor) {
     const { objective, phase } = actor.approach;
     return { to: stages[objective][phase === 'approach' ? 1 : 2], objective,
-      ...effects.attackOdds(actor, objective, phase) };
+      ...effects.attackOdds(actor, objective, phase, observingLeft()) };
   }
 
   function choose(actor) {

@@ -61,13 +61,15 @@ function createEffects(config, routes, actors) {
     }
   }
 
-  function attackOdds(actor, objective, phase) {
+  function attackOdds(actor, objective, phase, leftLook) {
     const { corridor, stock, stayShare } = config.movement.attack;
     const [quiet, loud] = (objective === 'corridor' ? corridor[actor.key] : stock)[phase];
     const intensity = clamp(actor.noise / noise.max, 0, 1);
     const light = objective === 'corridor' && actor.light > 0 && flashlight.modifiers[actor.key];
-    const advance = clamp(quiet + (loud - quiet) * intensity + (light ? light.advanceDelta * actor.light : 0),
-      light ? flashlight.minimumAdvance : 0, light ? flashlight.maximumAdvance : 1);
+    const doorObserved = objective === 'stock' && leftLook;
+    const modifier = doorObserved ? -stock.observationPenalty : light ? light.advanceDelta * actor.light : 0;
+    const minimum = doorObserved ? stock.minimumObservedAdvance : light ? flashlight.minimumAdvance : 0;
+    const advance = clamp(quiet + (loud - quiet) * intensity + modifier, minimum, light ? flashlight.maximumAdvance : 1);
     const failure = 1 - advance;
     return { advance, stay: failure * stayShare, abandon: failure * (1 - stayShare) };
   }

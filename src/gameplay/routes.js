@@ -74,6 +74,7 @@ function createAttackRoutes(config, graph, random, passable, clear) {
 
   function canNavigate(actor, id) {
     return actor.allowed.has(id) && id !== map.office && id !== map.front && id !== map.left
+      && (id !== map.closetVent || (actor.route?.objective === 'closetVent' && actor.position === actor.route.lastReached))
       && !(actor.rule.initialStationaryAttempts !== undefined && id === actor.rule.start)
       && !(actor.route?.id === 'CC' && id === map.leftApproach);
   }

@@ -99,6 +99,11 @@ function cameraActorFrame(cam, actors, config, isGateClosed, preview) {
     && (frame.layers?.length || (frame.gateKey ? variant?.[frame.gateKey] : variant))) };
 }
 
+function closetVentImage(occupied) {
+  const { vent } = window.NathGame.complexLayers.closet;
+  return occupied ? vent.gatinha : vent.empty;
+}
+
 function closetFrame(gate, occupants, doorway) {
   const scene = window.NathGame.complexLayers.closet;
   const selected = [`porta-${doorway}`, ...occupants.map(id => `sala-${id}`)];
@@ -164,6 +169,6 @@ function corridorSlots(front, back) {
 
 Object.assign(window.NathGame, {
   cameraStateKey, cameraFrame, cameraActorFrame, cameraObservation, sanityObservation,
-  characterStateImages, hasCameraState, officeCharacterImage, corridorSlots, closetFrame
+  characterStateImages, hasCameraState, officeCharacterImage, corridorSlots, closetFrame, closetVentImage
 });
 })();

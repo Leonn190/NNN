@@ -35,8 +35,8 @@ function scenario(overrides = {}, { levels, random = () => .5, gates = [], tune 
 }
 
 const routes = createRoutes(base.map);
-assert.equal(routes.positions.size, 25);
-assert.equal(base.map.edges.length, 35);
+assert.equal(routes.positions.size, 26);
+assert.equal(base.map.edges.length, 36);
 assert.deepEqual(routes.neighbors.get(2).sort((a, b) => a - b), [1, 3, 6, 7]);
 assert.equal(routes.gate(19, 1), 'G06');
 assert.equal(routes.connection(19, 18).openingId, 'P10');
@@ -46,6 +46,7 @@ assert.equal(routes.connection(15, 19), undefined);
 assert.deepEqual(routes.connection(19, 20).actors, ['padrao']);
 assert.deepEqual(Object.keys(base.characters).filter(key => base.characters[key].positions.includes(20)), ['padrao']);
 assert.deepEqual(Object.keys(base.characters).filter(key => base.characters[key].positions.includes(24)), ['gatinha']);
+assert.deepEqual(Object.keys(base.characters).filter(key => base.characters[key].positions.includes(base.map.closetVent)), ['gatinha']);
 assert.deepEqual([...routes.positions.keys()].filter(from => routes.connection(from, 14)), [15]);
 assert.equal(routes.gate(15, 7), 'G02');
 assert.equal(routes.connection(10, 15).openingId, 'P03');
@@ -93,6 +94,11 @@ for (const { from, to, type, gateId, openingId, exits, through = [], via = [] } 
       assert.equal(sides.filter(point => inside(point, byRoom.get(room))).length, 1);
       assert.equal(sides.filter(point => [...byRoom.values()].some(points => inside(point, points))).length, 1);
     }
+  } else if (type === 'vent') {
+    assert.equal(from, 3);
+    assert.equal(to, base.map.closetVent);
+    assert.deepEqual(routes.connection(from, to).actors, ['gatinha']);
+    assert.equal(routes.connection(to, from), undefined);
   } else {
     const rooms = [a, ...through, b];
     const openings = [gateId ?? openingId, ...via];
@@ -150,7 +156,7 @@ for (const [id, crossings] of Object.entries(gateCrossings)) {
     padrao: { CV: 19, CC: 19, EL: 16, EC: 15, EV: 10, ES: 21 },
     gotica: { CV: 30, CC: 30, EL: 20, EC: 10, EV: 10 },
     yandere: { CV: 22, CC: 22, EL: 10, EC: 14, EV: 8, EE: 24 },
-    gatinha: { CV: 48, EL: 26, EV: 26 }, maid: {}
+    gatinha: { CV: 48, EL: 26, AR: 26 }, maid: {}
   };
   const open = (_, edge) => Boolean(edge);
   const routing = createAttackRoutes(base, routes, () => 0, open, open);
@@ -182,7 +188,7 @@ for (const [id, crossings] of Object.entries(gateCrossings)) {
   const actor = { key: 'gatinha', rule: gatinha, allowed: new Set(gatinha.positions), position: 3 };
   const closedVip = (_, edge) => open(null, edge) && edge.gateId !== 'G02';
   const available = createAttackRoutes(base, routes, () => 0, closedVip, closedVip).selectionOdds(actor);
-  assert.deepEqual(available.map(({ route, probability }) => [route.id, probability]), [['EL', 1]]);
+  assert.deepEqual(available.map(({ route, probability }) => [route.id, probability]), [['EL', .5], ['AR', .5]]);
 }
 
 // Beginning at the stockroom still requires CAM12. Its intermediate corridor visit cannot start an attack.
@@ -380,7 +386,7 @@ for (const [tier, chance] of base.characters.gotica.staticChance.entries()) {
   assert.equal(actor('gotica').position, 10);
   assert.equal(actor('gotica').approach, 'approach');
   at(60, { leftLook: true });
-  assert.match(actor('padrao').stopped, /porta esquerda observada/);
+  assert.equal(actor('padrao').position, 12);
   at(61);
   assert.equal(actor('padrao').position, 12);
   assert.equal(actor('gotica').position, 10);
@@ -527,7 +533,7 @@ for (const [key, corridor] of Object.entries(corridorOdds)) {
   const actor = { key, rule: base.characters[key], position: 15, noise: 0, light: 0,
     approach: { objective: 'corridor', phase: 'approach' } };
   const fx = createEffects(base, routes, [actor]);
-  const tables = { corridor, ...(key !== 'maid' && { stock: [[.20, .94], [.40, .99]] }) };
+  const tables = { corridor, ...(key !== 'maid' && { stock: [[.25, .94], [.50, .99]] }) };
   for (const [objective, table] of Object.entries(tables)) {
     for (const [index, phase] of attackPhases.entries()) {
       const [quiet, loud] = table[index];
@@ -538,6 +544,11 @@ for (const [key, corridor] of Object.entries(corridorOdds)) {
         closeTo(odds.advance, expected);
         closeTo(odds.stay, (1 - expected) * .3);
         closeTo(odds.abandon, (1 - expected) * .7);
+        const observed = objective === 'stock' ? Math.max(.05, expected - .35) : expected;
+        const watchedOdds = fx.attackOdds(actor, objective, phase, true);
+        closeTo(watchedOdds.advance, observed);
+        closeTo(watchedOdds.stay, (1 - observed) * .3);
+        closeTo(watchedOdds.abandon, (1 - observed) * .7);
       }
     }
   }
@@ -638,12 +649,12 @@ for (const key of ['gotica', 'yandere', 'gatinha']) {
   assert.equal(debug('maid').noise, 0);
   assert.equal(debug('yandere').light, 0);
 
-  const stockAdvance = .20 + (.94 - .20) * .18;
+  const stockAdvance = .25 + (.94 - .25) * .18;
   closeTo(debug('yandere').attackOdds.advance, stockAdvance);
   at(20, { ...quiet, leftLook: true });
-  closeTo(debug('yandere').attackOdds.advance, 0);
-  closeTo(debug('yandere').attackOdds.blocked, stockAdvance);
-  closeTo(debug('yandere').attackOdds.stay, (1 - stockAdvance) * .3);
+  closeTo(debug('yandere').attackOdds.advance, .05);
+  closeTo(debug('yandere').attackOdds.blocked, 0);
+  closeTo(debug('yandere').attackOdds.stay, .95 * .3);
   at(20, quiet, { type: 'gate', id: 'G01' });
   assert.equal(debug('gotica').attackOdds.advance, 0);
   assert(debug('gotica').attackOdds.blocked > 0);
@@ -767,16 +778,102 @@ for (const level of [1, 4, 10, 11]) {
 }
 
 {
-  const { at, output } = scenario({ gotica: { start: 5, interval: 10, routes: { EL: 100 } } },
+  const { at, output, actor } = scenario({ gotica: { start: 5, interval: 10, routes: { EL: 100 } } },
     { random: () => 0 });
   at(20, { leftLook: true });
   assert.deepEqual(output('stockAttack'), ['gotica']);
   at(30, { leftLook: true });
-  at(34, { leftLook: true });
-  at(34.5);
-  at(44.5);
+  assert.equal(actor('gotica').position, 12);
+  at(40, { leftLook: true });
   assert.deepEqual(output('stockAttack'), ['gotica']);
   assert.equal(output('invasion').length, 1);
+}
+
+{
+  const gatinha = { interval: 10, routes: { AR: 100 } };
+  const setup = (fields = {}, options = {}) => scenario({ gatinha: { ...gatinha, ...fields } },
+    { random: () => 0, ...options });
+  const dark = { view: 'closet-back', closet: true };
+  const beam = { ...dark, closetVentLight: true, flashlight: true };
+  const enter = { type: 'closetEnter' };
+  const exit = { type: 'closetExit' };
+  const defend = setup();
+  defend.at(9.999);
+  assert.equal(defend.game.snapshot().closetVent, null);
+  defend.at(10);
+  assert.equal(defend.actor('gatinha').position, base.map.closetVent);
+  assert.equal(defend.game.snapshot().closetVent, 'closetVent');
+  defend.at(18, { view: 'cameras', camera: 'CAM04' });
+  defend.at(22, dark, enter);
+  defend.at(23, beam);
+  defend.at(24.999, { ...beam, view: 'closet-door' });
+  defend.at(28, beam);
+  defend.at(29.999, beam);
+  assert.equal(defend.game.snapshot().closetVent, 'closetVent');
+  defend.at(30, dark);
+  assert.equal(defend.actor('gatinha').position, 3);
+  closeTo(defend.actor('gatinha').remaining, 12.5);
+  assert.equal(defend.game.snapshot().closetVent, null);
+  assert.equal(defend.game.snapshot().outcome, null);
+  assert.equal(defend.output('closetVent').length, 1);
+
+  const late = setup();
+  late.at(10);
+  late.at(12, dark, enter);
+  late.at(13, {}, exit);
+  late.at(29.999);
+  assert.equal(late.game.snapshot().closetVent, 'closetVent');
+  late.at(30);
+  assert.equal(late.game.snapshot().closetVent, 'compromised');
+  late.at(60);
+  assert.equal(late.actor('gatinha').position, base.map.closetVent);
+  assert.equal(late.game.snapshot().outcome, null);
+  late.at(61, dark, enter);
+  assert.deepEqual(late.output('loss'), ['gatinha']);
+  late.game.reset({ gatinha: 0 });
+  late.at(61, dark, enter);
+  assert.equal(late.game.snapshot().closetVent, null);
+  assert.equal(late.game.snapshot().outcome, null);
+
+  const inside = setup();
+  inside.at(10);
+  inside.at(28.001, beam, enter);
+  inside.at(30, {}, exit);
+  assert.deepEqual(inside.output('loss'), ['gatinha']);
+
+  const gated = setup({ start: 5, positions: [3, 5, base.map.closetVent] }, { gates: ['G08'] });
+  gated.at(10);
+  assert.equal(gated.actor('gatinha').position, 5);
+  gated.at(12, {}, { type: 'gate', id: 'G08' });
+  assert.equal(gated.actor('gatinha').position, 3);
+  gated.at(22);
+  assert.equal(gated.game.snapshot().closetVent, 'closetVent');
+}
+
+for (const view of ['office', 'cameras', 'closet-door']) {
+  const { at, game, output } = scenario({
+    gotica: { start: 6, interval: 10, reaction: 2, routes: { CV: 100 } },
+    yandere: { start: 6, interval: 10, reaction: 2, firstIntervalReduction: [0, 0], routes: { CV: 100 } }
+  }, { random: () => 0 });
+  const input = { view };
+  at(0, input, view === 'closet-door' ? { type: 'closetEnter' } : undefined);
+  at(20, input);
+  at(30, input);
+  assert.equal(output('invasion').length, 2);
+  assert(game.officeState().invasionActive);
+  assert.equal(game.officeState().flash, view === 'office');
+  assert.equal(game.officeState().room.length, view === 'office' ? 0 : 2);
+  if (view === 'office') {
+    at(30.119, input);
+    assert(game.officeState().flash);
+    at(30.12, input);
+    assert.deepEqual(game.officeState().room.sort(), ['gotica', 'yandere']);
+    assert(!game.officeState().flash);
+    at(32.119, input);
+    assert.equal(game.snapshot().outcome, null);
+    at(32.12 + 1e-9, input);
+    assert.equal(game.snapshot().outcome, 'loss');
+  }
 }
 
 {
@@ -922,8 +1019,9 @@ for (const key of Object.keys(base.characters).filter(key => key !== 'yandere'))
     if (from === to) assert.equal(actor.key, 'maid');
     else {
       if (retreat) {
-        assert(base.movement.retreat[retreat].includes(to)
-          || (retreat === 'corridor' && from === base.map.front && to === base.map.back));
+        assert(base.movement.retreat[retreat]?.includes(to)
+          || (retreat === 'corridor' && from === base.map.front && to === base.map.back)
+          || (retreat === 'closetVent' && from === base.map.closetVent && to === actor.rule.start));
         if (retreat === 'office') assert.equal(from, base.map.office);
       } else {
         assert(edge);
@@ -939,7 +1037,7 @@ for (const key of Object.keys(base.characters).filter(key => key !== 'yandere'))
       assert([...atPosition.values()].filter(position => position === Number(id)).length <= limit);
     }
   } });
-  const input = { radio: true, closet: true };
+  const input = { radio: true, closet: true, view: 'closet-back', closetVentLight: true };
   game.reset(levels, input, { ...base.night, sanityEnabled: false });
   game.advance(0, input, { type: 'closetEnter' });
   for (let time = 0; time <= 1500 && !game.snapshot().outcome; time += 4.25) {
@@ -1003,7 +1101,7 @@ for (const [key, rule] of Object.entries(base.characters)) {
     const game = createMovement(config, {
       random: () => (seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0) / 2 ** 32,
       emit(type, data) {
-        if (type === 'electricalFault') reached = true;
+        if (type === 'electricalFault' || type === 'closetVent') reached = true;
         if (type !== 'move' || data.retreat) return;
         if (data.to === 15 && data.actor.route?.target === 10) assert.equal(data.actor.approach, null);
         if (data.to === 13 && data.actor.route) {

@@ -92,3 +92,46 @@ test('a pending audio resume cannot recreate ambience after a shift stops', asyn
   assert.equal(sound.stats().ambience, false);
   assert.equal(sound.context.nodes.length, 0);
 });
+
+test('invasions share a loop that fades, resumes and cleans up on shift stop', ({ mock }) => {
+  mock.timers.enable({ apis: ['setInterval'] });
+  let now = 0;
+  mock.method(performance, 'now', () => now);
+  const sound = new SoundEngine();
+  const invasion = require('../config/effects.json').invasion;
+  const sample = {
+    paused: true, plays: 0,
+    async play() { this.paused = false; this.plays++; },
+    pause() { this.paused = true; }
+  };
+  sound.samples.set(invasion.file, sample);
+  sound.startShift();
+  sound.setInvasionLoop(true, invasion);
+  sound.setInvasionLoop(true, invasion);
+  assert.equal(sample.plays, 1);
+  assert.equal(sample.loop, true);
+
+  sound.setInvasionLoop(false, invasion);
+  now = 500;
+  mock.timers.tick(500);
+  assert.equal(sample.paused, false);
+  assert.equal(sample.volume, invasion.volume / 2);
+  sound.setInvasionLoop(true, invasion);
+  assert.equal(sample.volume, invasion.volume);
+  assert.equal(sample.plays, 1);
+  sound.setInvasionLoop(false, invasion);
+  now = 1499;
+  mock.timers.tick(999);
+  assert.equal(sample.paused, false);
+  now = 1500;
+  mock.timers.tick(1);
+  assert.equal(sample.volume, 0);
+  assert.equal(sample.loop, false);
+  assert.equal(sample.paused, true);
+
+  sound.setInvasionLoop(true, invasion);
+  sound.setInvasionLoop(false, invasion);
+  sound.stopShift();
+  assert.equal(sound.invasionFade, undefined);
+  assert.equal(sample.paused, true);
+});

@@ -159,6 +159,11 @@ const context = vm.createContext({
     return timerId;
   },
   clearTimeout(id) { pendingTimers.delete(id); },
+  setInterval(callback, delay) {
+    pendingTimers.set(++timerId, { callback, delay });
+    return timerId;
+  },
+  clearInterval(id) { pendingTimers.delete(id); },
   requestAnimationFrame(fn) { frame = fn; return ++frameId; },
   cancelAnimationFrame(id) { if (id === frameId) frame = undefined; },
   ResizeObserver: class { observe() {} }
@@ -954,16 +959,49 @@ assert(!playedSamples.slice(beforeMapGate).includes('SFXBible_12478.ogg'));
 nodes['monitor-exit'].fire('click');
 assert.equal(ventArt.hidden, true);
 assert.equal(roomArt.hidden, false);
+const invasionAudio = samples.get('Invasão.ogg');
+assert.equal(invasionAudio.loop, true);
+assert.equal(invasionAudio.paused, false);
+const hidingAt = now;
 nodes['office-closet'].fire('click');
 step(smoresStart + 16_500);
 assert.match(closetArt.src, /Smores nas Frestas/);
 assert.equal(nodes['closet-extra'].hidden, true);
+step(hidingAt + 1000);
+const invasionFade = [...pendingTimers.values()].find(timer => timer.delay === 20);
+assert(invasionFade);
+invasionFade.callback();
+assert.equal(invasionAudio.paused, true);
 step(smoresStart + 51_000);
 assert.equal(roomArt.hidden, true);
 assert.equal(nodes['closet-extra'].hidden, true);
 assert(!closetArt.src.includes('Smores'));
 customStart({});
 console.log('PASS: Smores custom difficulty, layered office and closet art, vent and office gate sounds.');
+
+Object.assign(characterRules.gatinha, { interval: 10, routes: { AR: 100 } });
+customStart({ gatinha: 1, palhaca: 1 });
+const arStart = now;
+const closetVentArt = nodes['closet-vent'];
+step(arStart + 11_001);
+assert.match(closetVentArt.src, /vent-gatinha\.webp$/);
+assert.equal(playedSamples.at(-1), 'audio/closet-vent.mp3');
+nodes['office-closet'].fire('click');
+step(arStart + 12_501);
+press('d');
+step(arStart + 13_101);
+assert.equal(closet.dataset.view, 'back');
+pressW();
+assert.equal(closetBeam.hidden, false);
+assert.match(closetBeam.src, /sleeping\.webp$/);
+step(arStart + 15_100);
+assert.match(closetVentArt.src, /vent-gatinha\.webp$/);
+step(arStart + 15_101);
+assert.match(closetVentArt.src, /vent-empty\.webp$/);
+releaseW();
+Object.assign(characterRules.gatinha, startingCharacterRules.gatinha);
+customStart({});
+console.log('PASS: Gatinha closet vent layer and positioned cue, intact clown art and flashlight defense.');
 
 // A defeat holds a one-shot GIF and waits for the player to return to the menu.
 const [, screamSource] = html.match(/<audio id="jumpscare-sound" src="([^"]+)"/);

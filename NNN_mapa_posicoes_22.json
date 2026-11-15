@@ -2,8 +2,8 @@
   "projeto": "Nine Nights at Nath's (NNN)",
   "versao": "mapa-posicoes-v4",
   "fonte": "config/map.json",
-  "total_posicoes": 25,
-  "total_ligacoes": 35,
+  "total_posicoes": 26,
+  "total_ligacoes": 36,
   "ligacoes_bidirecionais": false,
   "posicoes": [
     {
@@ -48,7 +48,8 @@
         5,
         7,
         23,
-        24
+        24,
+        26
       ]
     },
     {
@@ -354,6 +355,16 @@
       "conexoes": [
         7
       ]
+    },
+    {
+      "id": 26,
+      "nome": "Ventilação do armário",
+      "sala": "controle",
+      "ponto": [
+        7.5,
+        7.9
+      ],
+      "conexoes": []
     }
   ],
   "regras_especiais": {

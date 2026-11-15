@@ -160,6 +160,8 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid #ffd3e8;outline-
 .gate-light-hotspot:disabled{pointer-events:none}
 .gate-button-hotspot{left:67.5%;top:44.4%;width:2.2%;height:7.2%}
 .office-shading{position:absolute;inset:0;pointer-events:none;background:linear-gradient(180deg,rgba(2,2,7,.46),transparent 20%,transparent 62%,rgba(4,3,9,.66) 100%),rgba(4,2,9,.13)}
+.invasion-flash{position:absolute;inset:0;z-index:4;pointer-events:none;background:repeating-linear-gradient(#0a0710 0 2px,#0d0912 2px 3px);opacity:.91}
+.game[data-closet-transition] .invasion-flash{visibility:hidden}
 .office-reticle{position:absolute;left:50%;top:47%;width:3px;height:3px;border-radius:50%;background:#ffe4f3;box-shadow:0 0 0 5px #fff1;opacity:.35;pointer-events:none}
 .office-location{position:absolute;right:30px;top:118px;font:700 10px var(--mono);letter-spacing:.15em;color:#fde6f5b8;text-shadow:0 1px 5px #000;white-space:nowrap}
 .location-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:#bfe4c1;box-shadow:0 0 10px #a7efd4;margin-right:6px}
@@ -177,6 +179,8 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid #ffd3e8;outline-
 .closet-composition{position:absolute;inset:0;container-type:size;filter:brightness(.72)}
 .closet-composition .feed-layers img{inset:auto;object-fit:fill}
 .closet-beam{filter:brightness(3.1) saturate(.8);mask-image:radial-gradient(circle at 50% 55%,#000 15cqh,#000d 21cqh,#0005 30cqh,transparent 39cqh)}
+.closet-vent{filter:brightness(.45)}
+.closet-beam:not([hidden]) + .closet-vent{filter:brightness(2.4) saturate(.8)}
 .closet-exit{inset:17% 5% 11%}
 .closet-light-hotspot{inset:16% 30% 12%}
 .game[data-mode="closet"] .hud-top{visibility:hidden}

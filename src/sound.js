@@ -91,9 +91,44 @@ class SoundEngine {
     audio.pause();
   }
   stopSamples() {
+    this.stopInvasionLoop();
     this.stopExclusiveSample();
     for (const file of this.samples.keys()) this.stopSample(file);
     for (const voices of this.sampleVoices.values()) for (const audio of voices) audio.pause();
+  }
+  setInvasionLoop(active, { file, volume, fadeOutSeconds }) {
+    const audio = this.samples.get(file);
+    if (!audio || !this.active) return;
+    if (active) {
+      if (this.invasionAudio === audio && this.invasionFade === undefined) return;
+      if (this.invasionFade !== undefined) {
+        clearInterval(this.invasionFade);
+        this.invasionFade = undefined;
+      }
+      audio.volume = volume;
+      if (this.invasionAudio === audio) return;
+      this.invasionAudio = audio;
+      audio.loop = true;
+      this.playSample(file, volume);
+    } else if (this.invasionAudio && this.invasionFade === undefined) {
+      const start = performance.now();
+      const initialVolume = audio.volume;
+      this.invasionFade = setInterval(() => {
+        const remaining = Math.max(0, 1 - (performance.now() - start) / (fadeOutSeconds * 1000));
+        audio.volume = initialVolume * remaining;
+        if (remaining === 0) this.stopInvasionLoop();
+      }, 20);
+    }
+  }
+  stopInvasionLoop() {
+    if (this.invasionFade !== undefined) {
+      clearInterval(this.invasionFade);
+      this.invasionFade = undefined;
+    }
+    if (!this.invasionAudio) return;
+    this.invasionAudio.loop = false;
+    this.invasionAudio.pause();
+    this.invasionAudio = undefined;
   }
   cameraMeow(sanity) {
     const clips = cameraMeows[Number(sanity < 50)];

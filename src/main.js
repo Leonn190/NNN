@@ -2,7 +2,7 @@
 'use strict';
 const {
   CAMERAS, OFFICE, makeCameraMap, SoundEngine, createMovement, createNightMenu,
-  cameraActorFrame, hasCameraState, closetFrame, officeCharacterImage, corridorSlots, loadConfig,
+  cameraActorFrame, hasCameraState, closetFrame, closetVentImage, officeCharacterImage, corridorSlots, loadConfig,
   createImageCache, clearImageSource, setImageSource, createCameraInterference
 } = window.NathGame;
 const shopCamera = CAMERAS.find(cam => cam.id === 'CAM01');
@@ -40,12 +40,12 @@ const dom = {
   officeScene: $('#office-scene'), officeMonitor: $('#office-monitor'), officeArt: $('#office-art'),
   officePower: $('#office-power'), desktopPower: $('#desktop-power'), shutdownDesktop: $('#shutdown-desktop'),
   officeCharacters: $('#office-characters'), corridorCharacters: $('#corridor-characters'),
-  smoresVent: $('#smores-vent'), smoresRoom: $('#smores-room'),
+  smoresVent: $('#smores-vent'), smoresRoom: $('#smores-room'), invasionFlash: $('#invasion-flash'),
   officeCloset: $('#office-closet'), officeRadio: $('#office-radio'),
   clownPeek: $('#clown-peek'), officeGate: $('#office-gate'), officeLight: $('#office-light'),
   closet: $('#closet-view'), closetExit: $('#closet-exit'), closetLight: $('#closet-light'),
   closetScene: $('#closet-composition'), closetDoorArt: $('#closet-door-art'), closetBeam: $('#closet-beam'),
-  closetExtra: $('#closet-extra'),
+  closetExtra: $('#closet-extra'), closetVent: $('#closet-vent'),
   feedArt: $('#feed-art'), feedScene: $('#feed-scene'), feedLayers: $('#feed-layers'),
   tech: $('#technical-feed'), cameraScare: $('#camera-scare'),
   techArt: $('#technical-art'), techNumber: $('#technical-number'),
@@ -81,8 +81,8 @@ const CLOWN_RIGHT_IMAGE = './public/images/jumpscares/palhaca-direita.gif';
 const CLOWN_BOTTOM_IMAGE = './public/images/jumpscares/palhaca-baixo.gif';
 const SHADOW_IMAGE = config.shadow.jumpscare;
 const JUMPSCARE_AUDIO = './public/audio/jumpscares/';
-const { corridorAttackSound, stockAttackSound, flashlight } = config.effects;
-const attackSamples = [...corridorAttackSound.files, ...stockAttackSound.files];
+const { corridorAttackSound, stockAttackSound, flashlight, invasion, closetVentSound } = config.effects;
+const attackSamples = [...corridorAttackSound.files, ...stockAttackSound.files, invasion.file, closetVentSound.file];
 const corridorSoundVoices = Object.keys(config.characters).length;
 const cameraScareImage = config.threats.yandereCameraScare.image;
 const MONITOR_TRANSITION_MS = { boot: 6500, shutdown: 2000 };
@@ -295,6 +295,8 @@ const movement = createMovement(config, {
     } else if (event === 'smores') {
       officeChanged = true;
       if (value === 'vent') sound.playSample('vent');
+    } else if (event === 'closetVent') {
+      sound.playSample(closetVentSound.file, closetVentSound.volume);
     } else if (event === 'gatesChanged') {
       for (const { id, closed } of value) {
         map.setGate(id, closed);
@@ -590,14 +592,16 @@ function updateMovementDebug() {
   debugProgress.value = clown.counter;
   const phase = {
     disabled: 'inativo', idle: 'inativo', 'pre-vent': 'aguardando acesso à ventilação',
-    vent: smores.retreatReady ? 'ventilação · pronto para recuar' : 'ventilação',
+    vent: smores.finalApproach ? 'ventilação · fase final'
+      : smores.retreatReady ? 'ventilação · pronto para recuar' : 'ventilação',
     room: 'sala'
   }[smores.phase];
   const timer = { idle: 'teste com rádio', vent: 'silêncio restante', room: 'saída' }[smores.phase];
   const remaining = smores.remaining > 0
     ? ` · ${timer} ${smores.remaining.toFixed(1)} s${smores.phase === 'vent' && smores.radio ? ' (rádio ligado)' : ''}`
     : '';
-  setText(debugSmores, `Smores · ${phase}${smores.phase === 'vent' && smores.looking ? ' · sob observação' : ''}${remaining}`);
+  const entry = smores.ignoredRemaining == null ? '' : ` · entrada em ${smores.ignoredRemaining.toFixed(1)} s`;
+  setText(debugSmores, `Smores · ${phase}${smores.phase === 'vent' && smores.looking ? ' · sob observação' : ''}${remaining}${entry}`);
 }
 
 function renderDebugOdds(container, odds, prefix) {
@@ -609,7 +613,7 @@ function renderDebugOdds(container, odds, prefix) {
   labels.forEach((label, index) => setText(container.children[index], label));
 }
 
-function syncMovement(now) {
+function syncMovement(now, office = movement.officeState()) {
   if (!movementChanged && !officeChanged && !changedGates.size) return;
   for (const id of changedCameras) state.characterPreviews.delete(id);
   const cam = CAMERAS[state.cameraIndex];
@@ -617,10 +621,11 @@ function syncMovement(now) {
   if (changedCameras.has(cam.id) || visibleGateChanged) updateCameraFeed(cam);
   if (officeChanged || (movementChanged && officePreview)) {
     officePreview = false;
-    const { room, doorway, front, back, smores } = movement.officeState();
+    const { room, doorway, front, back, smores, smoresVisible } = office;
     for (const [pose, image] of [['vent', dom.smoresVent], ['room', dom.smoresRoom]]) {
-      if (smores === pose && !image.getAttribute('src')) image.src = SMORES_ART[pose];
-      image.hidden = smores !== pose;
+      const visible = pose === 'room' ? smoresVisible : smores === pose;
+      if (visible && !image.getAttribute('src')) image.src = SMORES_ART[pose];
+      image.hidden = !visible;
     }
     setCorridorCharacters(front, back);
     setOfficeCharacterState(room, doorway);
@@ -926,6 +931,13 @@ function setClosetLight(on) {
   dom.closetLight.setAttribute('aria-pressed', String(on));
 }
 
+function renderClosetVent(occupied) {
+  const source = closetVentImage(occupied);
+  if (dom.closetVent.getAttribute('src') === source) return;
+  dom.closetVent.src = source;
+  dom.closetVent.alt = occupied ? 'Gatinha espiando pela ventilação do armário' : '';
+}
+
 function setClosetView(view) {
   if (dom.closet.dataset.view === view) return;
   dom.closet.dataset.view = view;
@@ -1070,6 +1082,8 @@ function stopShift() {
   dom.toast.classList.remove('show');
   clearCameraInterference();
   clearCorridorFlicker();
+  dom.invasionFlash.hidden = true;
+  renderClosetVent(false);
   clearCameraScare();
   releaseCameraScarePreload();
   imageCache.clear();
@@ -1258,6 +1272,7 @@ function prepareShift(shift) {
   state.characterPreviews.clear();
   stopRadio();
   setClownPhase(frame.clownStage);
+  renderClosetVent(false);
   clearClosetTransition();
   resetClosetPan();
   state.pan = state.targetPan = 0;
@@ -1383,6 +1398,7 @@ function gameInput() {
       ? dom.feedArt.getAttribute('src') : null,
     visibleCameraLayers: camera ? cameraComposition.visibleLayers() : [],
     cameraObservationBlocked: document.hidden,
+    invasionFlashBlocked: document.hidden,
     findShadow: !document.hidden,
     view: office ? 'office' : closet && !state.closetTransition ? `closet-${dom.closet.dataset.view}` : camera ? 'cameras' : null,
     closet,
@@ -1392,6 +1408,7 @@ function gameInput() {
     smoresLooking: office && officeCenter - officeHalf <= SMORES_VENT_CENTER && SMORES_VENT_CENTER <= officeCenter + officeHalf,
     corridorLight: office && state.flashlight && !movement.isGateClosed(OFFICE.gate) && corridorInView(),
     clownLight: state.mode === 'closet' && dom.closet.dataset.view === 'back' && !dom.closetBeam.hidden,
+    closetVentLight: !document.hidden && !state.closetTransition && !dom.closetBeam.hidden,
     flashlight: (office && state.flashlight) || (closet && !dom.closetBeam.hidden),
     radio: state.radioPlaying,
     computer: !dom.desktop.hidden && !dom.computerScreen.inert,
@@ -1445,7 +1462,14 @@ function renderGameFrame(frame, now) {
       renderedGoticaStaticAt = goticaStaticAt;
     }
   }
-  syncMovement(now);
+  const office = movement.officeState();
+  if (dom.invasionFlash.hidden === office.flash) {
+    dom.invasionFlash.hidden = !office.flash;
+    officeChanged = true;
+  }
+  syncMovement(now, office);
+  sound.setInvasionLoop(office.invasionActive && !frame.hidden, invasion);
+  renderClosetVent(frame.closetVent === 'closetVent');
   renderHallucination(frame.hallucination);
   updateClockUI(frame.hours);
   renderResourceState(frame);
@@ -2057,6 +2081,7 @@ function releaseCameraScarePreload() {
 
 function warmShiftImages(levels) {
   imageCache.warm([OFFICE.images.lit, OFFICE.images.closed]);
+  if (levels.gatinha > 0) imageCache.warm([closetVentImage(true)]);
   if (levels.shadow > 0) {
     setImageSource(dom.shadowOfficeArt, config.shadow.officeArt);
     setImageSource(dom.shadowSprite, config.shadow.sprite);

@@ -180,7 +180,8 @@ window.NathGame.localConfig = {
         15,
         23,
         24,
-        25
+        25,
+        26
       ],
       "cameras": [
         "CAM01",
@@ -195,7 +196,7 @@ window.NathGame.localConfig = {
       "routes": {
         "CV": 48,
         "EL": 26,
-        "EV": 26
+        "AR": 26
       },
       "audioModifier": 35,
       "hidingPlaces": [
@@ -319,9 +320,20 @@ window.NathGame.localConfig = {
     "stockAttackSound": {
       "files": [
         "audio/559107__agenta1cr__possessed-laugh.wav",
-        "audio/Risada 1.wav"
+        "audio/Risada 1.wav",
+        "risada 2.mp3"
       ],
       "volume": 0.32
+    },
+    "invasion": {
+      "file": "Invasão.ogg",
+      "volume": 0.45,
+      "fadeOutSeconds": 1,
+      "flashMs": 120
+    },
+    "closetVentSound": {
+      "file": "audio/closet-vent.mp3",
+      "volume": 0.45
     },
     "flashlight": {
       "corridorFlickerMs": 160,
@@ -637,6 +649,16 @@ window.NathGame.localConfig = {
           10.2,
           15.1
         ]
+      },
+      {
+        "id": 26,
+        "name": "Ventilação do armário",
+        "cameras": [],
+        "room": "controle",
+        "point": [
+          7.5,
+          7.9
+        ]
       }
     ],
     "edges": [
@@ -889,6 +911,16 @@ window.NathGame.localConfig = {
         "actors": [
           "gatinha"
         ]
+      },
+      {
+        "from": 3,
+        "to": 26,
+        "type": "vent",
+        "oneWay": true,
+        "actors": [
+          "gatinha"
+        ],
+        "route": "AR"
       }
     ],
     "stage": 1,
@@ -897,6 +929,7 @@ window.NathGame.localConfig = {
     "front": 14,
     "back": 15,
     "leftApproach": 10,
+    "closetVent": 26,
     "capacities": {
       "12": 1,
       "14": 2,
@@ -1006,6 +1039,16 @@ window.NathGame.localConfig = {
             ]
           ]
         },
+        "AR": {
+          "objective": "closetVent",
+          "target": 26,
+          "paths": [
+            [
+              3,
+              26
+            ]
+          ]
+        },
         "ES": {
           "objective": "stock",
           "target": 10,
@@ -1083,13 +1126,15 @@ window.NathGame.localConfig = {
       },
       "stock": {
         "approach": [
-          0.2,
+          0.25,
           0.94
         ],
         "entry": [
-          0.4,
+          0.5,
           0.99
-        ]
+        ],
+        "observationPenalty": 0.35,
+        "minimumObservedAdvance": 0.05
       },
       "stayShare": 0.3
     },
@@ -1404,6 +1449,8 @@ window.NathGame.localConfig = {
       "name": "Smores",
       "radioSeconds": 15,
       "silenceSeconds": 10,
+      "ignoredSeconds": 15,
+      "finalSeconds": 10,
       "quietRoomSpeed": 2,
       "targetBonusMultiplier": 2,
       "level1": {
@@ -1418,6 +1465,10 @@ window.NathGame.localConfig = {
         "intervalReduction": 2,
         "reactionReduction": 0.4
       }
+    },
+    "closetVent": {
+      "waitSeconds": 20,
+      "lightSeconds": 2
     },
     "attack": {
       "repeatReactionFactor": 0.92,

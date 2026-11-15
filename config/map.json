@@ -24,7 +24,8 @@
     {"id": 22, "name": "Saída do corredor", "cameras": [], "room": "corredor_servico", "point": [31.5, 27.3]},
     {"id": 23, "name": "Ponto cego do salão principal", "cameras": [], "room": "salao", "point": [25.9, 19]},
     {"id": 24, "name": "Banheiro — esconderijo da Gatinha", "cameras": [], "room": "wc_m", "point": [29.1, 16.7]},
-    {"id": 25, "name": "Escondida na VIP 2", "cameras": [], "room": "vip2", "point": [10.2, 15.1]}
+    {"id": 25, "name": "Escondida na VIP 2", "cameras": [], "room": "vip2", "point": [10.2, 15.1]},
+    {"id": 26, "name": "Ventilação do armário", "cameras": [], "room": "controle", "point": [7.5, 7.9]}
   ],
   "edges": [
     {"from": 1, "to": 2, "type": "room"},
@@ -61,7 +62,8 @@
     {"from": 19, "to": 22, "type": "room"},
     {"from": 3, "to": 4, "type": "gate", "gateId": "G07", "via": ["P14"], "through": ["circ_wc"]},
     {"from": 3, "to": 24, "type": "gate", "gateId": "G07", "via": ["P15"], "through": ["circ_wc"], "actors": ["gatinha"]},
-    {"from": 4, "to": 24, "type": "free", "openingId": "P14", "via": ["P15"], "through": ["circ_wc"], "actors": ["gatinha"]}
+    {"from": 4, "to": 24, "type": "free", "openingId": "P14", "via": ["P15"], "through": ["circ_wc"], "actors": ["gatinha"]},
+    {"from": 3, "to": 26, "type": "vent", "oneWay": true, "actors": ["gatinha"], "route": "AR"}
   ],
   "stage": 1,
   "office": 13,
@@ -69,6 +71,7 @@
   "front": 14,
   "back": 15,
   "leftApproach": 10,
+  "closetVent": 26,
   "capacities": {
     "12": 1,
     "14": 2,
