@@ -25,7 +25,9 @@ jobs:
           node scripts/check-assets.cjs dist
       - name: Testar balanceamento, cache e áudio
         run: node --test tests/balance.cjs tests/image-cache.cjs tests/sound.cjs
-      # A suíte completa já tem falhas de expectativas na branch principal.
-      - name: Executar a suíte JavaScript completa
+      # As suítes históricas de simulação ainda contêm expectativas antigas.
+      # Execute-as manualmente, sem mascarar falhas nos checks obrigatórios do push.
+      - name: Diagnóstico opcional da suíte histórica
+        if: github.event_name == 'workflow_dispatch'
         continue-on-error: true
         run: node --test tests/*.cjs

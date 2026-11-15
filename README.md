@@ -87,6 +87,8 @@ Consulte o [guia de assets](docs/asset-guidelines.md) para incluir sons, imagens
 
 Execute `node tests/night-systems.cjs`, `node tests/movement.cjs` e `node tests/camera-gates.cjs` para validar as regras e os controles. Execute `node tests/image-cache.cjs` para conferir o cache. Os testes de arte `tests/test_cam05_images.py` e `tests/test_office_images.py` rodam diretamente com Python e Pillow.
 
+O workflow automático exige apenas os testes de balanceamento, cache e áudio, além da conferência do pacote e das configurações. As suítes históricas completas de movimentação e interface ainda têm expectativas antigas de gameplay: ficam disponíveis como diagnóstico manual do workflow, sem alterar as regras do jogo nesta refatoração.
+
 ### Diagnóstico de desempenho
 
 Abra o jogo com `?perf=1`. O painel mostra FPS do RAF na última janela de um segundo, média dos períodos medidos na sessão, p95/p99, intervalos acima de 50 ms, custo do JS do jogo, Long Animation Frames (LoAF) quando disponíveis e recursos ativos. O custo de JS inclui as chamadas feitas pelo jogo no RAF. Layout, rasterização, decodificação em outras threads e composição podem ocorrer depois dele.

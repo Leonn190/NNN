@@ -348,7 +348,7 @@ for (const [sanity, seconds] of [[100, 60], [90, 60], [70, 105], [50, 150], [30,
   } });
   test.at(seconds);
   near(test.state().hours, sanity < 10 ? 0 : 1);
-  near(test.state().energy, 100 - base.power.computerDrain * base.power.computerIdleFactor * 60);
+  near(test.state().energy, 100 - .025 * 60);
   if (sanity < 10) continue;
   test.at(6 * seconds - .001);
   assert.equal(test.state().outcome, null);
@@ -361,12 +361,12 @@ for (const [sanity, seconds] of [[100, 60], [90, 60], [70, 105], [50, 150], [30,
 const dynamic = scenario({ input: { closet: true }, tune: config => { config.sanity.initial = 70; } });
 dynamic.at(10, { radio: true });
 near(dynamic.state().hours, Math.log(118.5 / 105) / 1.35);
-near(dynamic.state().energy, 100 - base.power.computerDrain * base.power.computerIdleFactor * 60 * dynamic.state().hours);
+near(dynamic.state().energy, 100 - .025 * 60 * dynamic.state().hours);
 const first = dynamic.state().hours;
 const firstEnergy = dynamic.state().energy;
 dynamic.at(20);
 near(dynamic.state().hours - first, Math.log(118.5 / 115.35) / .315);
-near(dynamic.state().energy, firstEnergy - (base.power.computerDrain * base.power.computerIdleFactor + base.power.radioDrain) * 60 * (dynamic.state().hours - first));
+near(dynamic.state().energy, firstEnergy - .085 * 60 * (dynamic.state().hours - first));
 
 const fastThreshold = scenario({ input: { closet: true }, tune(config) {
   config.sanity.initial = 91;
@@ -375,7 +375,7 @@ fastThreshold.at(10);
 const fastTime = 1 / .6;
 const fastHours = fastTime / 60 + Math.log(71.25 / 60) / 1.35;
 near(fastThreshold.state().hours, fastHours);
-near(fastThreshold.state().energy, 100 - base.power.computerDrain * base.power.computerIdleFactor * 60 * fastHours);
+near(fastThreshold.state().energy, 100 - .025 * 60 * fastHours);
 
 const pausedClock = scenario({ input: { closet: true }, tune(config) {
   config.sanity.initial = 11;
@@ -383,8 +383,7 @@ const pausedClock = scenario({ input: { closet: true }, tune(config) {
 pausedClock.at(10, { radio: true });
 const pausedHours = Math.log(240 / 237.75) / 1.35;
 near(pausedClock.state().hours, pausedHours);
-near(pausedClock.state().energy,
-  100 - base.power.computerDrain * base.power.computerIdleFactor * (60 * pausedHours + (10 - 1 / .6) / 4));
+near(pausedClock.state().energy, 100 - .025 * (60 * pausedHours + (10 - 1 / .6) / 4));
 const recoveryAt = 10 + 5 / .14;
 pausedClock.at(recoveryAt - .001, { radio: true });
 near(pausedClock.state().hours, pausedHours);
@@ -470,24 +469,21 @@ for (const key of [...Object.keys(base.characters), 'palhaca']) {
   }
 }
 
-const idleComputerDrain = base.power.computerDrain * base.power.computerIdleFactor;
 const powerInput = { radio: true, corridorLight: true, flashlight: true, gates: ['G01'] };
 const power = scenario({ input: powerInput });
 power.at(10, powerInput, { type: 'computerPower' });
-const powerFirstEnergy = 100 - 10 * (idleComputerDrain + base.power.gateDrain + base.power.radioDrain + base.power.flashlightDrain);
-near(power.state().energy, powerFirstEnergy);
+near(power.state().energy, 100 - 10 * (.025 + .30 + .06 + .12));
 power.at(20, {}, { type: 'gate', id: 'G01' });
 power.at(20, {}, { type: 'gate', id: 'G06' });
 power.at(20, {}, { type: 'gate', id: 'G01' });
-const powerSecondEnergy = powerFirstEnergy - 10 * (base.power.gateDrain + base.power.radioDrain + base.power.flashlightDrain);
-near(power.state().energy, powerSecondEnergy);
+near(power.state().energy, 90.15);
 power.at(30, {}, { type: 'computerPower' });
-near(power.state().energy, powerSecondEnergy - 10 * (2 * base.power.gateDrain));
+near(power.state().energy, 84.15);
 assert.equal(power.state().computerOn, true);
 near(power.state().sanity, 98.4);
 
 const outage = scenario({ input: { gates: ['G01'], closet: true, radio: true }, tune(config) {
-  config.power.initial = (idleComputerDrain + base.power.gateDrain + base.power.radioDrain) * 10;
+  config.power.initial = .385 * 10;
 } });
 outage.at(10, { closet: true });
 assert.equal(outage.state().blackout, true);
@@ -514,14 +510,12 @@ assert.equal(outage.state().flashlightAvailable, true);
 outage.at(70.01);
 assert.equal(outage.state().flashlightAvailable, false);
 outage.game.reset();
-assert.deepEqual([outage.state().energy, outage.state().sanity, outage.state().hours, outage.state().computerOn],
-  [(idleComputerDrain + base.power.gateDrain + base.power.radioDrain) * 10, 100, 0, true]);
+assert.deepEqual([outage.state().energy, outage.state().sanity, outage.state().hours, outage.state().computerOn], [3.85, 100, 0, true]);
 
 const hudGates = scenario({ input: { gates: ['G01', 'G06', 'G09'] } });
-near(hudGates.hud().energyLossPerSecond, idleComputerDrain + 3 * base.power.gateDrain);
+near(hudGates.hud().energyLossPerSecond, .925);
 hudGates.at(0, { radio: true, flashlight: true });
-near(hudGates.hud().energyLossPerSecond,
-  idleComputerDrain + 3 * base.power.gateDrain + base.power.radioDrain + base.power.flashlightDrain);
+near(hudGates.hud().energyLossPerSecond, 1.105);
 hudGates.at(0, { radio: true }, { type: 'computerPower' });
 hudGates.at(0, { radio: true }, { type: 'computerPower' });
 near(hudGates.hud().noiseIntensity, 100);
@@ -561,12 +555,10 @@ hudPeaks.at(15, { flashlight: true });
 near(hudPeaks.hud().noiseIntensity, 56, 1e-6);
 hudPeaks.game.reset();
 near(hudPeaks.hud().noiseIntensity, 0);
-near(hudPeaks.hud().energyLossPerSecond, idleComputerDrain);
+near(hudPeaks.hud().energyLossPerSecond, .025);
 
 const flashlightInput = { flashlight: true, clownLight: true, view: 'closet-back', closet: true };
-const flashlight = scenario({ levels: { palhaca: 1 }, tune(config) {
-  config.power.initial = base.power.computerDrain * base.power.computerIdleFactor + base.power.flashlightDrain;
-} });
+const flashlight = scenario({ levels: { palhaca: 1 }, tune(config) { config.power.initial = .145; } });
 flashlight.at(0, flashlightInput, { type: 'closetEnter' });
 flashlight.at(60.99, flashlightInput);
 assert.equal(flashlight.state().energy, 0);

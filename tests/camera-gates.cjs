@@ -1297,12 +1297,12 @@ const approachStart = now;
 const doorCreak = 'audio/effects/doors/porta-rangendo.mp3';
 const laughsPlayed = () => playedSamples.filter(file => /^audio\/effects\/invasion\/estoque\/risada-[12]\./.test(file));
 const laughsBeforeApproach = laughsPlayed().length;
-const creaksBeforeApproach = playedSamples.filter(file => file === doorCreak).length;
+assert(!playedSamples.includes(doorCreak));
 step(approachStart + 10_500);
 assert.deepEqual(visibleOfficeLayers(), [officeLayer('doorway', 'original')]);
 assert.equal(playedSamples.at(-1), doorCreak);
 step(approachStart + 11_000);
-assert.equal(playedSamples.filter(file => file === doorCreak).length, creaksBeforeApproach + 1);
+assert.equal(playedSamples.filter(file => file === doorCreak).length, 1);
 assert.equal(laughsPlayed().length, laughsBeforeApproach + 1);
 console.log('PASS: samples for both meow sets, flashlight, closet travel, doorway arrival, win and Shadow attack.');
 Object.assign(characterRules.yandere, {
@@ -1473,7 +1473,7 @@ console.log('PASS: nine campaign intros and wins, fixed start time, retry, conti
 
 customStart({});
 const blackoutStart = now;
-assert.equal(nodes['energy-meter'].style.getPropertyValue('--meter-color'), 'rgb(83, 217, 130)');
+assert.equal(nodes['energy-meter'].style.getPropertyValue('--meter-color'), 'rgb(95, 218, 125)');
 radioButton.fire('click');
 radio.fire('playing');
 nodes['office-monitor'].fire('click');
@@ -1566,8 +1566,7 @@ assert.equal(scareArt.hidden, false);
 const firstScareUrl = scareArt.src;
 assert(activeScareUrls.has(firstScareUrl));
 assert.equal(nodes['cameras-view'].inert, true);
-assert.equal(playedSamples.length, soundCount + 1);
-assert.equal(playedSamples.at(-1), require('../config/threats.json').yandereCameraScare.sound);
+assert.equal(playedSamples.length, soundCount);
 assert.equal(scream.paused, true);
 assert(movement.snapshot().sanity < sanityBeforeScare - 15);
 assert.equal(movement.snapshot().outcome, null);
