@@ -1200,7 +1200,7 @@ function beginJumpscare(source) {
     dom.game.dataset.scare = 'shadow';
     audio = 'shadow.ogg';
   } else if (source === CLOWN_BOTTOM_IMAGE || source === CLOWN_RIGHT_IMAGE) {
-    audio = 'palha%C3%A7a.ogg';
+    audio = 'palhaca.ogg';
     if (source === CLOWN_BOTTOM_IMAGE) {
       dom.game.dataset.scare = 'clown-bottom';
       setClosetLight(false);

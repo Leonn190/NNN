@@ -151,7 +151,7 @@ test('spatial gate closures overlap with independent pan and preserve the centra
     sound.context.state = 'running';
     mock.method(sound.context, 'createMediaElementSource', () => new AudioNode());
     sound.preloadSamples();
-    const file = 'SFXBible_12478.ogg';
+    const file = 'audio/effects/doors/portao-fechando.ogg';
     sound.playSample('officeGateClose');
     sound.playPannedSample('officeGateClose', .31, -.82, 2);
     sound.playPannedSample('officeGateClose', .19, .14, 2);

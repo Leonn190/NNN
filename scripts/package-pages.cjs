@@ -9,17 +9,7 @@ const files = [
   'public/images/Anúncio Vintage de Contratação Animatrônica.png',
   'public/images/Smores nas Frestas do Escritório.png',
   'public/NNN_Yandere_Jumpscare_1080p.gif',
-  'public/SFXBible_12478.ogg',
-  'public/Invasão.ogg',
-  'public/risada 2.mp3',
-  ...['Risada 1.wav', 'risada yandere.wav', 'Erro.ogg', 'P1.ogg', 'P2.ogg', 'closet-vent.mp3']
-    .map(name => `public/audio/${name}`),
-  ...[
-    '01_FNAF2_Music_Box', '02_FNAF2_Vent', '04_FNAF4_Door_Creak',
-    '06_FNAF4_Player_Running', '07_FNAF4_Flashlight', '08_FNAF4_Nightmare_Jumpscare',
-    '10_FNAF3_Rebooting', '11_FNAF2_Chimes'
-  ].map(name => `public/${name}.mp3`),
-  ...['scream.wav', 'shadow.ogg', 'palhaça.ogg', 'yandere especial.ogg'].map(name => `public/audio/jumpscares/${name}`)
+
 ];
 
 function include(directory, pattern) {
@@ -33,8 +23,7 @@ function include(directory, pattern) {
 include('src', /\.(js|css)$/);
 include('config', /\.json$/);
 include('public/images', /(?:\.(webp|gif|svg)$|\/cameras\/CAM\d{2}\/technical\.png$)/);
-include('public/audio', /\/audio\/(?:menu\/[^/]+\.mp3|radio\/[^/]+\.mp3|metal\d{2}\.mp3)$/);
-for (const folder of ['01_camera_sinistra', '02_camera_pesadelo']) include(`public/${folder}`, /\.wav$/);
+include('public/audio', /\.(mp3|ogg|wav)$/);
 
 // As variantes iluminadas e os dois recortes antigos do armário servem aos testes de arte.
 const runtimeFiles = files.filter(file => !/^public\/images\/office\/(?:states\/(?:open-lit|corridor)\/|closet\/layers\/(?:yandere|platinada)\.webp$)/.test(file));

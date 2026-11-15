@@ -315,33 +315,33 @@ window.NathGame.localConfig = {
     },
     "corridorAttackSound": {
       "files": [
-        "audio/metal01.mp3",
-        "audio/metal02.mp3",
-        "audio/metal03.mp3",
-        "audio/metal04.mp3",
-        "audio/metal05.mp3"
+        "audio/effects/invasion/corredor/metal01.mp3",
+        "audio/effects/invasion/corredor/metal02.mp3",
+        "audio/effects/invasion/corredor/metal03.mp3",
+        "audio/effects/invasion/corredor/metal04.mp3",
+        "audio/effects/invasion/corredor/metal05.mp3"
       ],
       "volume": 0.32
     },
     "stockAttackSound": {
       "files": [
-        "audio/Risada 1.wav",
-        "risada 2.mp3"
+        "audio/effects/invasion/estoque/risada-1.wav",
+        "audio/effects/invasion/estoque/risada-2.mp3"
       ],
       "volume": 0.32
     },
     "yandereSabotageSound": {
-      "file": "audio/Erro.ogg",
+      "file": "audio/characters/yandere/sabotagem.ogg",
       "volume": 0.45
     },
     "yandereSurpriseSound": {
-      "file": "audio/risada yandere.wav",
+      "file": "audio/characters/yandere/risada-surpresa.wav",
       "volume": 0.32
     },
     "padraoInvasionSound": {
       "files": [
-        "audio/P1.ogg",
-        "audio/P2.ogg"
+        "audio/characters/padrao/invasao-1.ogg",
+        "audio/characters/padrao/invasao-2.ogg"
       ],
       "volume": 0.45
     },
@@ -372,17 +372,17 @@ window.NathGame.localConfig = {
       }
     },
     "smoresRoomSound": {
-      "file": "smores.wav",
+      "file": "audio/characters/smores/smores-room.wav",
       "volume": 0.45
     },
     "invasion": {
-      "file": "Invasão.ogg",
+      "file": "audio/effects/invasion/invasao.ogg",
       "volume": 0.45,
       "fadeOutSeconds": 1,
       "flashMs": 120
     },
     "closetVentSound": {
-      "file": "audio/closet-vent.mp3",
+      "file": "audio/characters/gatinha/closet-vent.mp3",
       "volume": 0.45
     },
     "flashlight": {
@@ -1506,7 +1506,7 @@ window.NathGame.localConfig = {
       ],
       "durationSeconds": 1.21,
       "image": "./public/NNN_Yandere_Jumpscare_1080p.gif",
-      "sound": "audio/jumpscares/yandere especial.ogg"
+      "sound": "audio/jumpscares/yandere-camera.ogg"
     },
     "yandereSurprise": {
       "inactivity": {

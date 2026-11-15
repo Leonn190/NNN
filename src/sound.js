@@ -1,15 +1,15 @@
 (() => {
 'use strict';
 const sampleFiles = {
-  musicBox: '01_FNAF2_Music_Box.mp3',
-  vent: '02_FNAF2_Vent.mp3',
-  doorCreak: '04_FNAF4_Door_Creak.mp3',
-  officeGateClose: 'SFXBible_12478.ogg',
-  running: '06_FNAF4_Player_Running.mp3',
-  flashlight: '07_FNAF4_Flashlight.mp3',
-  nightmare: '08_FNAF4_Nightmare_Jumpscare.mp3',
-  reboot: '10_FNAF3_Rebooting.mp3',
-  chimes: '11_FNAF2_Chimes.mp3'
+  musicBox: 'audio/characters/palhaca/caixa-de-musica.mp3',
+  vent: 'audio/characters/smores/duto.mp3',
+  doorCreak: 'audio/effects/doors/porta-rangendo.mp3',
+  officeGateClose: 'audio/effects/doors/portao-fechando.ogg',
+  running: 'audio/effects/movement/corrida-armario.mp3',
+  flashlight: 'audio/effects/interface/lanterna.mp3',
+  nightmare: 'audio/characters/shadow/confronto.mp3',
+  reboot: 'audio/effects/interface/reinicio-computador.mp3',
+  chimes: 'audio/effects/interface/fim-do-turno.mp3'
 };
 const cameraMeows = [
   ['01_camera_sinistra', 'camera'],

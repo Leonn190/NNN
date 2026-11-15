@@ -3,7 +3,7 @@
     "observationSeconds": [8, 3],
     "durationSeconds": 1.21,
     "image": "./public/NNN_Yandere_Jumpscare_1080p.gif",
-    "sound": "audio/jumpscares/yandere especial.ogg"
+    "sound": "audio/jumpscares/yandere-camera.ogg"
   },
   "yandereSurprise": {
     "inactivity": { "min": 55, "max": 65 },
