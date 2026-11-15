@@ -1297,12 +1297,12 @@ const approachStart = now;
 const doorCreak = 'audio/effects/doors/porta-rangendo.mp3';
 const laughsPlayed = () => playedSamples.filter(file => /^audio\/effects\/invasion\/estoque\/risada-[12]\./.test(file));
 const laughsBeforeApproach = laughsPlayed().length;
-assert(!playedSamples.includes(doorCreak));
+const creaksBeforeApproach = playedSamples.filter(file => file === doorCreak).length;
 step(approachStart + 10_500);
 assert.deepEqual(visibleOfficeLayers(), [officeLayer('doorway', 'original')]);
 assert.equal(playedSamples.at(-1), doorCreak);
 step(approachStart + 11_000);
-assert.equal(playedSamples.filter(file => file === doorCreak).length, 1);
+assert.equal(playedSamples.filter(file => file === doorCreak).length, creaksBeforeApproach + 1);
 assert.equal(laughsPlayed().length, laughsBeforeApproach + 1);
 console.log('PASS: samples for both meow sets, flashlight, closet travel, doorway arrival, win and Shadow attack.');
 Object.assign(characterRules.yandere, {

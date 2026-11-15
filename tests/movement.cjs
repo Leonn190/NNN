@@ -445,7 +445,8 @@ for (const [tier, chance] of base.characters.gotica.staticChance.entries()) {
   assert.equal(actor('gotica').route, null);
   assert.equal(actor('gotica').approach, null);
   assert.equal(actor('gotica').noise, 0);
-  assert.equal(actor('gotica').routeBonus, 25);
+  assert.equal(actor('gotica').routeBonus,
+    base.movement.routes.bonus[0] + 2 * base.movement.routes.blockedProgressRetention * base.movement.routes.perMove[0]);
   closeTo(actor('gotica').remaining, 12.5);
   assert.deepEqual(output('move').map(({ to }) => to), [15, 14, 15]);
   assert.deepEqual(output('corridorAttack'), ['gotica']);

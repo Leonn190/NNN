@@ -348,7 +348,7 @@ for (const [sanity, seconds] of [[100, 60], [90, 60], [70, 105], [50, 150], [30,
   } });
   test.at(seconds);
   near(test.state().hours, sanity < 10 ? 0 : 1);
-  near(test.state().energy, 100 - .025 * 60);
+  near(test.state().energy, 100 - base.power.computerDrain * base.power.computerIdleFactor * 60);
   if (sanity < 10) continue;
   test.at(6 * seconds - .001);
   assert.equal(test.state().outcome, null);
