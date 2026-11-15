@@ -65,7 +65,7 @@ function canonicalCameraCast(cam, key) {
 function hasCameraState(cam, key) {
   return typeof key === 'string' && (key === 'vazia' || Object.hasOwn(characterStateImages(cam), key)
     || ((window.NathGame.cameraLayers?.[cam.id] || window.NathGame.complexLayers?.[cam.id])
-      && cameraLayerKeys(cam, key).length > 0));
+      && (key === 'todas' || cameraLayerKeys(cam, key).length > 0)));
 }
 
 function cameraFrame(cam, key, isGateClosed, outside = false) {

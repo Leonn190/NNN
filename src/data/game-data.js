@@ -217,12 +217,6 @@ const CAMERAS = [
         "closed": "./public/images/cameras/CAM12/base.webp"
       }
     },
-    "characterStateImages": {
-      "todas": {
-        "open": "./public/images/cameras/CAM12/states/open/todas.webp",
-        "closed": "./public/images/cameras/CAM12/states/closed/todas.webp"
-      }
-    },
     "technical": "./public/images/cameras/CAM12/technical.png",
     "renderAvailable": true
   }

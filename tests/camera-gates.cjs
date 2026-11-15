@@ -718,6 +718,15 @@ for (const [id, name] of Object.entries(previewNames)) {
   }
   assert(preview('todas'));
   if (id === 'CAM09') assert.deepEqual(feedLayers(), [`${cameraFolder(id)}/layers/maid.webp`]);
+  else if (id === 'CAM12') {
+    const layers = ['original', 'yandere', 'gotica'].map(actor => `${cameraFolder(id)}/layers/open/${actor}.webp`);
+    assert.equal(base.src, selected.source);
+    assert.deepEqual(feedLayers(), layers);
+    gate('G06');
+    assert.notEqual(base.src, selected.source);
+    assert.deepEqual(feedLayers(), layers);
+    gate('G06');
+  }
   else {
     assert.match(base.src, /\/todas\.webp$/);
     assert.deepEqual(feedLayers(), []);

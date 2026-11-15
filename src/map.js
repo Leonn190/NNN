@@ -104,13 +104,13 @@ function makeCameraMap({ canvas, onSelect, onToggleGate }) {
       d:`M ${px} ${py} L ${px+Math.sin(rads)*length} ${py-Math.cos(rads)*length}`,
       stroke:'#a8e5f1','stroke-width':'1.6','stroke-dasharray':'2 3',fill:'none',opacity:'.6',
     }));
-    g.append(makeSvg('circle',{cx:px,cy:py,r:20,class:'pin-area'}));
-    g.append(makeSvg('circle',{cx:px,cy:py,r:16,class:'pin-halo'}));
-    const wave = makeSvg('circle', { cx: px, cy: py, r: 14, class: 'pin-audio-wave' });
-    const echo = makeSvg('circle', { cx: px, cy: py, r: 14, class: 'pin-audio-wave pin-audio-echo' });
+    g.append(makeSvg('circle',{cx:px,cy:py,r:21.5,class:'pin-area'}));
+    g.append(makeSvg('circle',{cx:px,cy:py,r:17.5,class:'pin-halo'}));
+    const wave = makeSvg('circle', { cx: px, cy: py, r: 15.7, class: 'pin-audio-wave' });
+    const echo = makeSvg('circle', { cx: px, cy: py, r: 15.7, class: 'pin-audio-wave pin-audio-echo' });
     echo.addEventListener('animationend', () => g.classList.remove('audio-pulse'));
     g.append(wave, echo);
-    g.append(makeSvg('circle',{cx:px,cy:py,r:13.5,class:'pin-body'}));
+    g.append(makeSvg('circle',{cx:px,cy:py,r:15.2,class:'pin-body'}));
     g.append(makeSvg('text',{x:px,y:py+4,class:'pin-number'},String(cam.number).padStart(2,'0')));
     bindMapButton(g, () => onSelect(cam.id));
     const tip = makeSvg('title',{},cam.id);
