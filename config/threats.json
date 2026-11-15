@@ -15,7 +15,7 @@
     "level1": { "ventChance": 15, "roomSeconds": 35, "intervalReduction": 1, "reactionReduction": 0.3 },
     "maxLevel": { "ventChance": 20, "roomSeconds": 50, "intervalReduction": 2, "reactionReduction": 0.4 }
   },
-  "closetVent": { "waitSeconds": 20, "lightSeconds": 2 },
+  "closetVent": { "waitSeconds": 15, "lightSeconds": { "min": 1.5, "max": 3.5 } },
   "attack": {
     "repeatReactionFactor": 0.92,
     "stay": 5.5,

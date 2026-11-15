@@ -247,7 +247,7 @@ function warmCamera(cam, actors, frame) {
 const map = makeCameraMap({
   canvas: $('#map-canvas'),
   onToggleGate(id) {
-    if (state.mode === 'cameras') advanceGame(performance.now(), { type: 'gate', id });
+    if (state.mode === 'cameras') advanceGame(performance.now(), { type: 'gate', id, source: 'cameras' });
   },
   onSelect(id) {
     if (!state.complete) changeCamera(id, true);
@@ -334,7 +334,7 @@ function updateOfficeView() {
   }
   const illuminated = state.flashlight && corridorInView();
   const view = closed ? 'closed' : illuminated ? 'lit' : 'dark';
-  const doorsOnline = movement.gateControlsAvailable();
+  const doorsOnline = movement.gateControlsAvailable(OFFICE.gate);
   const viewKey = `${view}|${doorsOnline}|${lightBlocked}|${state.flashlight}`;
   if (viewKey !== officeViewKey) {
     officeViewKey = viewKey;
@@ -924,6 +924,7 @@ function setClownPhase(index) {
   const source = CLOWN_ART + art;
   if (dom.closetBeam.getAttribute('src') !== source) dom.closetBeam.src = source;
   dom.closetBeam.alt = alt;
+  dom.closetBeam.toggleAttribute('data-standing', art === 'standing.webp');
 }
 
 function setClosetLight(on) {
@@ -1547,6 +1548,7 @@ function renderResourceState({ energy, blackout, computerOn, radioAvailable, fla
     clearMonitorTransition();
     clearCameraLaunch();
     delete cameraApp.panel.dataset.opening;
+    updateOfficeView();
   }
   dom.computerScreen.inert = !computerOn || Boolean(state.monitorTransition);
   dom.officePower.disabled = dom.desktopPower.disabled = blackout;
@@ -1745,8 +1747,8 @@ radioMusic.addEventListener('pause', () => { if (radioMusic.paused) setRadioPlay
 radioMusic.addEventListener('error', stopRadio);
 dom.closetExit.addEventListener('click', () => beginClosetTransition('exit'));
 dom.officeGate.addEventListener('click', () => {
-  if (state.complete || state.mode !== 'office' || state.closetTransition || !movement.gateControlsAvailable()) return;
-  advanceGame(performance.now(), { type: 'gate', id: OFFICE.gate });
+  if (state.complete || state.mode !== 'office' || state.closetTransition || !movement.gateControlsAvailable(OFFICE.gate)) return;
+  advanceGame(performance.now(), { type: 'gate', id: OFFICE.gate, source: 'office' });
 });
 for (const button of [dom.officeLight, dom.closetLight]) {
   button.addEventListener('pointerdown', event => {
@@ -2008,9 +2010,21 @@ for (const eventName of ['pointerup', 'pointercancel', 'lostpointercapture']) {
   });
 }
 
+let lastCameraKeyAt = -Infinity;
 document.addEventListener('keydown', event => {
   if (dom.game.hidden || state.complete || event.altKey || event.ctrlKey || event.metaKey) return;
   const key = event.key.toLowerCase();
+  if (state.mode === 'cameras' && !dom.computerScreen.inert && !cameraApp.panel.inert
+      && !cameraApp.panel.hidden && /^[wasd]$/.test(key)) {
+    if (event.target?.isContentEditable || event.target?.closest?.('input, textarea, select, [role="textbox"]')) return;
+    event.preventDefault();
+    const now = performance.now();
+    if (!event.repeat || now - lastCameraKeyAt >= 180) {
+      lastCameraKeyAt = now;
+      map.moveSelection(key);
+    }
+    return;
+  }
   if (developerDebug && key === 'j' && (!state.closetTransition || state.mode === 'closet')) {
     event.preventDefault();
     if (!event.repeat) {

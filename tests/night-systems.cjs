@@ -222,7 +222,10 @@ for (const [level, seconds] of [[6, 5.5], [11, 3]]) {
 }
 {
   const test = stareScenario();
-  test.at(0, { ...kitchen, gates: ['G01'] }, { type: 'gate', id: 'G01' });
+  assert.equal(test.at(0, kitchen, { type: 'gate', id: 'G01' }), false);
+  assert.equal(test.at(0, {}, { type: 'gate', id: 'G01', source: 'cameras' }), false);
+  assert.equal(test.at(0, {}, { type: 'gate', id: 'G01' }), true);
+  test.at(0, kitchen);
   test.at(8, kitchen);
   near(test.state().sanity, 95.04);
   assert.equal(test.events.filter(([event]) => event === 'cameraScareStart').length, 0);
@@ -324,14 +327,16 @@ assert.deepEqual(cameraRoster(), startingRoster);
 assert.deepEqual(inactive.events, [['win', undefined]]);
 assert.equal(inactive.calls(), 0);
 
-for (const [sanity, seconds] of [[100, 60], [90, 60], [70, 92], [50, 124], [30, 156], [15, 180]]) {
+for (const [sanity, seconds] of [[100, 60], [90, 60], [70, 105], [50, 150], [30, 195], [10, 240], [9.9, 240]]) {
   near(hourDuration(base.night.clock, sanity), seconds);
   const test = scenario({ tune(config) {
     config.sanity.initial = sanity;
     config.sanity.recovery.passive = 0;
   } });
   test.at(seconds);
-  near(test.state().hours, 1);
+  near(test.state().hours, sanity < 10 ? 0 : 1);
+  near(test.state().energy, 100 - .025 * 60);
+  if (sanity < 10) continue;
   test.at(6 * seconds - .001);
   assert.equal(test.state().outcome, null);
   test.at(6 * seconds + 1);
@@ -342,30 +347,45 @@ for (const [sanity, seconds] of [[100, 60], [90, 60], [70, 92], [50, 124], [30, 
 
 const dynamic = scenario({ input: { closet: true }, tune: config => { config.sanity.initial = 70; } });
 dynamic.at(10, { radio: true });
-near(dynamic.state().hours, Math.log(101.6 / 92) / .96);
+near(dynamic.state().hours, Math.log(118.5 / 105) / 1.35);
+near(dynamic.state().energy, 100 - .025 * 60 * dynamic.state().hours);
 const first = dynamic.state().hours;
+const firstEnergy = dynamic.state().energy;
 dynamic.at(20);
-near(dynamic.state().hours - first, Math.log(101.6 / 99.36) / .224);
+near(dynamic.state().hours - first, Math.log(118.5 / 115.35) / .315);
+near(dynamic.state().energy, firstEnergy - .085 * 60 * (dynamic.state().hours - first));
 
-for (const target of [6, 7]) {
-  const overtime = scenario({ input: { closet: true }, tune(config) {
-    config.night.hoursToWin = target;
-    config.night.secondsPerHour = 60;
-    config.night.powerEnabled = false;
-  } });
-  overtime.at((target + 4) * 180, { radio: true });
-  assert.equal(overtime.state().outcome, null);
-  assert.equal(overtime.state().sanity, 0);
-  assert(overtime.state().hours > target + 3);
-  const recoveryAt = overtime.state().now + 15 / .14;
-  overtime.at(recoveryAt - .001, { radio: true });
-  assert.equal(overtime.state().outcome, null);
-  overtime.at(recoveryAt + 1);
-  near(overtime.state().now, recoveryAt);
-  near(overtime.state().sanity, 15);
-  assert.equal(overtime.state().outcome, 'win');
-  assert(overtime.state().hours > target + 3);
-}
+const fastThreshold = scenario({ input: { closet: true }, tune(config) {
+  config.sanity.initial = 91;
+} });
+fastThreshold.at(10);
+const fastTime = 1 / .6;
+const fastHours = fastTime / 60 + Math.log(71.25 / 60) / 1.35;
+near(fastThreshold.state().hours, fastHours);
+near(fastThreshold.state().energy, 100 - .025 * 60 * fastHours);
+
+const pausedClock = scenario({ input: { closet: true }, tune(config) {
+  config.sanity.initial = 11;
+} });
+pausedClock.at(10, { radio: true });
+const pausedHours = Math.log(240 / 237.75) / 1.35;
+near(pausedClock.state().hours, pausedHours);
+near(pausedClock.state().energy, 100 - .025 * (60 * pausedHours + (10 - 1 / .6) / 4));
+const recoveryAt = 10 + 5 / .14;
+pausedClock.at(recoveryAt - .001, { radio: true });
+near(pausedClock.state().hours, pausedHours);
+pausedClock.at(recoveryAt + 1);
+near(pausedClock.state().sanity, 10.14);
+near(pausedClock.state().hours, pausedHours + Math.log(240 / 239.685) / .315);
+
+const thresholdWin = scenario({ input: { radio: true }, tune(config) {
+  config.sanity.initial = 9.9;
+  config.night.hoursToWin = 0;
+} });
+thresholdWin.at(1);
+near(thresholdWin.state().now, .1 / .14);
+near(thresholdWin.state().sanity, 10);
+assert.equal(thresholdWin.state().outcome, 'win');
 const nineClock = scenario({ tune(config) { config.night.hoursToWin = 7; } });
 nineClock.at(360);
 assert.equal(nineClock.state().outcome, null);
@@ -455,19 +475,22 @@ const outage = scenario({ input: { gates: ['G01'], closet: true, radio: true }, 
 outage.at(10, { closet: true });
 assert.equal(outage.state().blackout, true);
 assert.equal(outage.state().computerOn, false);
+assert.equal(outage.game.isGateClosed('G01'), false);
+assert.equal(outage.at(10, { closet: true }, { type: 'gate', id: 'G01', source: 'office' }), false);
+assert.equal(outage.at(10, { closet: true }, { type: 'gate', id: 'G01', source: 'workshop' }), false);
 near(outage.state().sanity, 93.8);
 near(outage.hud().energyLossPerSecond, 0);
-near(outage.hud().sanityLossPerSecond, 1.44);
+near(outage.hud().sanityLossPerSecond, 1.20);
 outage.at(15, { closet: true, radio: true }, { type: 'computerPower' });
 assert.equal(outage.state().computerOn, false);
-near(outage.state().sanity, 86.6);
-near(outage.hud().sanityLossPerSecond, 1.34);
+near(outage.state().sanity, 87.8);
+near(outage.hud().sanityLossPerSecond, 1.10);
 near(outage.hud().noiseIntensity, 72);
 outage.at(39.99, { closet: true, radio: true });
 assert.equal(outage.state().radioAvailable, true);
 outage.at(41, { closet: true, radio: true });
 assert.equal(outage.state().radioAvailable, false);
-near(outage.state().sanity, 51.66);
+near(outage.state().sanity, 59.10);
 near(outage.hud().noiseIntensity, 0);
 outage.at(69.99);
 assert.equal(outage.state().flashlightAvailable, true);
@@ -597,7 +620,7 @@ found.returnAt(5, 'closet');
 assert.equal(found.state().shadow.phase, 'manifested');
 found.game.reset({ shadow: 1 });
 assert.equal(found.state().shadow.phase, 'inactive');
-const interrupted = shadowTest(10, 20, [0, .25], config => { config.power.initial = .025 * 3; });
+const interrupted = shadowTest(10, 20, [0, .25], config => { config.power.initial = .025 * 3 / 4; });
 interrupted.returnAt(0);
 interrupted.at(10);
 assert.equal(interrupted.state().blackout, true);
@@ -788,7 +811,7 @@ faultDuringBlackout.at(8, {}, { type: 'computerPower' });
 assert.equal(faultDuringBlackout.state().electricalFault, true);
 assert.equal(faultDuringBlackout.state().computerOn, false);
 
-const faultCausesBlackout = scenario({ levels: { yandere: 1 }, tune(config) {
+const faultCausesBlackout = scenario({ levels: { yandere: 1 }, input: { gates: ['G01', 'G09'] }, tune(config) {
   tuneElectrical(config);
   config.power.initial = 5;
   config.sanity.initial = 3;
@@ -798,6 +821,8 @@ faultCausesBlackout.at(sabotageAt);
 assert.equal(faultCausesBlackout.state().energy, 0);
 assert.equal(faultCausesBlackout.state().sanity, 0);
 assert.equal(faultCausesBlackout.state().computerOn, false);
+assert.equal(faultCausesBlackout.game.isGateClosed('G01'), false);
+assert.equal(faultCausesBlackout.game.isGateClosed('G09'), true);
 faultCausesBlackout.at(sabotageAt + 30 - .01);
 assert.equal(faultCausesBlackout.state().radioAvailable, true);
 faultCausesBlackout.at(sabotageAt + 30);

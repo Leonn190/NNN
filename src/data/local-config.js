@@ -194,9 +194,13 @@ window.NathGame.localConfig = {
       "interval": 19,
       "reaction": 4,
       "routes": {
-        "CV": 48,
-        "EL": 26,
-        "AR": 26
+        "CV": 30,
+        "EL": 30,
+        "AR": 40
+      },
+      "firstRoutes": {
+        "CV": 50,
+        "EL": 50
       },
       "audioModifier": 35,
       "hidingPlaces": [
@@ -1169,9 +1173,9 @@ window.NathGame.localConfig = {
     "rulesVersion": "1.1.2",
     "clock": {
       "fastSanity": 90,
-      "slowSanity": 15,
+      "slowSanity": 10,
       "fastSecondsPerHour": 60,
-      "slowSecondsPerHour": 180
+      "slowSecondsPerHour": 240
     },
     "startHour": 12,
     "hoursToWin": 6,
@@ -1467,8 +1471,11 @@ window.NathGame.localConfig = {
       }
     },
     "closetVent": {
-      "waitSeconds": 20,
-      "lightSeconds": 2
+      "waitSeconds": 15,
+      "lightSeconds": {
+        "min": 1.5,
+        "max": 3.5
+      }
     },
     "attack": {
       "repeatReactionFactor": 0.92,

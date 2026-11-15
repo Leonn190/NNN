@@ -94,6 +94,7 @@ let now = 0;
 let characterRules;
 let startingCharacterRules;
 let sanityRules;
+let clownRules;
 let movement;
 const math = Object.create(Math);
 let randomValue = () => 0;
@@ -150,7 +151,10 @@ const context = vm.createContext({
       characterRules = data;
       startingCharacterRules = structuredClone(data);
     }
-    if (url.pathname.endsWith('/threats.json')) data.clown.growthIncreasePerLevel = 0;
+    if (url.pathname.endsWith('/threats.json')) {
+      clownRules = data.clown;
+      clownRules.growthIncreasePerLevel = 0;
+    }
     if (url.pathname.endsWith('/sanity.json')) sanityRules = data;
     return { ok: true, json: async () => data };
   },
@@ -331,6 +335,7 @@ const gates = svg.children.find(node => node.attrs['aria-label'] === 'Portões')
 const camera = id => cameras.find(node => node.attrs['data-cam'] === id).fire('click');
 const gate = id => gates.find(node => node.attrs['data-gate'] === id).fire('click');
 const isClosed = id => gates.find(node => node.attrs['data-gate'] === id).attrs['aria-pressed'] === 'true';
+const mapOfficeGate = gates.find(node => node.attrs['data-gate'] === 'G01');
 assert(!svg.children.some(node => node.attrs.class === 'map-tracking'));
 assert(!svg.children.some(node => node.attrs['data-actor']));
 assert.doesNotMatch(html + css, /Painel Geral|systems-view|locator-|restart-all|animatronic-marker/i);
@@ -454,6 +459,24 @@ nodes['cameras-view'].fire('animationend', { animationName: 'camera-window-open'
 assert(!Object.hasOwn(nodes['cameras-view'].dataset, 'opening'));
 nodes['maximize-cameras'].fire('click');
 camera('CAM08');
+pressW();
+assert.equal(nodes['cam-number'].textContent, 'CAM 09');
+pressW({ repeat: true });
+assert.equal(nodes['cam-number'].textContent, 'CAM 09');
+step(now + 180);
+pressW({ repeat: true });
+assert.equal(nodes['cam-number'].textContent, 'CAM 10');
+document.fire('keydown', { key: 'a' });
+document.fire('keydown', { key: 's', target: { isContentEditable: true } });
+assert.equal(nodes['cam-number'].textContent, 'CAM 10');
+document.fire('keydown', { key: 's' });
+assert.equal(nodes['cam-number'].textContent, 'CAM 09');
+document.fire('keydown', { key: 'd' });
+assert.equal(nodes['cam-number'].textContent, 'CAM 05');
+nodes['maximize-cameras'].fire('click');
+assert(!Object.hasOwn(nodes['cameras-view'].dataset, 'maximized'));
+nodes['maximize-cameras'].fire('click');
+camera('CAM08');
 nodes['monitor-exit'].fire('click');
 nodes['office-monitor'].fire('click');
 assert.equal(nodes['taskbar-cameras'].attrs['aria-pressed'], 'true');
@@ -505,7 +528,10 @@ assert.equal(signal.hidden, true);
 assert.equal(runningAnimations.size, 0);
 // Unrelated gates leave CAM05 alone. A fourth closure reopens the latest
 // previous closure, and the feed must update in the same interaction.
-gate('G01'); gate('G02'); assert.equal(signal.hidden, true);
+gate('G01');
+assert.equal(mapOfficeGate.attrs['aria-disabled'], 'true');
+assert(!isClosed('G01'));
+gate('G09'); gate('G02'); assert.equal(signal.hidden, true);
 gate('G04'); check('closed-open');
 gate('G03'); check('open-open'); assert(!isClosed('G04')); assertGatePulse();
 gate('G05'); check('open-closed'); assert(!isClosed('G03'));
@@ -533,7 +559,7 @@ radio.fire('playing');
 nodes['office-monitor'].fire('click');
 finishCameraLaunch(); check('closed-open');
 gate('G04');
-gate('G01');
+gate('G09');
 gate('G02');
 // Resetting the night restores both the map and the default open-open image.
 for (let time = now + 100; time < nightStart + 360_000; time += 100) step(time);
@@ -552,12 +578,19 @@ assert.equal(chimes.paused, true);
 assert(gates.every(node => node.attrs['aria-pressed'] === 'false'));
 nodes['office-monitor'].fire('click'); finishCameraLaunch(); camera('CAM05'); check('open-open'); office('dark');
 // G01 controls the office, and the flashlight cannot reveal a closed gate.
-gate('G01'); office('closed');
-nodes['close-cameras'].fire('click'); office('closed');
-pressW(); office('closed');
-nodes['office-monitor'].fire('click'); finishCameraLaunch();
 gate('G01'); office('dark');
-gate('G02'); gate('G03'); gate('G01'); office('closed');
+nodes['monitor-exit'].fire('click');
+officeGate.fire('click'); office('closed');
+pressW(); office('closed');
+nodes['office-monitor'].fire('click');
+gate('G01'); office('closed');
+nodes['monitor-exit'].fire('click');
+officeGate.fire('click'); office('dark');
+nodes['office-monitor'].fire('click');
+gate('G02'); gate('G03');
+nodes['monitor-exit'].fire('click');
+officeGate.fire('click'); office('closed');
+nodes['office-monitor'].fire('click');
 gate('G06'); assert(!isClosed('G01')); office('dark');
 nodes['close-cameras'].fire('click');
 nodes['close-desktop'].fire('click');
@@ -756,9 +789,11 @@ const closetFrame = (gateState, room = [], doorway = null) => {
 const visibleOfficeLayers = () => nodes['office-characters'].children
   .filter(image => !image.hidden).map(image => image.src);
 const officeLayer = (location, character) => `./public/images/office/characters/${location}/${character}.webp`;
-for (const id of ['G01', 'G02', 'G03', 'G04', 'G05', 'G06', 'G07', 'G08', 'G09']) {
+for (const id of ['G02', 'G03', 'G04', 'G05', 'G06', 'G07', 'G08', 'G09']) {
   if (isClosed(id)) gate(id);
 }
+nodes['monitor-exit'].fire('click');
+if (isClosed('G01')) officeGate.fire('click');
 const officeCharacters = [...OFFICE.characters];
 let officeCases = 0;
 for (let mask = 0; mask < (1 << officeCharacters.length); mask++) {
@@ -773,11 +808,11 @@ for (let mask = 0; mask < (1 << officeCharacters.length); mask++) {
     assert.deepEqual(visibleOfficeLayers(), expected);
     office('dark');
     closetFrame('open', room, doorway === 'maid' ? null : doorway);
-    gate('G01');
+    officeGate.fire('click');
     office('closed');
     closetFrame('closed', room, doorway === 'maid' ? null : doorway);
     assert.deepEqual(visibleOfficeLayers(), expected);
-    gate('G01');
+    officeGate.fire('click');
     officeCases += 2;
   }
 }
@@ -793,8 +828,8 @@ assert(setOfficeCharacterState(OFFICE.characters.slice(0, 4)));
 closetFrame('open', OFFICE.characters.slice(0, 4));
 assert(setOfficeCharacterState(OFFICE.characters));
 closetFrame('open', OFFICE.characters);
-gate('G01'); closetFrame('closed', OFFICE.characters);
-gate('G01');
+officeGate.fire('click'); closetFrame('closed', OFFICE.characters);
+officeGate.fire('click');
 assert(!setOfficeCharacterState(['maid', 'maid']));
 assert(!setOfficeCharacterState(['original'], 'original'));
 assert(!setOfficeCharacterState([], 'desconhecida'));
@@ -979,7 +1014,9 @@ assert(!closetArt.src.includes('Smores'));
 customStart({});
 console.log('PASS: Smores custom difficulty, layered office and closet art, vent and office gate sounds.');
 
-Object.assign(characterRules.gatinha, { interval: 10, routes: { AR: 100 } });
+Object.assign(characterRules.gatinha, { interval: 10, routes: { AR: 100 }, firstRoutes: { AR: 100 } });
+const initialClown = clownRules.initial;
+clownRules.initial = clownRules.stages[2];
 customStart({ gatinha: 1, palhaca: 1 });
 const arStart = now;
 const closetVentArt = nodes['closet-vent'];
@@ -993,12 +1030,15 @@ step(arStart + 13_101);
 assert.equal(closet.dataset.view, 'back');
 pressW();
 assert.equal(closetBeam.hidden, false);
-assert.match(closetBeam.src, /sleeping\.webp$/);
-step(arStart + 15_100);
+assert.match(closetBeam.src, /standing\.webp$/);
+assert.equal(closetBeam.getAttribute('data-standing'), '');
+step(arStart + 14_600);
 assert.match(closetVentArt.src, /vent-gatinha\.webp$/);
-step(arStart + 15_101);
+step(arStart + 14_601);
 assert.match(closetVentArt.src, /vent-empty\.webp$/);
+assert.match(closetBeam.src, /standing\.webp$/);
 releaseW();
+clownRules.initial = initialClown;
 Object.assign(characterRules.gatinha, startingCharacterRules.gatinha);
 customStart({});
 console.log('PASS: Gatinha closet vent layer and positioned cue, intact clown art and flashlight defense.');
@@ -1258,6 +1298,7 @@ customStart({ yandere: 1, padrao: 1 });
 const faultStart = now;
 radioButton.fire('click');
 radio.fire('playing');
+officeGate.fire('click');
 nodes['office-monitor'].fire('click');
 finishCameraLaunch();
 camera('CAM05');
@@ -1316,9 +1357,13 @@ assert.equal(nodes['camera-offline'].hidden, true);
 assert.equal(nodes['feed-art'].hidden, false);
 assert.equal(nodes['camera-audio'].disabled, false);
 assert.match(nodes['feed-art'].src, /CAM12\/states\/open\//);
-assert(gates.every(node => node.attrs['aria-disabled'] === 'false' && node.attrs.tabindex === '0'));
+assert(gates.filter(node => node !== mapOfficeGate)
+  .every(node => node.attrs['aria-disabled'] === 'false' && node.attrs.tabindex === '0'));
 assert(isClosed('G01'));
 gate('G01');
+assert(isClosed('G01'));
+nodes['monitor-exit'].fire('click');
+officeGate.fire('click');
 assert(!isClosed('G01'));
 assert.equal(radio.paused, false);
 customStart({});
@@ -1484,6 +1529,7 @@ window.location.protocol = 'https:';
 customStart({ yandere: 1 });
 await new Promise(resolve => setImmediate(resolve));
 assert.equal(scareDownloads.length, downloadsBefore + 1);
+officeGate.fire('click');
 nodes['office-monitor'].fire('click');
 finishCameraLaunch();
 camera('CAM03');
@@ -1620,14 +1666,18 @@ const overtimeStart = now;
 nodes['office-closet'].fire('click');
 step(overtimeStart + 1450);
 step(overtimeStart + 9 * 180_000);
-assert.match(nodes['clock-label'].innerHTML, /^9 /);
+assert.match(nodes['clock-label'].innerHTML, /^12 /);
 assert.equal(movement.snapshot().outcome, null);
 nodes['closet-exit'].fire('click');
 step(now + 1040);
-step(now + 376_000);
+step(now + 249_000);
+assert.match(nodes['clock-label'].innerHTML, /^12 /);
+step(now + 30_000);
+assert(movement.snapshot().hours > 0);
+step(now + 1100_000);
 assert.equal(movement.snapshot().outcome, 'win');
-assert.match(nodes['shift-time'].innerHTML, /^11:\d\d <small>AM/);
-console.log('PASS: layered hallucination and cleanup, hidden-tab laugh suppression, and overtime clock.');
+assert.match(nodes['shift-time'].innerHTML, /^6:00 <small>AM/);
+console.log('PASS: layered hallucination and cleanup, hidden-tab laugh suppression, and clock pause and recovery.');
 }
 
 test().catch(error => {

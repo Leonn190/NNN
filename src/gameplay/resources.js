@@ -18,24 +18,39 @@ function hourDuration(clock, sanity) {
     * (clock.slowSecondsPerHour - clock.fastSecondsPerHour);
 }
 
-function clockProgress(clock, sanity, rate, seconds) {
-  if (rate === 0 || seconds === 0) return seconds / hourDuration(clock, sanity);
+function clockProgress(clock, sanity, rate, seconds, pauseBelowMinimum = true) {
+  if (rate === 0 || seconds === 0) {
+    return pauseBelowMinimum && sanity < clock.slowSanity ? 0 : seconds / hourDuration(clock, sanity);
+  }
   // Split where the hourly duration reaches a limit. Between limits it changes linearly.
-  const cuts = [clock.slowSanity, clock.fastSanity].map(limit => (limit - sanity) / rate)
-    .filter(time => time > 0 && time < seconds).sort((a, b) => a - b);
+  const slowAt = (clock.slowSanity - sanity) / rate;
+  const fastAt = (clock.fastSanity - sanity) / rate;
+  const cuts = [slowAt, fastAt].filter(time => time > 0 && time < seconds).sort((a, b) => a - b);
   let elapsed = 0;
   let hours = 0;
   for (const end of [...cuts, seconds]) {
-    const startDuration = hourDuration(clock, sanity + rate * elapsed);
-    const endDuration = hourDuration(clock, sanity + rate * end);
-    const change = (endDuration - startDuration) / startDuration;
-    hours += (end - elapsed) / startDuration * (change ? Math.log1p(change) / change : 1);
+    const belowMinimum = rate > 0 ? end <= slowAt : elapsed >= slowAt;
+    if (!pauseBelowMinimum || !belowMinimum) {
+      const startDuration = hourDuration(clock, sanity + rate * elapsed);
+      const endDuration = hourDuration(clock, sanity + rate * end);
+      const change = (endDuration - startDuration) / startDuration;
+      hours += (end - elapsed) / startDuration * (change ? Math.log1p(change) / change : 1);
+    }
     elapsed = end;
   }
   return hours;
 }
 
-function createResources({ night: defaults, sanity: sanityRules, power }, night = defaults) {
+function firstTime(low, high, reached) {
+  for (let i = 0; i < 42; i++) {
+    const mid = (low + high) / 2;
+    if (reached(mid)) high = mid;
+    else low = mid;
+  }
+  return high;
+}
+
+function createResources({ night: defaults, sanity: sanityRules, power }, night = defaults, onBlackout = () => {}) {
   const { hoursToWin, powerEnabled, sanityEnabled, secondsPerHour } = night;
   const fastestHour = secondsPerHour ?? night.clock.fastSecondsPerHour;
   const clock = { ...night.clock, fastSecondsPerHour: fastestHour };
@@ -54,6 +69,7 @@ function createResources({ night: defaults, sanity: sanityRules, power }, night 
     if (energy === 0) {
       blackoutAt = now;
       computerOn = false;
+      onBlackout();
     }
   }
 
@@ -67,48 +83,52 @@ function createResources({ night: defaults, sanity: sanityRules, power }, night 
       + (radio ? power.radioDrain : 0) + (input.flashlight ? power.flashlightDrain : 0) : 0;
   const sanityChange = (observation, radio) => sanityEnabled
     ? sanityRate(sanityRules, { ...observation, radio, blackout: energy === 0 }) : 0;
+  const consumptionMultiplier = () => sanityEnabled ? fastestHour / hourDuration(clock, sanity) : 1;
 
   function segment(now, until, input, observation, gates = input.gates) {
     const radioUntil = blackoutAt + power.radioGraceSeconds;
     const flashlightUntil = blackoutAt + power.flashlightGraceSeconds;
     const radio = input.radio && radioAvailable(now);
     const drain = energyDrain(input, gates, radio);
-    const powerEnds = drain > 0 ? now + energy / drain : Infinity;
     const rate = sanityChange(observation, radio);
     const progress = seconds => sanityEnabled ? clockProgress(clock, sanity, rate, seconds)
       : seconds / fastestHour;
-    const limit = Math.min(until, powerEnds, radioUntil > now ? radioUntil : Infinity,
+    const drainPerSecond = drain * consumptionMultiplier();
+    // A paused clock still uses the slowest hourly duration for energy.
+    const spent = seconds => rate !== 0
+      ? drain * fastestHour * clockProgress(clock, sanity, rate, seconds, false)
+      : drainPerSecond * seconds;
+    const limit = Math.min(until, radioUntil > now ? radioUntil : Infinity,
       flashlightUntil > now ? flashlightUntil : Infinity);
-    const duration = limit - now;
+    const available = limit - now;
+    let powerEnds = Infinity;
+    if (drain > 0 && spent(available) >= energy) {
+      const elapsed = rate !== 0
+        ? firstTime(0, Math.min(available, energy * clock.slowSecondsPerHour / (drain * fastestHour)),
+          seconds => spent(seconds) >= energy)
+        : energy / drainPerSecond;
+      powerEnds = Math.min(limit, now + elapsed);
+    }
+    const endLimit = Math.min(limit, powerEnds);
+    const duration = endLimit - now;
     const remaining = hoursToWin - hours;
     let dt = duration;
     let won = false;
-    const needsRecovery = sanityEnabled && sanity < clock.slowSanity;
-    const recoveryTime = needsRecovery ? (rate > 0 ? (clock.slowSanity - sanity) / rate : Infinity) : 0;
-    const tolerance = 1e-12;
-    // Find the first instant in this segment when the target hour and sanity threshold are both met.
-    if (recoveryTime <= duration + tolerance && progress(duration) >= remaining - tolerance) {
-      let earliest = Math.min(recoveryTime, duration);
-      if (progress(earliest) < remaining - tolerance) {
-        let high = duration;
-        for (let i = 0; i < 42; i++) {
-          const mid = (earliest + high) / 2;
-          if (progress(mid) >= remaining - tolerance) high = mid;
-          else earliest = mid;
-        }
-        earliest = high;
-      }
-      if (!sanityEnabled || needsRecovery || sanity + rate * earliest >= clock.slowSanity) {
-        dt = earliest;
-        won = true;
-      }
+    const thresholdAt = rate === 0 ? Infinity : (clock.slowSanity - sanity) / rate;
+    const eligibleFrom = sanityEnabled && sanity < clock.slowSanity ? (rate > 0 ? thresholdAt : Infinity) : 0;
+    const eligibleUntil = sanityEnabled && rate < 0 ? Math.min(duration, thresholdAt) : duration;
+    const reached = seconds => progress(seconds) >= remaining - 1e-12;
+    if (eligibleFrom <= eligibleUntil && reached(eligibleUntil)) {
+      dt = reached(eligibleFrom) ? eligibleFrom : firstTime(eligibleFrom, eligibleUntil, reached);
+      won = true;
     }
-    const end = dt === duration ? limit : now + dt;
+    const end = dt === duration ? endLimit : now + dt;
+    const consumed = end >= powerEnds ? energy : spent(dt);
     hours += progress(dt);
     if (won) hours = Math.max(hours, hoursToWin);
     if (sanityEnabled) sanity = clampPercent(sanity + rate * dt);
-    if (won && needsRecovery) sanity = Math.max(clock.slowSanity, sanity);
-    drainEnergy(end >= powerEnds ? energy : drain * dt, end);
+    if (won && sanityEnabled) sanity = Math.max(clock.slowSanity, sanity);
+    drainEnergy(consumed, end);
     return { end, radio, won };
   }
 
@@ -126,7 +146,7 @@ function createResources({ night: defaults, sanity: sanityRules, power }, night 
         radioAvailable: radio, flashlightAvailable: flashlightAvailable(now) };
       if (input) {
         const radioActive = input.radio && radio;
-        frame.energyLossPerSecond = energyDrain(input, gates, radioActive);
+        frame.energyLossPerSecond = energyDrain(input, gates, radioActive) * consumptionMultiplier();
         frame.sanityLossPerSecond = Math.max(0, -sanityChange(observation, radioActive));
       }
       return frame;

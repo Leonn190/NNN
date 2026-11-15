@@ -165,7 +165,8 @@
     ],
     "interval": 19,
     "reaction": 4.0,
-    "routes": { "CV": 48, "EL": 26, "AR": 26 },
+    "routes": { "CV": 30, "EL": 30, "AR": 40 },
+    "firstRoutes": { "CV": 50, "EL": 50 },
     "audioModifier": 35,
     "hidingPlaces": [
       23,

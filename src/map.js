@@ -1,6 +1,6 @@
 (() => {
 'use strict';
-const { CAMERAS, VENUE } = window.NathGame;
+const { CAMERAS, OFFICE, VENUE } = window.NathGame;
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
 const SCALE = 10.5;
@@ -8,6 +8,7 @@ const PAD_X = 18;
 const PAD_Y = 18;
 const X = value => PAD_X + value * SCALE;
 const Y = value => PAD_Y + (VENUE.height - value) * SCALE;
+const directions = { w: [0, 1], s: [0, -1], a: [-1, 0], d: [1, 0] };
 
 function makeSvg(tag, attrs = {}, content = null) {
   const element = document.createElementNS(SVG_NS, tag);
@@ -63,14 +64,19 @@ function makeCameraMap({ canvas, onSelect, onToggleGate }) {
     };
     if (type === 'portao') {
       const label = `Portão ${id}`;
+      const interactive = id !== OFFICE.gate;
       const gate = makeSvg('g', {
-        class: 'map-gate', 'data-gate': id, tabindex: '0', role: 'button',
+        class: 'map-gate', 'data-gate': id, tabindex: interactive ? '0' : '-1', role: 'button',
         'aria-label': label, 'aria-pressed': 'false',
       });
       gate.append(makeSvg('title', {}, label));
-      gate.append(makeSvg('line', {...coords, class: 'gate-hit-area'}));
+      if (interactive) {
+        gate.append(makeSvg('line', {...coords, class: 'gate-hit-area'}));
+        bindMapButton(gate, () => { if (gate.getAttribute('aria-disabled') !== 'true') onToggleGate(id); });
+      } else {
+        gate.setAttribute('aria-disabled', 'true');
+      }
       gate.append(makeSvg('line', {...coords, class: 'gate-line'}));
-      bindMapButton(gate, () => { if (gate.getAttribute('aria-disabled') !== 'true') onToggleGate(id); });
       gateNodes.set(id, gate);
       gateLayer.append(gate);
       continue;
@@ -98,14 +104,14 @@ function makeCameraMap({ canvas, onSelect, onToggleGate }) {
       d:`M ${px} ${py} L ${px+Math.sin(rads)*length} ${py-Math.cos(rads)*length}`,
       stroke:'#a8e5f1','stroke-width':'1.6','stroke-dasharray':'2 3',fill:'none',opacity:'.6',
     }));
-    g.append(makeSvg('circle',{cx:px,cy:py,r:16,class:'pin-area'}));
-    g.append(makeSvg('circle',{cx:px,cy:py,r:13,class:'pin-halo'}));
-    const wave = makeSvg('circle', { cx: px, cy: py, r: 11, class: 'pin-audio-wave' });
-    const echo = makeSvg('circle', { cx: px, cy: py, r: 11, class: 'pin-audio-wave pin-audio-echo' });
+    g.append(makeSvg('circle',{cx:px,cy:py,r:20,class:'pin-area'}));
+    g.append(makeSvg('circle',{cx:px,cy:py,r:16,class:'pin-halo'}));
+    const wave = makeSvg('circle', { cx: px, cy: py, r: 14, class: 'pin-audio-wave' });
+    const echo = makeSvg('circle', { cx: px, cy: py, r: 14, class: 'pin-audio-wave pin-audio-echo' });
     echo.addEventListener('animationend', () => g.classList.remove('audio-pulse'));
     g.append(wave, echo);
-    g.append(makeSvg('circle',{cx:px,cy:py,r:10.7,class:'pin-body'}));
-    g.append(makeSvg('text',{x:px,y:py+3.5,class:'pin-number'},String(cam.number).padStart(2,'0')));
+    g.append(makeSvg('circle',{cx:px,cy:py,r:13.5,class:'pin-body'}));
+    g.append(makeSvg('text',{x:px,y:py+4,class:'pin-number'},String(cam.number).padStart(2,'0')));
     bindMapButton(g, () => onSelect(cam.id));
     const tip = makeSvg('title',{},cam.id);
     g.append(tip);
@@ -118,13 +124,31 @@ function makeCameraMap({ canvas, onSelect, onToggleGate }) {
   canvas.append(svg);
   let activeCamera;
   return {
+    moveSelection(key) {
+      const [dx, dy] = directions[key];
+      let nearest;
+      let best = Infinity;
+      for (const camera of CAMERAS) {
+        const x = camera.x - activeCamera.x;
+        const y = camera.y - activeCamera.y;
+        const forward = x * dx + y * dy;
+        const lateral = Math.abs(x * dy - y * dx);
+        if (forward <= 0 || lateral > forward * 1.75) continue;
+        const distance = Math.hypot(forward, 2 * lateral);
+        if (distance >= best) continue;
+        nearest = camera;
+        best = distance;
+      }
+      if (nearest) onSelect(nearest.id);
+    },
     pulseAudio(id) { cameraNodes.get(id)?.classList.add('audio-pulse'); },
     clearAudioPulses() {
       for (const node of cameraNodes.values()) node.classList.remove('audio-pulse');
     },
     setGate(id, closed) { setGateClosed(gateNodes.get(id), closed); },
     setGateControls(enabled) {
-      for (const gate of gateNodes.values()) {
+      for (const [id, gate] of gateNodes) {
+        if (id === OFFICE.gate) continue;
         gate.setAttribute('aria-disabled', String(!enabled));
         gate.setAttribute('tabindex', enabled ? '0' : '-1');
       }

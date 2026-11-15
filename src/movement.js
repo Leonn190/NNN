@@ -3,7 +3,7 @@
 
 const { factor, difficultyProgress, interpolate, uniform, weightedChoices, drawWeighted, createRoutes, createAttackRoutes,
   createEffects, createHallucinations, createApproach, createThreats, createSmores,
-  createResources, createShadow, shadowDifficulty, createGates, createElectrical, CAMERAS } = window.NathGame;
+  createResources, createShadow, shadowDifficulty, createGates, canControlGate, createElectrical, CAMERAS } = window.NathGame;
 
 function createMovement(config, { random = Math.random, hallucinationRandom = Math.random, emit = () => {} } = {}) {
   const { map, movement, characters, night } = config;
@@ -20,7 +20,8 @@ function createMovement(config, { random = Math.random, hallucinationRandom = Ma
   let closetAttack, flashUntil, smoresVisibleAt;
 
   const movementPaused = () => now < movementDelay;
-  const gateControlsAvailable = () => maxClosedGates > 0 && !electrical.failed();
+  const gateControlsAvailable = id => maxClosedGates > 0 && !electrical.failed()
+    && canControlGate(id, undefined, resources.snapshot(now).blackout);
   const officeLightAvailable = () => !gates.closed.has(officeGate) && !actors.some(actor => actor.position === office);
   const moveDue = actor => {
     const accelerated = actor.due - smores.intervalReduction();
@@ -105,7 +106,8 @@ function createMovement(config, { random = Math.random, hallucinationRandom = Ma
       emit(event, phase);
     });
     threats = createThreats(config, { palhaca: levelFor('palhaca') }, random, emit, smores.reactionReduction);
-    resources = createResources(config, rules);
+    resources = createResources(config, rules, () => gates.open(officeGate));
+    if (resources.snapshot(now).blackout) gates.open(officeGate);
     const shadowMax = night.campaignMaxLevel;
     const shadowLevel = sanityEnabled ? Math.min(shadowMax, levelFor('shadow')) : 0;
     shadow = createShadow(config.shadow, shadowDifficulty(config.shadow, shadowLevel, shadowMax), cameraIds, random);
@@ -127,8 +129,8 @@ function createMovement(config, { random = Math.random, hallucinationRandom = Ma
 
   function resolveClosetVent() {
     if (closetAttack?.phase !== 'closetVent') return;
-    const { actor, due, litSince } = closetAttack;
-    const repelAt = litSince + closetVentRules.lightSeconds;
+    const { actor, due, litSince, lightSeconds } = closetAttack;
+    const repelAt = litSince + lightSeconds;
     if (repelAt <= Math.min(now, due)) {
       closetAttack = null;
       actor.previous = closetVent;
@@ -171,7 +173,8 @@ function createMovement(config, { random = Math.random, hallucinationRandom = Ma
     if (!attackRoutes.reach(actor, from)) return false;
     if (actor.route.objective === 'closetVent') {
       actor.due = Infinity;
-      closetAttack = { actor, phase: 'closetVent', due: now + closetVentRules.waitSeconds, litSince: Infinity };
+      closetAttack = { actor, phase: 'closetVent', due: now + closetVentRules.waitSeconds, litSince: Infinity,
+        lightSeconds: uniform(random, closetVentRules.lightSeconds) };
       emit('closetVent', actor);
       return true;
     }
@@ -486,11 +489,11 @@ function createMovement(config, { random = Math.random, hallucinationRandom = Ma
     const flashlightAvailable = resources.flashlightAvailable(now);
     const corridorLight = flashlightAvailable && input.corridorLight;
     const clownLight = flashlightAvailable && input.clownLight;
+    const effectiveCorridorLight = corridorLight && officeLightAvailable();
     const observation = observeSanity(computerOn, corridorLight, clownLight, camera);
     const { end, radio, won } = resources.segment(now, until, input, observation, gates.closed);
     const activeInput = { ...noiseInput(radio, computerOn), corridorLight, clownLight };
-    effects.integrate(end - now, { ...activeInput,
-      corridorLight: corridorLight && officeLightAvailable() });
+    effects.integrate(end - now, { ...activeInput, corridorLight: effectiveCorridorLight });
     if (!movementPaused()) {
       threats.integrate(end - now, activeInput);
       smores.integrate(end - now, radio);
@@ -510,7 +513,7 @@ function createMovement(config, { random = Math.random, hallucinationRandom = Ma
           threats.nextDeadline(now, radio, resources.flashlightAvailable(now) && input.clownLight), smores.nextDeadline(now, radio));
         for (const actor of actors) due = Math.min(due, actor.pending?.expires ?? moveDue(actor));
         if (closetAttack?.phase === 'closetVent') {
-          due = Math.min(due, closetAttack.due, closetAttack.litSince + closetVentRules.lightSeconds);
+          due = Math.min(due, closetAttack.due, closetAttack.litSince + closetAttack.lightSeconds);
         }
       }
       const camera = observeCamera();
@@ -545,9 +548,11 @@ function createMovement(config, { random = Math.random, hallucinationRandom = Ma
       case 'cameraAudio':
         accepted = camerasAvailable() && effects.startAudio(now, input.camera);
         break;
-      case 'gate':
-        accepted = gateControlsAvailable() && gates.toggle(action.id);
+      case 'gate': {
+        const source = input.view === 'cameras' || input.camera ? 'cameras' : action.source;
+        accepted = gateControlsAvailable() && gates.toggle(action.id, source, resources.snapshot(now).blackout);
         break;
+      }
       case 'computerPower': {
         if (cameraScareEnds !== undefined) break;
         const wasOn = resources.computerOn();

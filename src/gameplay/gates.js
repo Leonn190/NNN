@@ -1,7 +1,9 @@
 (() => {
 'use strict';
 
-const gateIds = new Set(window.NathGame.VENUE.openings.filter(({ type }) => type === 'portao').map(({ id }) => id));
+const { OFFICE, VENUE } = window.NathGame;
+const gateIds = new Set(VENUE.openings.filter(({ type }) => type === 'portao').map(({ id }) => id));
+const canControlGate = (id, source, blackout) => id !== OFFICE.gate || (source !== 'cameras' && !blackout);
 
 function createGates(limit, changed, initial = []) {
   const closed = new Set([...initial].filter(id => gateIds.has(id)).slice(0, limit));
@@ -12,8 +14,8 @@ function createGates(limit, changed, initial = []) {
     return true;
   }
 
-  function toggle(id) {
-    if (!gateIds.has(id) || limit <= 0) return false;
+  function toggle(id, source, blackout) {
+    if (!gateIds.has(id) || limit <= 0 || !canControlGate(id, source, blackout)) return false;
     if (closed.has(id)) return open(id);
     const changes = [];
     if (closed.size >= limit) {
@@ -29,5 +31,5 @@ function createGates(limit, changed, initial = []) {
   return { closed, open, toggle };
 }
 
-window.NathGame.createGates = createGates;
+Object.assign(window.NathGame, { createGates, canControlGate });
 })();

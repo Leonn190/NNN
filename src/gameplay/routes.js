@@ -64,11 +64,13 @@ function createAttackRoutes(config, graph, random, passable, clear) {
   const { definitions, bonus: initialBonus, perMove, padraoPerMove } = movement.routes;
   const permitsEdge = (actor, edge) => edge && (!edge.actors || edge.actors.includes(actor.key));
   function routeOptions(actor) {
-    return Object.entries(actor.rule.routes ?? {}).map(([id, weight]) => {
+    const { routes, firstRoutes } = actor.rule;
+    return Object.entries(routes ?? {}).map(([id, weight]) => {
       const { objective, target, paths } = definitions[id];
       const variants = paths?.filter(path => path.every((position, index) =>
         actor.allowed.has(position) && (index === 0 || permitsEdge(actor, graph.connection(path[index - 1], position)))));
-      return { id, weight, objective, target, variants };
+      const routeWeight = actor.lastRoute == null && firstRoutes ? firstRoutes[id] ?? 0 : weight;
+      return { id, weight: routeWeight, objective, target, variants };
     }).filter(({ target, variants }) => actor.allowed.has(target) && (variants === undefined || variants.length));
   }
 
@@ -116,7 +118,7 @@ function createAttackRoutes(config, graph, random, passable, clear) {
     const candidates = usable => options.map(option => candidate(actor, option, usable)).filter(Boolean);
     let eligible = candidates(passable);
     // If every route is gated, keep a physical option so the actor can wait for a door.
-    if (!eligible.length && exclude === undefined) eligible = candidates(permitsEdge);
+    if (!eligible.length && exclude === undefined && actor.key !== 'gatinha') eligible = candidates(permitsEdge);
     const total = eligible.reduce((sum, { weight }) => sum + weight, 0);
     return eligible.map(({ route, weight }) => ({ route, probability: weight / total }));
   }

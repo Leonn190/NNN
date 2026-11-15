@@ -2,9 +2,9 @@
   "rulesVersion": "1.1.2",
   "clock": {
     "fastSanity": 90,
-    "slowSanity": 15,
+    "slowSanity": 10,
     "fastSecondsPerHour": 60,
-    "slowSecondsPerHour": 180
+    "slowSecondsPerHour": 240
   },
   "startHour": 12,
   "hoursToWin": 6,

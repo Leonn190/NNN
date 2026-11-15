@@ -156,7 +156,7 @@ for (const [id, crossings] of Object.entries(gateCrossings)) {
     padrao: { CV: 19, CC: 19, EL: 16, EC: 15, EV: 10, ES: 21 },
     gotica: { CV: 30, CC: 30, EL: 20, EC: 10, EV: 10 },
     yandere: { CV: 22, CC: 22, EL: 10, EC: 14, EV: 8, EE: 24 },
-    gatinha: { CV: 48, EL: 26, AR: 26 }, maid: {}
+    gatinha: { CV: 30, EL: 30, AR: 40 }, maid: {}
   };
   const open = (_, edge) => Boolean(edge);
   const routing = createAttackRoutes(base, routes, () => 0, open, open);
@@ -169,7 +169,7 @@ for (const [id, crossings] of Object.entries(gateCrossings)) {
   assert.equal(routing.bonus(11, 120), 636);
   for (const [key, weights] of Object.entries(expected)) {
     const rule = base.characters[key];
-    const actor = { key, rule, allowed: new Set(rule.positions), position: rule.start };
+    const actor = { key, rule, allowed: new Set(rule.positions), position: rule.start, lastRoute: 'CV' };
     const odds = routing.selectionOdds(actor);
     assert.deepEqual(odds.map(({ route }) => route.id), Object.keys(weights));
     for (const { route, probability } of odds) {
@@ -186,9 +186,16 @@ for (const [id, crossings] of Object.entries(gateCrossings)) {
   }
   const gatinha = base.characters.gatinha;
   const actor = { key: 'gatinha', rule: gatinha, allowed: new Set(gatinha.positions), position: 3 };
+  assert.deepEqual(routing.selectionOdds(actor).map(({ route, probability }) => [route.id, probability]),
+    [['CV', .5], ['EL', .5]]);
+  createAttackRoutes(base, routes, () => .99, open, open).select(actor);
+  assert.equal(actor.lastRoute, 'EL');
   const closedVip = (_, edge) => open(null, edge) && edge.gateId !== 'G02';
   const available = createAttackRoutes(base, routes, () => 0, closedVip, closedVip).selectionOdds(actor);
-  assert.deepEqual(available.map(({ route, probability }) => [route.id, probability]), [['EL', .5], ['AR', .5]]);
+  assert.deepEqual(available.map(({ route, probability }) => [route.id, probability]), [['EL', 3 / 7], ['AR', 4 / 7]]);
+  actor.lastRoute = null;
+  assert.deepEqual(createAttackRoutes(base, routes, () => 0, closedVip, closedVip).selectionOdds(actor)
+    .map(({ route, probability }) => [route.id, probability]), [['EL', 1]]);
 }
 
 // Beginning at the stockroom still requires CAM12. Its intermediate corridor visit cannot start an attack.
@@ -790,7 +797,7 @@ for (const level of [1, 4, 10, 11]) {
 }
 
 {
-  const gatinha = { interval: 10, routes: { AR: 100 } };
+  const gatinha = { interval: 10, routes: { AR: 100 }, firstRoutes: { AR: 100 } };
   const setup = (fields = {}, options = {}) => scenario({ gatinha: { ...gatinha, ...fields } },
     { random: () => 0, ...options });
   const dark = { view: 'closet-back', closet: true };
@@ -803,14 +810,14 @@ for (const level of [1, 4, 10, 11]) {
   defend.at(10);
   assert.equal(defend.actor('gatinha').position, base.map.closetVent);
   assert.equal(defend.game.snapshot().closetVent, 'closetVent');
-  defend.at(18, { view: 'cameras', camera: 'CAM04' });
-  defend.at(22, dark, enter);
-  defend.at(23, beam);
-  defend.at(24.999, { ...beam, view: 'closet-door' });
-  defend.at(28, beam);
-  defend.at(29.999, beam);
+  defend.at(16, { view: 'cameras', camera: 'CAM04' });
+  defend.at(18, dark, enter);
+  defend.at(19, beam);
+  defend.at(20.499, { ...beam, view: 'closet-door' });
+  defend.at(23.5, beam);
+  defend.at(24.999, beam);
   assert.equal(defend.game.snapshot().closetVent, 'closetVent');
-  defend.at(30, dark);
+  defend.at(25, dark);
   assert.equal(defend.actor('gatinha').position, 3);
   closeTo(defend.actor('gatinha').remaining, 12.5);
   assert.equal(defend.game.snapshot().closetVent, null);
@@ -821,9 +828,9 @@ for (const level of [1, 4, 10, 11]) {
   late.at(10);
   late.at(12, dark, enter);
   late.at(13, {}, exit);
-  late.at(29.999);
+  late.at(24.999);
   assert.equal(late.game.snapshot().closetVent, 'closetVent');
-  late.at(30);
+  late.at(25);
   assert.equal(late.game.snapshot().closetVent, 'compromised');
   late.at(60);
   assert.equal(late.actor('gatinha').position, base.map.closetVent);
@@ -837,9 +844,16 @@ for (const level of [1, 4, 10, 11]) {
 
   const inside = setup();
   inside.at(10);
-  inside.at(28.001, beam, enter);
-  inside.at(30, {}, exit);
+  inside.at(23.501, beam, enter);
+  inside.at(25, {}, exit);
   assert.deepEqual(inside.output('loss'), ['gatinha']);
+
+  const longLight = setup({}, { random: () => .75 });
+  longLight.at(10, beam, enter);
+  longLight.at(12.999, beam);
+  assert.equal(longLight.game.snapshot().closetVent, 'closetVent');
+  longLight.at(13, beam);
+  assert.equal(longLight.game.snapshot().closetVent, null);
 
   const gated = setup({ start: 5, positions: [3, 5, base.map.closetVent] }, { gates: ['G08'] });
   gated.at(10);
@@ -1038,7 +1052,7 @@ for (const key of Object.keys(base.characters).filter(key => key !== 'yandere'))
     }
   } });
   const input = { radio: true, closet: true, view: 'closet-back', closetVentLight: true };
-  game.reset(levels, input, { ...base.night, sanityEnabled: false });
+  game.reset(levels, input, { ...base.night, powerEnabled: false, sanityEnabled: false });
   game.advance(0, input, { type: 'closetEnter' });
   for (let time = 0; time <= 1500 && !game.snapshot().outcome; time += 4.25) {
     const action = game.electricalFault() ? { type: 'computerPower' }
@@ -1090,7 +1104,7 @@ for (const key of Object.keys(base.characters).filter(key => key !== 'yandere'))
 for (const [key, rule] of Object.entries(base.characters)) {
   for (const id of Object.keys(rule.routes ?? {})) {
     const config = structuredClone(base);
-    config.characters = { [key]: { ...rule, routes: { [id]: 100 } } };
+    config.characters = { [key]: { ...rule, routes: { [id]: 100 }, firstRoutes: undefined } };
     for (const table of [config.movement.attack.corridor[key], config.movement.attack.stock]) {
       for (const phase of attackPhases) table[phase] = [1, 1];
     }
