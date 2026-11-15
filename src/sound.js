@@ -12,12 +12,12 @@ const sampleFiles = {
   chimes: 'audio/effects/interface/fim-do-turno.mp3'
 };
 const cameraMeows = [
-  ['01_camera_sinistra', 'camera'],
-  ['02_camera_pesadelo', 'pesadelo']
-].map(([folder, suffix]) => [
-  `${folder}/01_miado_agudo_${suffix}.wav`,
-  `${folder}/02_miado_longo_${suffix}.wav`,
-  `${folder}/03_miado_curto_${suffix}.wav`
+  'audio/cameras/sinistra',
+  'audio/cameras/pesadelo'
+].map(folder => [
+  `${folder}/01-miado-agudo.wav`,
+  `${folder}/02-miado-longo.wav`,
+  `${folder}/03-miado-curto.wav`
 ]);
 
 // Efeitos do jogo e mixagem do rádio da mesa.
