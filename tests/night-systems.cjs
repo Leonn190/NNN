@@ -474,15 +474,15 @@ const idleComputerDrain = base.power.computerDrain * base.power.computerIdleFact
 const powerInput = { radio: true, corridorLight: true, flashlight: true, gates: ['G01'] };
 const power = scenario({ input: powerInput });
 power.at(10, powerInput, { type: 'computerPower' });
-const firstEnergy = 100 - 10 * (idleComputerDrain + base.power.gateDrain + base.power.radioDrain + base.power.flashlightDrain);
-near(power.state().energy, firstEnergy);
+const powerFirstEnergy = 100 - 10 * (idleComputerDrain + base.power.gateDrain + base.power.radioDrain + base.power.flashlightDrain);
+near(power.state().energy, powerFirstEnergy);
 power.at(20, {}, { type: 'gate', id: 'G01' });
 power.at(20, {}, { type: 'gate', id: 'G06' });
 power.at(20, {}, { type: 'gate', id: 'G01' });
-const secondEnergy = firstEnergy - 10 * (base.power.gateDrain + base.power.radioDrain + base.power.flashlightDrain);
-near(power.state().energy, secondEnergy);
+const powerSecondEnergy = powerFirstEnergy - 10 * (base.power.gateDrain + base.power.radioDrain + base.power.flashlightDrain);
+near(power.state().energy, powerSecondEnergy);
 power.at(30, {}, { type: 'computerPower' });
-near(power.state().energy, secondEnergy - 10 * (2 * base.power.gateDrain));
+near(power.state().energy, powerSecondEnergy - 10 * (2 * base.power.gateDrain));
 assert.equal(power.state().computerOn, true);
 near(power.state().sanity, 98.4);
 
