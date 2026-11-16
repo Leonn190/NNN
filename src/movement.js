@@ -732,8 +732,8 @@ function createMovement(config, { random = Math.random, hallucinationRandom = Ma
           }
         }
       }
-      const scareDeadline = updateCameraScare(camera, until);
-      due = Math.min(due, scareDeadline, hallucinations.nextDeadline());
+      const scareDeadline = movementPaused() ? Infinity : updateCameraScare(camera, until);
+      due = Math.min(due, scareDeadline, movementPaused() ? Infinity : hallucinations.nextDeadline());
       // A modifier or a power boundary can leave work due at this instant.
       // Resolve it without integrating backward or skipping intervening events.
       integrate(Math.max(now, due), cameraScareEnds === undefined && camerasAvailable() ? camera : undefined);
@@ -743,7 +743,7 @@ function createMovement(config, { random = Math.random, hallucinationRandom = Ma
       if (now < until) {
         settle();
         if (outcome) return;
-        hallucinations.resolve(now, resources.snapshot(now).sanity, hallucinationsAudible);
+        if (!movementPaused()) hallucinations.resolve(now, resources.snapshot(now).sanity, hallucinationsAudible);
       }
     }
     const current = typeof nextInput === 'function' ? nextInput() : nextInput;
