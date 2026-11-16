@@ -171,6 +171,7 @@
   let currentFolder = null;
   let openFile = null;
   let status = '';
+  let draft = '';
 
   function permitted() {
     return !$('#game').hidden && !$('#computer-desktop').hidden
@@ -221,8 +222,9 @@
     const toolbar = element('div', 'nnn-browser-toolbar');
     const home = element('button', null, '⌂  Este computador');
     const path = element('span', 'nnn-browser-path',
-      currentFolder ? 'Este computador / Notas / ' + currentFolder
-        : 'Este computador');
+      currentFolder === '__notes_root__' ? 'Este computador / Notas'
+        : currentFolder ? 'Este computador / Notas / ' + currentFolder
+          : 'Este computador');
     home.type = 'button';
     home.addEventListener('click', () => { currentFolder = null; openFile = null; renderExplorer(); });
     toolbar.append(home, path);
@@ -297,6 +299,8 @@
     const textarea = element('textarea', 'nnn-user-textarea');
     textarea.placeholder = 'Escreva suas observações...';
     textarea.maxLength = MAX_USER_NOTE;
+    textarea.value = draft;
+    textarea.addEventListener('input', () => { draft = textarea.value; });
     textarea.setAttribute('aria-label', 'Conteúdo da anotação');
     textarea.addEventListener('keydown', event => event.stopPropagation());
     const footer = element('div', 'nnn-editor-footer');
@@ -309,6 +313,7 @@
       const entry = createEntry('Pessoal', 'Outras', text, activeGuard(), null);
       persist();
       textarea.value = '';
+      draft = '';
       status = entry.filename + ' foi salvo em Notas / Outras.';
       statusText.textContent = status;
       refresh();
