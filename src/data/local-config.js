@@ -1227,7 +1227,7 @@ window.NathGame.localConfig = {
     }
   },
   "night": {
-    "rulesVersion": "1.1.2",
+    "rulesVersion": "1.1.3",
     "clock": {
       "fastSanity": 90,
       "slowSanity": 10,
@@ -1243,10 +1243,10 @@ window.NathGame.localConfig = {
       0,
       11
     ],
-    "campaignMaxLevel": 10,
+    "campaignMaxLevel": 11,
     "campaign": [
       {
-        "movementDelay": 40,
+        "movementDelay": 45,
         "maxClosedGates": 0,
         "secondsPerHour": 50,
         "hoursToWin": 6,
@@ -1254,8 +1254,8 @@ window.NathGame.localConfig = {
         "sanityEnabled": false,
         "levels": {
           "gotica": 5,
-          "yandere": 3,
-          "palhaca": 0,
+          "yandere": 4,
+          "palhaca": 1,
           "padrao": 0,
           "gatinha": 0,
           "maid": 0,
@@ -1268,30 +1268,12 @@ window.NathGame.localConfig = {
         "maxClosedGates": 1,
         "secondsPerHour": 55,
         "hoursToWin": 6,
-        "powerEnabled": false,
-        "sanityEnabled": false,
-        "levels": {
-          "gotica": 5,
-          "yandere": 7,
-          "palhaca": 2,
-          "padrao": 0,
-          "gatinha": 0,
-          "maid": 0,
-          "smores": 0,
-          "shadow": 0
-        }
-      },
-      {
-        "movementDelay": 30,
-        "maxClosedGates": 2,
-        "secondsPerHour": 60,
-        "hoursToWin": 6,
         "powerEnabled": true,
         "sanityEnabled": false,
         "levels": {
-          "gotica": 3,
-          "yandere": 5,
-          "palhaca": 1,
+          "gotica": 8,
+          "yandere": 4,
+          "palhaca": 2,
           "padrao": 1,
           "gatinha": 0,
           "maid": 0,
@@ -1300,38 +1282,56 @@ window.NathGame.localConfig = {
         }
       },
       {
-        "movementDelay": 25,
+        "movementDelay": 35,
+        "maxClosedGates": 2,
+        "secondsPerHour": 60,
+        "hoursToWin": 6,
+        "powerEnabled": true,
+        "sanityEnabled": true,
+        "levels": {
+          "gotica": 4,
+          "yandere": 9,
+          "palhaca": 2,
+          "padrao": 2,
+          "gatinha": 0,
+          "maid": 1,
+          "smores": 0,
+          "shadow": 0
+        }
+      },
+      {
+        "movementDelay": 30,
         "maxClosedGates": 3,
         "secondsPerHour": 60,
         "hoursToWin": 6,
         "powerEnabled": true,
         "sanityEnabled": true,
         "levels": {
-          "gotica": 3,
-          "yandere": 4,
-          "palhaca": 2,
-          "padrao": 2,
-          "gatinha": 1,
-          "maid": 0,
+          "gotica": 5,
+          "yandere": 2,
+          "palhaca": 3,
+          "padrao": 3,
+          "gatinha": 2,
+          "maid": 9,
           "smores": 0,
           "shadow": 0
         }
       },
       {
-        "movementDelay": 20,
+        "movementDelay": 25,
         "maxClosedGates": 4,
         "secondsPerHour": 60,
         "hoursToWin": 6,
         "powerEnabled": true,
         "sanityEnabled": true,
         "levels": {
-          "gotica": 3,
-          "yandere": 4,
+          "gotica": 5,
+          "yandere": 3,
           "palhaca": 5,
-          "padrao": 3,
-          "gatinha": 2,
-          "maid": 9,
-          "smores": 0,
+          "padrao": 4,
+          "gatinha": 10,
+          "maid": 2,
+          "smores": 3,
           "shadow": 0
         }
       },
@@ -1343,14 +1343,14 @@ window.NathGame.localConfig = {
         "powerEnabled": true,
         "sanityEnabled": true,
         "levels": {
-          "gotica": 4,
+          "gotica": 6,
           "yandere": 5,
           "palhaca": 8,
-          "padrao": 4,
-          "gatinha": 10,
-          "maid": 2,
-          "smores": 3,
-          "shadow": 0
+          "padrao": 5,
+          "gatinha": 4,
+          "maid": 4,
+          "smores": 5,
+          "shadow": 1
         }
       },
       {
@@ -1361,36 +1361,36 @@ window.NathGame.localConfig = {
         "powerEnabled": true,
         "sanityEnabled": true,
         "levels": {
-          "gotica": 5,
-          "yandere": 5,
-          "palhaca": 4,
-          "padrao": 8,
-          "gatinha": 7,
+          "gotica": 11,
+          "yandere": 11,
+          "palhaca": 3,
+          "padrao": 6,
+          "gatinha": 5,
           "maid": 5,
-          "smores": 2,
-          "shadow": 1
+          "smores": 3,
+          "shadow": 2
         }
       },
       {
-        "movementDelay": 12,
+        "movementDelay": 10,
         "maxClosedGates": 7,
         "secondsPerHour": 60,
         "hoursToWin": 6,
         "powerEnabled": true,
         "sanityEnabled": true,
         "levels": {
-          "gotica": 7,
-          "yandere": 7,
+          "gotica": 6,
+          "yandere": 6,
           "palhaca": 5,
-          "padrao": 9,
-          "gatinha": 7,
-          "maid": 7,
-          "smores": 5,
-          "shadow": 3
+          "padrao": 10,
+          "gatinha": 5,
+          "maid": 6,
+          "smores": 10,
+          "shadow": 10
         }
       },
       {
-        "movementDelay": 12,
+        "movementDelay": 10,
         "maxClosedGates": 8,
         "secondsPerHour": 60,
         "hoursToWin": 7,
@@ -1399,12 +1399,12 @@ window.NathGame.localConfig = {
         "levels": {
           "gotica": 7,
           "yandere": 7,
-          "palhaca": 5,
-          "padrao": 10,
+          "palhaca": 6,
+          "padrao": 11,
           "gatinha": 7,
           "maid": 7,
-          "smores": 6,
-          "shadow": 10
+          "smores": 3,
+          "shadow": 11
         }
       }
     ]
