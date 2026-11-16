@@ -285,11 +285,11 @@ window.NathGame.localConfig = {
   "effects": {
     "cameraAudio": {
       "duration": 3,
-      "cooldown": 10,
+      "cooldown": 9,
       "factors": [
         1,
         1,
-        0.2
+        0.25
       ]
     },
     "static": {
@@ -1513,6 +1513,7 @@ window.NathGame.localConfig = {
         "min": 55,
         "max": 65
       },
+      "sanityThreshold": 75,
       "warningSeconds": 1,
       "firstLevel": 5,
       "secondLevel": 8,
@@ -1579,13 +1580,13 @@ window.NathGame.localConfig = {
         50,
         80
       ],
-      "entryDeathAbove": 80,
-      "floorPerEntry": 10,
+      "entryDeathAbove": 82,
+      "floorPerEntry": 8,
       "growth": [
-        0.85,
-        1.65
+        0.8,
+        1.56
       ],
-      "warningAt": 80,
+      "warningAt": 79,
       "closetGrowthFactor": 3.25,
       "litClosetGrowthFactor": 1.625,
       "musicReduction": 2
