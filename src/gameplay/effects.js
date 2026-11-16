@@ -96,6 +96,11 @@ function createEffects(config, routes, actors) {
     return { advance, stay: failure * share, abandon: failure * (1 - share) };
   }
 
+  function stayWeight(actor, now = 0) {
+    const stimulus = activeAudio(actor, now);
+    return stimulus?.distance.get(actor.position) === 0 ? factor(actor.rule.audioModifier) : 1;
+  }
+
   function weight(actor, to, now = 0) {
     const from = actor.position;
     let result = 1;
@@ -114,7 +119,7 @@ function createEffects(config, routes, actors) {
   }
 
   return {
-    startAudio, integrate, weight, attackOdds,
+    startAudio, integrate, weight, stayWeight, attackOdds,
     staticActive: now => now < staticUntil,
     staticDeadline: now => now < staticUntil ? staticUntil : Infinity,
     triggerStatic: now => { staticUntil = now + config.effects.static.duration; },
