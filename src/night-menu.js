@@ -14,6 +14,7 @@ function createNightMenu(config, { prepareShift, startShift, onEnter }) {
   const start = $('#start-game');
   const continueButton = $('#continue-game');
   const continueLabel = $('#continue-game-label');
+  const campaignStar = $('#campaign-star');
   const customButton = $('#open-custom');
   const customScreen = $('#custom-night');
   const debugButton = $('#custom-debug');
@@ -40,6 +41,7 @@ function createNightMenu(config, { prepareShift, startShift, onEnter }) {
 
   function recordWin(number) {
     completed = Math.max(number, completed, readProgress());
+    campaignStar.hidden = completed < campaign.length;
     try {
       localStorage.setItem(progressKey, String(completed));
     } catch {}
@@ -109,6 +111,7 @@ function createNightMenu(config, { prepareShift, startShift, onEnter }) {
 
   function show() {
     completed = Math.max(completed, readProgress());
+    campaignStar.hidden = completed < campaign.length;
     continueButton.hidden = completed === 0;
     continueLabel.textContent = completed === campaign.length ? `Rejogar noite ${campaign.length}`
       : `Continuar · Noite ${completed + 1}`;
