@@ -552,11 +552,14 @@ function createMovement(config, { random = Math.random, hallucinationRandom = Ma
         && (input.leftLook || (input.computer && computerOn) || action?.type === 'closetExit');
       smores.resolve(input, input.radio && radioAvailable, ventOpportunity);
     }
-    if (action?.type === 'closetEnter' && !threats.snapshot().hidden && threats.enterCloset(now)) {
-      effects.addNoiseEvent('closetEnter', now);
-      resources.applyEvent('closetEnter', now);
+    const peaceful = movementPaused();
+    if (action?.type === 'closetEnter' && !threats.snapshot().hidden && threats.enterCloset(now, peaceful)) {
+      if (!peaceful) {
+        effects.addNoiseEvent('closetEnter', now);
+        resources.applyEvent('closetEnter', now);
+      }
     }
-    if (movementPaused()) return;
+    if (peaceful) return;
     const radio = input.radio && radioAvailable;
     const resolveThreats = () => threats.resolve(now, actor => withdraw(actor, 'office'),
       source => finish('loss', source), radio, flashlightAvailable && input.clownLight);
@@ -668,6 +671,10 @@ function createMovement(config, { random = Math.random, hallucinationRandom = Ma
   const noiseInput = (radio, computerOn) => ({ ...input, radio, computer: computerOn && input.computer });
 
   function integrate(until, camera) {
+    if (movementPaused()) {
+      now = Math.min(until, movementDelay);
+      return;
+    }
     const computerOn = resources.computerOn();
     const flashlightAvailable = resources.flashlightAvailable(now);
     const corridorLight = flashlightAvailable && input.corridorLight;
@@ -755,7 +762,7 @@ function createMovement(config, { random = Math.random, hallucinationRandom = Ma
         effects.addNoiseEvent('closetExit', now);
         break;
       case 'cameraAudio':
-        accepted = camerasAvailable() && effects.startAudio(now, input.camera);
+        accepted = !movementPaused() && camerasAvailable() && effects.startAudio(now, input.camera);
         break;
       case 'gate': {
         const source = input.view === 'cameras' || input.camera ? 'cameras' : action.source;
@@ -784,7 +791,7 @@ function createMovement(config, { random = Math.random, hallucinationRandom = Ma
       shadow.returnToOffice(now, 'computer', sanity, blackout);
     }
     settle(action);
-    if (!outcome) {
+    if (!outcome && !movementPaused()) {
       updateCameraScare(observeCamera());
       hallucinations.resolve(now, resources.snapshot(now).sanity, hallucinationsAudible);
     }
@@ -995,6 +1002,10 @@ function createMovement(config, { random = Math.random, hallucinationRandom = Ma
     const lightAvailable = resources.flashlightAvailable(now);
     const observation = observeSanity(computerOn, lightAvailable && input.corridorLight, lightAvailable && input.clownLight, observeCamera());
     const frame = resources.snapshot(now, input, observation, gates.closed);
+    if (movementPaused()) {
+      frame.energyLossPerSecond = 0;
+      frame.sanityLossPerSecond = 0;
+    }
     return { ...frame, noiseIntensity: outcome ? 0 : effects.noiseIntensity(now,
       noiseInput(input.radio && frame.radioAvailable, computerOn)) };
   }
