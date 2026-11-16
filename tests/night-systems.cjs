@@ -38,17 +38,18 @@ function scenario({ levels, input, draws = [], tune = () => {}, nightNumber } = 
 }
 
 const campaignLevels = {
-  gotica:  [5, 5, 3, 3, 3, 4, 5, 7, 7],
-  yandere: [3, 7, 5, 4, 4, 5, 5, 7, 7],
-  palhaca: [0, 2, 1, 2, 5, 8, 4, 5, 5],
-  padrao:  [0, 0, 1, 2, 3, 4, 8, 9, 10],
-  gatinha: [0, 0, 0, 1, 2, 10, 7, 7, 7],
-  maid:    [0, 0, 0, 0, 9, 2, 5, 7, 7],
-  smores:  [0, 0, 0, 0, 0, 3, 2, 5, 6],
-  shadow:  [0, 0, 0, 0, 0, 0, 1, 3, 10]
+  gotica   [5, 8, 4, 5, 5, 6, 11, 6, 7],
+  yandere  [4, 4, 9, 2, 3, 5, 11, 6, 7],
+  palhaca  [1, 2, 2, 3, 5, 8, 3, 5, 6],
+  padrao   [0, 1, 2, 3, 4, 5, 6, 10, 11],
+  gatinha  [0, 0, 0, 2, 10, 4, 5, 5, 7],
+  maid     [0, 0, 1, 9, 2, 4, 5, 6, 7],
+  smores   [0, 0, 0, 0, 3, 5, 3, 10, 3],
+  shadow   [0, 0, 0, 0, 0, 1, 2, 10, 11]
 };
 assert.equal(base.night.campaign.length, 9);
-const movementDelays = [40, 40, 30, 25, 20, 20, 15, 12, 12];
+assert.equal(base.night.campaignMaxLevel, 11);
+const movementDelays = [45, 40, 35, 30, 25, 20, 15, 10, 10];
 for (const [index, entry] of base.night.campaign.entries()) {
   const nightNumber = index + 1;
   const secondsPerHour = [50, 55][index] ?? 60;
@@ -60,14 +61,19 @@ for (const [index, entry] of base.night.campaign.entries()) {
   const expectedActors = Object.entries(entry.levels).filter(([id, level]) => level > 0 && id in base.characters);
   assert.deepEqual(test.game.diagnostics().map(({ key, level }) => [key, level]).sort(), expectedActors.sort());
   assert.equal(test.state().sanity, 100);
-  assert.equal(test.state().clownStage >= 0, nightNumber >= 2);
-  test.at(1, input);
-  assert.equal(test.state().sanity < 100, nightNumber >= 4);
+  assert.equal(test.state().clownStage >= 0, true);
+  test.at(delay - .01, input);
+  assert.equal(test.state().sanity, 100);
+  near(test.state().hours, 0);
+  near(test.state().energy, 100);
+  assert.equal(test.state().blackout, false);
+  test.at(delay + 1, input);
+  assert.equal(test.state().sanity < 100, nightNumber >= 3);
   near(test.state().hours, 1 / secondsPerHour);
-  near(test.state().energy, nightNumber >= 3 ? 1 - .025 - .30 - .06 : 100);
-  test.at(10, input);
-  assert.equal(test.state().blackout, nightNumber >= 3);
-  assert.equal(test.state().computerOn, nightNumber <= 2);
+  near(test.state().energy, nightNumber >= 2 ? 1 - .025 - .30 - .06 : 100);
+  test.at(delay + 10, input);
+  assert.equal(test.state().blackout, nightNumber >= 2);
+  assert.equal(test.state().computerOn, nightNumber === 1);
   if (nightNumber <= 2) {
     assert.equal(test.state().sanity, 100);
     assert(test.game.camerasAvailable());
@@ -96,14 +102,12 @@ for (const [index, entry] of base.night.campaign.entries()) {
   encounter.at(delay, watching);
   const radioSeconds = base.threats.smores.radioSeconds;
   encounter.at(delay + radioSeconds, watching);
-  near(encounter.state().hours, nightNumber >= 4
-    ? clockProgress(base.night.clock, 20, .14, delay - .01)
-      + clockProgress(base.night.clock, 20 + .14 * (delay - .01), .04, .01)
-      + clockProgress(base.night.clock, 20 + .14 * (delay - .01) + .0004, .14, radioSeconds) : (delay + radioSeconds) / secondsPerHour);
+  near(encounter.state().hours, nightNumber >= 3
+    ? clockProgress(base.night.clock, 20, .14, radioSeconds) : radioSeconds / secondsPerHour);
   near(encounter.game.diagnostics()[0].remaining, actors[0].remaining - radioSeconds);
-  assert.equal(encounter.game.officeState().smores, nightNumber >= 6 ? 'vent' : 'idle');
+  assert.equal(encounter.game.officeState().smores, nightNumber >= 5 ? 'vent' : 'idle');
   encounter.returnAt(delay + radioSeconds);
-  assert.equal(encounter.state().shadow.phase, nightNumber >= 7 ? 'manifested' : 'inactive');
+  assert.equal(encounter.state().shadow.phase, nightNumber >= 6 ? 'manifested' : 'inactive');
 
   const gates = scenario({ nightNumber });
   const gateIds = window.NathGame.VENUE.openings.filter(({ type }) => type === 'portao').map(({ id }) => id);
@@ -118,7 +122,7 @@ const firstYandereMove = scenario({ nightNumber: 2, tune(config) {
   config.movement.jitter = { min: 0, max: 0 };
 } });
 const yandere = () => firstYandereMove.game.diagnostics().find(actor => actor.key === 'yandere');
-const firstInterval = 5 * .67 * .52;
+const firstInterval = 5 * (1 - .55 * .3) * (1 - (.30 + .30 * .3));
 near(yandere().remaining, firstInterval);
 firstYandereMove.at(40 + firstInterval - .001);
 assert.equal(yandere().position, 19);
