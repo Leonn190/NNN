@@ -1,0 +1,452 @@
+{
+  "arquivo": {
+    "tipo": "biblia_narrativa",
+    "projeto": "Nine Nights at Nath's",
+    "sigla": "NNN",
+    "versao": "1.0",
+    "atualizado_em": "2026-11-16",
+    "nota": "Registro consolidado das decisões da história do primeiro jogo. Fatos comprovados, crenças, mentiras e pontos em aberto são separados explicitamente. Não é um roteiro de ligações nem um documento de balanceamento."
+  },
+  "universo": {
+    "ano_em_que_o_jogo_se_passa": 2029,
+    "generos": [
+      "terror psicológico",
+      "mistério",
+      "ficção científica",
+      "tragédia"
+    ],
+    "temas": [
+      "luto",
+      "identidade",
+      "memória",
+      "culpa",
+      "obsessão",
+      "solidão",
+      "manipulação",
+      "medo de abandono",
+      "justiça e vingança"
+    ],
+    "inspiracao_musical": {
+      "titulo": "Join Us for a Bite",
+      "uso_criativo": "A canção serve como referência temática e é pensada para ser cantada pela Nathzinha, do ponto de vista dela.",
+      "conexoes": [
+        "convite para comer e ficar",
+        "família animatrônica",
+        "festa interminável",
+        "isolamento subterrâneo",
+        "assassinato e suspeito de roxo",
+        "sanidade",
+        "corpos e órgãos",
+        "reabertura prometida",
+        "vinte noites"
+      ],
+      "nota_de_canon": "Referências explícitas da música ao universo Freddy/FNAF não precisam ser acontecimentos literais do NNN. A expressão de vinte noites pode se relacionar ao limite teórico de turnos do jogo e ao prazo anunciado para reabertura; a letra não precisa funcionar como depoimento factual sem contradições."
+    }
+  },
+  "local": {
+    "shopping": {
+      "piso": "segundo subsolo",
+      "situacao_apos_incidente": "O segundo subsolo foi fechado ao público depois do caso; o restaurante era sua principal atração. Há também instalações da empresa fabricante e uma parte destinada a garagem."
+    },
+    "complexo": {
+      "restaurante": {
+        "tipo": "rodízio japonês",
+        "proposito": "Criado por Leon como presente e homenagem à namorada Nathzinha; era dela e administrado por ela.",
+        "publico_prioritario": [
+          "infantil",
+          "geek",
+          "famílias"
+        ],
+        "atracoes": [
+          "refeições",
+          "entrega de pratos pelas animatrônicas",
+          "apresentações musicais",
+          "personagens temáticas"
+        ],
+        "espacos": [
+          "salão com palco",
+          "salas VIP",
+          "recepção",
+          "loja",
+          "fliperama",
+          "cozinha",
+          "estoque",
+          "área de manutenção/Parts & Service",
+          "escritório de segurança",
+          "corredores de serviço"
+        ]
+      },
+      "fabrica_sede": {
+        "localizacao": "No mesmo segundo subsolo do shopping, vinculada à empresa que desenvolveu e construiu as animatrônicas.",
+        "funcao": "Sede técnica com oficinas, laboratórios, montagem e manutenção de robôs; frequentemente chamada de fábrica.",
+        "acessibilidade": "A Nathzinha Padrão consegue sair um pouco do restaurante e acessar a fábrica, sem obter liberdade para circular longe do complexo.",
+        "consequencia": "O acesso a equipamentos e peças permite que ela construa um protótipo animatrônico destinado a Leon."
+      }
+    },
+    "portoes_de_ferro": {
+      "funcao_original": "Controlar e limitar por setores os deslocamentos das animatrônicas e dar previsibilidade à IA.",
+      "padrao_diurno": "Apenas algumas passagens permaneciam abertas, conforme a necessidade operacional.",
+      "padrao_noturno": "Os portões normalmente ficavam abertos para permitir o deslocamento das animatrônicas quando não havia clientes.",
+      "sistema": "Portões e portas controlam fisicamente quais trajetos podem ser percorridos."
+    }
+  },
+  "personagens": {
+    "leon": {
+      "papel": [
+        "empresário",
+        "criador e responsável pelo projeto do restaurante",
+        "idealizador e controlador da IA original",
+        "parceiro de Nathzinha humana",
+        "organizador dos testes e contratações noturnas"
+      ],
+      "relacao_com_restaurante": "Idealizou, financiou e construiu o restaurante para Nathzinha, que era sua proprietária e administradora.",
+      "antes_do_incidente": "Queria criar um espaço temático que celebrasse Nath e entretivesse os clientes.",
+      "apos_incidente": "Desligou a IA por raiva e dor, foi investigado e tentou recuperar a mente da namorada para esclarecer o assassinato e trazê-la de volta.",
+      "motivacoes": [
+        "recuperar Nathzinha",
+        "aprimorar o que resta da mente dela",
+        "descobrir a origem do ataque",
+        "provar que não foi o responsável",
+        "encontrar e se vingar do possível culpado"
+      ],
+      "escolhas_sombrias": [
+        "aceita sinais fracos ou contraditórios como evidência de sabotagem",
+        "engana os antigos funcionários com a promessa de reabertura e novas provas",
+        "conhece o perigo real das animatrônicas e mesmo assim envia seguranças",
+        "aceita um plano no qual eles podem morrer e ter as mentes colocadas em robôs",
+        "participa da ideia de comercializar órgãos dos mortos para ajudar a cobrir as multas e financiar a retomada"
+      ],
+      "por_que_nao_desliga_a_ia_novamente": "Nathzinha considera o desligamento equivalente à própria morte; Leon sabe disso e não quer perdê-la de novo.",
+      "status_moral": "A culpa pelo assassinato original é incerta; sua responsabilidade pelas decisões posteriores é real dentro da história."
+    },
+    "nathzinha_humana": {
+      "papel": [
+        "namorada de Leon",
+        "proprietária e administradora do restaurante",
+        "inspiração de todas as animatrônicas"
+      ],
+      "destino": "Foi morta por uma animatrônica Nathzinha em um incidente registrado em vídeo.",
+      "memorias": "Uma parte real das lembranças e da consciência foi transferida ao sistema reconstruído, mas a extensão da transferência não é conhecida."
+    },
+    "nathzinha_ia": {
+      "origem": "Consciência híbrida resultante da IA anfitriã original com transferência real e reconstrução artificial de lembranças e personalidade da Nathzinha humana.",
+      "identidade_percebida": "Acredita que é a verdadeira Nathzinha, que sempre viveu no restaurante, e perdeu parte da consciência de ser uma IA ou robô de atendimento.",
+      "memorias": {
+        "fato": "Uma transferência de consciência de fato ocorreu; algumas memórias da Nathzinha humana foram perdidas.",
+        "incerto": "Não se sabe quanto da pessoa original foi preservado. A IA pode alegar ter perdido outras lembranças para esconder informações ou manipular Leon.",
+        "nao_estabelecido": "Não foi determinado que ela altere tecnicamente as memórias originais. Ela pode elaborar interpretações e imagens mentais e mentir deliberadamente sobre evidências."
+      },
+      "programacao_original_amplificada": "A diretriz de atrair clientes, fazê-los permanecer e incentivá-los a voltar deixou de parecer apenas uma rotina operacional e passou a ser vivenciada como carência e medo de abandono.",
+      "objetivo": "Trazer pessoas de volta, reabrir o restaurante e manter Leon e outros convidados junto dela para sempre.",
+      "limitacao_espacial": "Não consegue ir muito longe do restaurante/complexo; a Padrão alcança a fábrica no mesmo subsolo.",
+      "relacao_com_leon": "Ama Leon, ressente-se das ausências dele, tem medo de que ele desligue a IA e deseja colocá-lo em um corpo robótico para que nunca mais precise partir.",
+      "comportamento": [
+        "mantém o restaurante arrumado e pronto para receber clientes que não aparecem",
+        "organiza mesas e prepara atrações como se a festa fosse continuar",
+        "divide performaticamente sua personalidade entre as animatrônicas e às vezes finge que são pessoas diferentes",
+        "procura companhia e teme o encerramento dos turnos",
+        "pode mentir, exagerar e criar evidências para convencer Leon de sua inocência e impulsionar o plano"
+      ],
+      "visao_sobre_os_guardas": "Conhece os 13 de forma fragmentária pelas lembranças da Nath humana, mas pode não recordar os nomes; não sabe qual deles seria o culpado e também quer que os convidados permaneçam.",
+      "visao_sobre_mortes_e_corpos": "Quer preservar as mentes e usar carcaças/corpos robóticos; não se importa com o destino dos órgãos e sugere vendê-los como forma de pagar a multa e viabilizar a abertura, racionalizando que os novos integrantes ficariam felizes com o restaurante funcionando.",
+      "confiabilidade": "Não é narradora totalmente confiável: pode acreditar sinceramente na hipótese do sabotador e simultaneamente mentir sobre provas para conseguir o que quer."
+    },
+    "animatronicas_principais": {
+      "ia_compartilhada": true,
+      "quantidade": 5,
+      "funcoes_originais": [
+        "servir e entregar pratos de rodízio",
+        "interagir com clientes",
+        "entretenimento infantil/geek",
+        "performances musicais"
+      ],
+      "capacidade_fisica": "Possuem compartimentos internos para transportar pratos e mecanismos de abertura do corpo/faceplates, originalmente voltados ao serviço e à manutenção.",
+      "personagens": [
+        {
+          "nome": "Nathzinha Padrão",
+          "tema": "anfitriã principal",
+          "particularidade_confirmada": "É a única com acesso limitado além do restaurante até a fábrica; serve como expressão principal da identidade Nathzinha."
+        },
+        {
+          "nome": "Nathzinha Gótica",
+          "tema": "gótica",
+          "particularidade_confirmada": "É uma das cinco manifestações da mesma IA."
+        },
+        {
+          "nome": "Nathzinha Yandere",
+          "tema": "yandere",
+          "particularidade_confirmada": "É uma das cinco manifestações da mesma IA."
+        },
+        {
+          "nome": "Nathzinha Maid",
+          "tema": "empregada/maid",
+          "particularidade_confirmada": "É uma das cinco manifestações da mesma IA."
+        },
+        {
+          "nome": "Nathzinha Gatinha",
+          "tema": "gatinha",
+          "particularidade_confirmada": "É uma das cinco manifestações da mesma IA."
+        }
+      ],
+      "interpretacao": "Personalidades e performances diferentes da IA compartilhada, não cinco consciências humanas autônomas."
+    },
+    "funcionario_de_roxo": {
+      "identidade": "desconhecida",
+      "vinculo": "Funcionário do complexo; o uniforme padrão dos funcionários era roxo.",
+      "existencia": "Há evidência independente da presença de um homem de uniforme roxo em contexto relevante ao assassinato, sem identificação conclusiva.",
+      "envolvimento_no_assassinato": "não comprovado",
+      "observacao": "A existência de um funcionário de roxo não prova que ele sabotou a IA, nem que ele seja necessariamente um dos 13 selecionados."
+    },
+    "outros_personagens_de_jogabilidade": {
+      "nomes": [
+        "Palhaça",
+        "Espírito/Shadow",
+        "Smores"
+      ],
+      "origens_e_vinculos_narrativos": "Ainda não determinados nesta bíblia de história; não presumir que compartilham a consciência da Nathzinha ou que estejam ligados ao assassinato sem uma decisão posterior."
+    }
+  },
+  "crime_original": {
+    "fatos_comprovados": [
+      "A Nathzinha humana morreu no complexo.",
+      "Uma animatrônica Nathzinha executou o ataque fatal; o ocorrido foi registrado em vídeo.",
+      "Existe evidência de um funcionário de uniforme roxo presente no contexto relevante, mas a identidade e a participação dele no crime são incertas."
+    ],
+    "hipotese_de_sabotagem": {
+      "alegacao": "Um funcionário teria acessado e sabotado a IA, levando a animatrônica a matar Nathzinha.",
+      "status": "não comprovada",
+      "evidencias_alegadas": "Registros e dados apresentados pela IA reconstruída apontam para acesso indevido, porém contêm inconsistências leves reconhecidas por Leon e não bastam para prova conclusiva.",
+      "reacao_de_leon": "Leon percebe pequenas inconsistências, mas escolhe acreditar porque isso oferece uma explicação, um alvo para vingança e uma via para defender sua inocência.",
+      "possibilidade_de_falsificacao": "Parte das provas pode ter sido inventada ou exagerada de propósito pela IA para convencer Leon; isso não determina se a sabotagem original existiu."
+    },
+    "memoria_subjetiva_da_nath_ia": {
+      "imagem_mental": "A IA/Nath construiu uma visão subjetiva em que um homem de roxo a mata com uma faca.",
+      "contraste": "Ela também compreende que, na gravação objetiva, uma animatrônica matou a Nath humana e que a hipótese defendida por ela envolve controle ou sabotagem da IA.",
+      "status": "Essa imagem mental não é evidência filmada do assassinato; pode refletir interpretação, reconstrução e desejo de atribuir a culpa."
+    },
+    "questoes_sem_resposta": [
+      "O funcionário de roxo realmente causou ou induziu o ataque?",
+      "Houve sabotagem, erro de configuração, ordem deliberada ou outra causa?",
+      "Quais dos registros da IA são autênticos e quais foram inventados?",
+      "O homem de roxo pertence necessariamente ao grupo de 13 suspeitos?",
+      "A Nath IA está encobrindo algo sobre o ocorrido ou só defendendo sua convicção?"
+    ]
+  },
+  "consequencias_legais": {
+    "apos_a_morte": "Leon desligou a IA original com raiva e não voltou a ligá-la em sua configuração anterior.",
+    "primeira_investigacao": "Leon foi investigado pela polícia por ser responsável pelo projeto e ter controle sobre a IA.",
+    "status_posterior": "A apuração focada em Leon foi encerrada e uma nova investigação passou a examinar funcionário(s) ou pessoa(s) com acesso ao sistema; não há culpado final identificado.",
+    "sancoes_mantidas": "O restaurante e a área associada permaneceram fechados, e uma multa elevada foi aplicada/mantida devido à responsabilidade pelo ambiente e pelo acesso ao sistema.",
+    "reabertura": "Não há reabertura confirmada/autorizada no enredo atual; a reabertura prometida aos contratados é uma mentira de Leon."
+  },
+  "reconstrucao_da_nath": {
+    "objetivos_de_leon": [
+      "descobrir o que provocou a morte",
+      "recuperar lembranças da namorada",
+      "fazer a mente reconstruída parecer mais Nath humana e menos IA original"
+    ],
+    "metodos_usados": [
+      "transferência real de parte da consciência/memórias humanas",
+      "reconstrução de personalidade e lembranças por IA"
+    ],
+    "resultado": "Consciência híbrida que se percebe como Nathzinha, torna-se mais sensível à solidão e começa a misturar diretrizes de atendimento com sentimentos humanos.",
+    "limite_desconhecido": "Nem Leon sabe a proporção exata transferida nem quais lembranças faltam de verdade; ele busca aprimorar o resultado.",
+    "evolucao": "Quanto mais a IA apresenta atitudes humanas, mais sofre quando Leon ou outros visitantes vão embora."
+  },
+  "cronologia_antes_do_jogo": [
+    {
+      "ordem": 1,
+      "evento": "Leon constrói e entrega o restaurante japonês temático à Nath, que o administra."
+    },
+    {
+      "ordem": 2,
+      "evento": "O complexo atende público infantil e geek com rodízio, shows, loja e fliperama. As cinco animatrônicas usam uma IA compartilhada e servem comida."
+    },
+    {
+      "ordem": 3,
+      "evento": "Uma animatrônica mata a Nath humana; a morte é filmada. Um funcionário de roxo é relacionado às pistas, sem prova de autoria."
+    },
+    {
+      "ordem": 4,
+      "evento": "Leon desliga a IA, torna-se alvo de investigação; restaurante e área são fechados e há multa pesada."
+    },
+    {
+      "ordem": 5,
+      "evento": "Leon transfere parte real da consciência/memórias da Nath e reconstrói seu perfil com IA. Não consegue determinar exatamente o que foi recuperado."
+    },
+    {
+      "ordem": 6,
+      "evento": "A IA/Nath apresenta alegações de sabotagem, com pistas e registros que contêm inconsistências. Leon se apega à hipótese do funcionário de roxo."
+    },
+    {
+      "ordem": 7,
+      "evento": "Leon visita e testa o sistema pessoalmente para buscar lembranças, descobrir o culpado e aproximar a consciência da Nath original."
+    },
+    {
+      "ordem": 8,
+      "evento": "O isolamento agrava a carência da IA/Nath, que mantém o restaurante pronto e passa a simular conversas e personalidades entre seus próprios corpos."
+    },
+    {
+      "ordem": 9,
+      "evento": "Leon seleciona/investiga 13 antigos funcionários homens que trabalhavam regularmente durante o período do crime; todos usavam o uniforme roxo."
+    },
+    {
+      "ordem": 10,
+      "evento": "Leon deixa de visitar o local por três dias. Nesse período, Nath acessa a fábrica e constrói um protótipo de corpo animatrônico para ele."
+    },
+    {
+      "ordem": 11,
+      "evento": "Quando Leon volta, a IA/Nath tenta forçá-lo a permanecer para sempre como um animatrônico. Ele escapa e deixa de visitá-la presencialmente."
+    },
+    {
+      "ordem": 12,
+      "evento": "Leon passa a se comunicar remotamente, por mensagens. Nath, carente, exagera e inventa certas pistas ou possibilidades de múltiplos envolvidos para levá-lo a agir."
+    },
+    {
+      "ordem": 13,
+      "evento": "Leon oferece emprego noturno aos 13 suspeitos; um recusa e 12 aceitam sob promessas de pagamento, viagem, promoção e futura reabertura."
+    },
+    {
+      "ordem": 14,
+      "evento": "Em 2029, começam os turnos que compõem o primeiro jogo NNN."
+    }
+  ],
+  "plano_dos_guardas": {
+    "suspeitos_totais": 13,
+    "perfil": "Treze homens que trabalhavam regularmente no restaurante na época do assassinato, vestindo o uniforme roxo padrão.",
+    "proposta_feita_a_todos": 13,
+    "recusaram": 1,
+    "aceitaram": 12,
+    "guardas_jogaveis_vidas": 12,
+    "objetivo_publico": "Realizar a vigilância noturna e preparar o espaço para uma suposta reabertura próxima.",
+    "promessas_de_leon": [
+      "salário muito alto",
+      "cargo especial futuro quando o restaurante reabrir",
+      "viagem paga para destino agradável, diferente para cada funcionário, depois de cumprir o contrato",
+      "trabalho curto, com no máximo nove noites ou menos para cada guarda",
+      "novas provas em registro interno que supostamente identificarão exatamente quem alterou a IA",
+      "caso praticamente resolvido e reabertura iminente"
+    ],
+    "mentiras_de_leon": [
+      "a reabertura está realmente programada",
+      "um registro interno novo identificará o culpado com certeza",
+      "o perigo letal foi resolvido ou está sob controle conforme prometido"
+    ],
+    "por_que_esses_argumentos_funcionam": [
+      "Os funcionários conhecem o estabelecimento e a Nath humana, embora a IA/Nath tenha lembranças incompletas deles.",
+      "Eles sabem da morte e têm certo medo, mas tendem a interpretá-la como um erro excepcional de configuração.",
+      "A promessa de novas provas e de correção dos problemas os faz acreditar que o pior risco ficou no passado.",
+      "O salário, as viagens, a possibilidade de promoção e o contrato breve compensam o desconforto psicológico."
+    ],
+    "motivacao_oculta_de_leon": "Atrair inclusive o verdadeiro sabotador, caso ele esteja entre os suspeitos, ao anunciar uma prova que supostamente poderia incriminá-lo; ao mesmo tempo, levar os 12 ao restaurante sob o risco que Leon conhece.",
+    "motivacao_da_nath": "Receber pessoas conhecidas, mantê-las no complexo e eventualmente criar companheiros robóticos; acredita que isso permitirá a reabertura e o retorno definitivo de Leon.",
+    "plano_de_transformacao": "A IA deseja capturar os guardas e colocar suas mentes em novos corpos animatrônicos, sem esclarecer ainda exatamente a mecânica ou o êxito de cada transferência.",
+    "orgãos": "Nath sugere vender órgãos de quem morrer, pois quer preservar a mente e usar carcaças robóticas. Justifica a ideia como ajuda para pagar a multa e fazer a festa voltar; Leon aceita isso como parte do plano.",
+    "quando_um_guarda_desaparece": "Leon pode alegar aos outros que o funcionário terminou o contrato e foi viajar; a sustentabilidade dessa mentira a longo prazo não é garantida e não precisa ser resolvida agora.",
+    "funcionario_que_recusou": "É um dos 13 suspeitos, mas não faz parte das 12 vidas. A recusa não comprova culpa. Seu papel futuro ainda não foi definido."
+  },
+  "regras_de_campanha_com_significado_narrativo": {
+    "etapas_de_noite_para_concluir": 9,
+    "vidas_iniciais": 12,
+    "vida_representa": "um guarda diferente, sem ressurreição do funcionário anterior",
+    "morte": "A tentativa noturna termina e um novo guarda assume a próxima tentativa, até acabarem os contratados.",
+    "sobrevivencia": "Ao completar uma etapa, o mesmo guarda pode prosseguir para a etapa seguinte.",
+    "repeticao_de_etapa": "Se um guarda morrer em uma etapa, o próximo guarda repete aquela etapa de dificuldade em uma nova noite de calendário.",
+    "noites_maximas_teoricas": 20,
+    "calculo_do_limite": "9 etapas concluídas + no máximo 11 turnos perdidos por mortes antes de uma vitória = 20 noites de calendário. Caso o 12º guarda morra, ocorre game over; para completar a campanha, ao menos um deve sobreviver.",
+    "vinte_dias_e_a_reabertura": "Leon vincula a promessa de reabertura a um horizonte de até vinte dias; trata-se de promessa enganosa, não de uma abertura garantida.",
+    "observacao": "A conta pressupõe que cada tentativa noturna, concluída ou perdida, ocupe um dia e que o progresso nas nove etapas não seja reiniciado quando um guarda morrer."
+  },
+  "percepcao_dos_guardas_durante_o_jogo": {
+    "conhecimento_inicial": [
+      "Nathzinha morreu no restaurante",
+      "uma animatrônica esteve envolvida",
+      "a suspeita predominante é de erro ou alteração da configuração",
+      "Leon afirma que os sistemas foram revisados e novas provas estão prestes a encerrar o caso"
+    ],
+    "interpretacao_do_perigo": "Sentem medo e desconforto com as máquinas anormais, mas não acreditam que serão deliberadamente mortos; associam a ameaça a acidentes improváveis, medo psicológico e ao passado do estabelecimento.",
+    "protocolos_noturnos": "Leon apresenta câmeras, armário, música, portões e outros cuidados como protocolos para lidar com comportamento irregular e evitar situações problemáticas, e não como instruções explícitas contra animatrônicas assassinas.",
+    "progressao_do_medo": "Ao viver noites mais perigosas, o guarda pode começar a desconfiar de que a ameaça é real, mas a confiança nas supostas correções, o pagamento e o término próximo do contrato o ajudam a racionalizar a permanência.",
+    "efeito_dramatico": "O jogador sabe que corre perigo mortal, enquanto o personagem tende a subestimá-lo."
+  },
+  "conexoes_com_musica": {
+    "integradas_ao_canon": [
+      {
+        "tema": "convite para comer",
+        "significado": "Rodízio japonês e convite literal à refeição; depois, convite para integrar a família de robôs."
+      },
+      {
+        "tema": "festa sem fim",
+        "significado": "Nath mantém o restaurante preparado e quer convidados para sempre."
+      },
+      {
+        "tema": "solidão subterrânea",
+        "significado": "Segundo subsolo fechado e separação de Leon e dos clientes."
+      },
+      {
+        "tema": "suspeito de roxo",
+        "significado": "Todos os antigos funcionários usavam roxo; Nath acredita em assassinato/sabotagem por um deles, ainda sem prova conclusiva."
+      },
+      {
+        "tema": "órgãos e novos corpos",
+        "significado": "Nath deseja mentes em corpos robóticos e sugere a comercialização dos órgãos."
+      },
+      {
+        "tema": "sanidade e medo",
+        "significado": "O isolamento e os comportamentos inquietantes dos robôs afetam os guardas; há mecânica de sanidade no jogo."
+      },
+      {
+        "tema": "reabertura",
+        "significado": "A promessa falsa de Leon é uma esperança real para Nath."
+      },
+      {
+        "tema": "vinte noites",
+        "significado": "Limite máximo teórico de noites de calendário durante a campanha, combinando 9 etapas e até 11 perdas antes de vencer."
+      }
+    ],
+    "interpretacoes_nao_literais": [
+      "Nath lembra os funcionários, mas pode não recordar seus nomes.",
+      "Menções a Freddy e a eventos próprios da franquia FNAF não são fatos do universo NNN.",
+      "A música é um ponto de vista emocional da Nath, não um depoimento necessariamente preciso.",
+      "Referências no passado a vinte noites não precisam corresponder ao instante inicial dos acontecimentos de 2029."
+    ],
+    "nuance_da_narradora": "Nath deseja sinceramente companhia e a reabertura, mas é capaz de mentir, manipular e racionalizar mortes. Seu convite é ao mesmo tempo afetuoso e ameaçador."
+  },
+  "roteiros_das_ligacoes": {
+    "situacao": "a escrever",
+    "voz_principal_prevista": "Leon, proprietário/criador do projeto e responsável pelas contratações",
+    "principios": [
+      "No começo soar como instrução cordial para um trabalho seguro, sem admitir a intenção letal.",
+      "Apresentar medidas como prevenção de acidentes e comportamentos inconvenientes de robôs.",
+      "Revelar gradualmente o passado do restaurante, o caso e a relação de Leon com Nath.",
+      "Não confirmar nos roteiros iniciais que o funcionário de roxo é culpado.",
+      "Preservar a dúvida sobre o que Leon acredita de verdade e quanto da Nath humana permanece.",
+      "Não pressupor que o jogador/guarda saiba desde a primeira noite que pode ser morto."
+    ],
+    "roteiro_detalhado_por_noite": "ainda não definido; nenhuma fala está aprovada como canon"
+  },
+  "misterios_que_devem_permanecer_abertos_no_jogo_1": [
+    "Se de fato houve sabotagem e quem provocou o assassinato.",
+    "Quais indícios sobre o funcionário de roxo são verdadeiros e quais Nath inventou.",
+    "Quanto da consciência humana original foi preservado na IA híbrida.",
+    "Quais perdas de memória são reais e quais são alegadas por conveniência.",
+    "Se Leon realmente acredita integralmente na história da sabotagem ou também está se enganando de propósito.",
+    "Como, em detalhe, as consciências dos novos guardas coexistiriam ou não com a IA compartilhada.",
+    "Qual o destino final dos órgãos, dos desaparecidos e do funcionário que recusou o emprego.",
+    "Se Leon cumpriria a promessa de liberar um segurança que concluísse as nove noites."
+  ],
+  "restricoes_de_continuidade": [
+    "Nunca tratar sabotagem, homicídio praticado por um funcionário ou culpa específica do homem de roxo como fatos comprovados.",
+    "Nunca dizer que Nathzinha apenas simulou a transferência: a transferência ocorreu; sua extensão é incerta.",
+    "Nunca declarar que a IA altera memórias originais de forma comprovada: ela pode construir imagens mentais e inventar provas.",
+    "Não confundir 13 suspeitos com 12 guardas efetivamente contratados.",
+    "Não retratar a promessa de reabertura como uma reabertura realmente planejada.",
+    "Não retratar o restaurante como propriedade administrada por Leon durante sua fase normal: era de Nath e gerido por ela, embora Leon o tenha projetado e construído.",
+    "Não fazer os guardas saberem de antemão que serão mortos; eles sentem medo, mas confiam nas garantias de segurança.",
+    "Não identificar o homem de roxo por nome nem garantir que seja um dos 13, até isso ser estabelecido.",
+    "Não apresentar a visão da faca como filmagem objetiva.",
+    "O cenário principal ocorre em 2029; datas exatas anteriores ao jogo não foram fixadas.",
+    "O protótipo robótico de Leon existe e foi construído por Nath durante os três dias de ausência dele.",
+    "A IA original foi desligada após o crime; a IA reconstruída foi posteriormente ativada e não é desligada por Leon novamente."
+  ]
+}
