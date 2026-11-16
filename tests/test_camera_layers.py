@@ -15,8 +15,8 @@ catalog = json.loads(catalog_js.split(" = ", 1)[1].strip().removesuffix(";"))
 assert set(catalog) == {"CAM01", "CAM02", "CAM04", "CAM07", "CAM08", "CAM09", "CAM10", "CAM11", "CAM12"}
 poses = {"01-maid-sentada": "maid", "02-maid-saindo": "maid-saindo"}
 service_sources = {
-    "Nathzinha Maid na Sala de Manutenção": "maid-retorno",
-    "Tchauzinho na Sala de Manutenção": "yandere",
+    "maid-retorno": "maid-retorno",
+    "yandere": "yandere",
 }
 poses.update(service_sources)
 pose_regions = {
@@ -70,7 +70,7 @@ for camera, catalog_entry in catalog.items():
         cast_size = len(layers) - int("original-saida" in layers)
         assert len(variants) == (2 if camera == "CAM09" else 2 ** cast_size - 2)
         if camera == "CAM09":
-            variants.extend(ROOT / "public/images" / f"{name}.png" for name in service_sources)
+            variants.extend(ROOT / "outros/arte/cameras/CAM09" / f"{name}.png" for name in service_sources)
         for original in variants:
             keys = [poses[original.stem]] if camera == "CAM09" else original.stem.split("-")
             assert set(keys) <= layers.keys(), original

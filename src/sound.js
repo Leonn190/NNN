@@ -1,23 +1,23 @@
 (() => {
 'use strict';
 const sampleFiles = {
-  musicBox: '01_FNAF2_Music_Box.mp3',
-  vent: '02_FNAF2_Vent.mp3',
-  doorCreak: '04_FNAF4_Door_Creak.mp3',
-  officeGateClose: 'SFXBible_12478.ogg',
-  running: '06_FNAF4_Player_Running.mp3',
-  flashlight: '07_FNAF4_Flashlight.mp3',
-  nightmare: '08_FNAF4_Nightmare_Jumpscare.mp3',
-  reboot: '10_FNAF3_Rebooting.mp3',
-  chimes: '11_FNAF2_Chimes.mp3'
+  musicBox: 'audio/characters/palhaca/caixa-de-musica.mp3',
+  vent: 'audio/characters/smores/duto.mp3',
+  doorCreak: 'audio/effects/doors/porta-rangendo.mp3',
+  officeGateClose: 'audio/effects/doors/portao-fechando.ogg',
+  running: 'audio/effects/movement/corrida-armario.mp3',
+  flashlight: 'audio/effects/interface/lanterna.mp3',
+  nightmare: 'audio/characters/shadow/confronto.mp3',
+  reboot: 'audio/effects/interface/reinicio-computador.mp3',
+  chimes: 'audio/effects/interface/fim-do-turno.mp3'
 };
 const cameraMeows = [
-  ['01_camera_sinistra', 'camera'],
-  ['02_camera_pesadelo', 'pesadelo']
-].map(([folder, suffix]) => [
-  `${folder}/01_miado_agudo_${suffix}.wav`,
-  `${folder}/02_miado_longo_${suffix}.wav`,
-  `${folder}/03_miado_curto_${suffix}.wav`
+  'audio/cameras/sinistra',
+  'audio/cameras/pesadelo'
+].map(folder => [
+  `${folder}/01-miado-agudo.wav`,
+  `${folder}/02-miado-longo.wav`,
+  `${folder}/03-miado-curto.wav`
 ]);
 
 // Efeitos do jogo e mixagem do rádio da mesa.

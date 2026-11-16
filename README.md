@@ -4,36 +4,38 @@ Fangame de terror com uma campanha de nove noites. **New Game** começa na Noite
 
 Os contadores de movimento começam após a pausa inicial de cada noite. A pausa dura 40 s nas noites 1 e 2, 30 s na 3, 25 s na 4, 20 s nas noites 5 e 6, 15 s na 7 e 12 s nas noites 8 e 9.
 
-**Custom Night** tem seis horas e permite escolher o nível de 0 a 10 para cada personagem. Na campanha e na Custom Night, as animatrônicas de nível 0 ficam imóveis nas câmeras de suas posições iniciais, e a Palhaça dorme no armário. Smores e Shadow só aparecem nos seus eventos, a partir do nível 1. O turno pode ser repetido após vitória ou derrota.
+**Custom Night** tem seis horas e permite escolher o nível de 0 a 10 ou **MAX** (11) para cada personagem. O nível máximo usado na campanha é 10. Na campanha e na Custom Night, as animatrônicas de nível 0 ficam imóveis nas câmeras de suas posições iniciais, e a Palhaça dorme no armário. Smores e Shadow só aparecem nos seus eventos, a partir do nível 1. O turno pode ser repetido após vitória ou derrota.
 
 **Projeto estático puro:** HTML + CSS + JavaScript com scripts locais. Não depende de Node.js, npm, Vite, Astro, bundlers, servidores próprios, banco de dados ou etapa de build. Desenvolvido para hospedar diretamente no **GitHub Pages**.
 
 ## Estrutura
 
 ```text
-Restaurante_da_Nathzinha_Web_V1/
+NNN/
 ├── index.html                       # Menu inicial e tela da noite
 ├── .nojekyll                        # Não processar pastas pelo Jekyll
 ├── .github/workflows/pages.yml      # Publicação automática, sem build
 ├── config/                          # Regras carregadas pelo jogo em tempo de execução
 ├── src/                             # Código do jogo/site
-│   ├── main.js                      # Escritório, monitor, noite, HUD, entradas
+│   ├── main.js                      # Escritório, monitor, noite e entradas
+│   ├── resource-hud.js              # Renderização dos medidores
 │   ├── config.js                    # Leitura dos JSONs por HTTP(S)
 │   ├── movement.js                  # Relógio, tentativas, ocupação e transições
 │   ├── gameplay/                    # Grafo, efeitos, ameaças, recursos e Shadow
 │   ├── night-menu.js                # Menu e seletores do Custom Night
 │   ├── scene-art.js                 # Seleção das variantes e dos slots visuais
 │   ├── map.js                       # Mapa clicável da planta real
-│   ├── sound.js                     # Efeitos sonoros gerados no navegador
+│   ├── sound.js                     # Amostras, síntese e mixagem de áudio
 │   ├── data/game-data.js            # Dados da planta usados no jogo
 │   └── styles/main.css              # Interface e animações
-├── public/                          # Recursos consumidos pelo navegador
+├── public/                          # Recursos do site e algumas fontes históricas de arte
 │   ├── images/
 │   │   ├── office/                  # Mestre, fundos e camadas de personagens
 │   │   │   └── closet/              # Frestas, camadas e poses da Palhaça
 │   │   ├── computer/                # Moldura do monitor e papel de parede
 │   │   ├── shadow/                  # Confronto Neon e sprite das câmeras
 │   │   ├── menu/                    # Arte da tela de título e variações de glitch
+│   │   ├── intro/                   # Anúncio da abertura da campanha
 │   │   ├── jumpscares/              # GIFs por personagem e WebP animado da Shadow
 │   │   ├── cameras/
 │   │   │   └── CAM01/ … CAM12/      # Uma pasta por câmera
@@ -42,20 +44,23 @@ Restaurante_da_Nathzinha_Web_V1/
 │   │   │       ├── technical.png    # Imagem de fallback da planta
 │   │   │       └── states/          # WebPs de personagens e portões
 │   │   └── branding/                # Ícone do site
-│   ├── audio/                       # Trilha do menu e grito dos jumpscares
-│   ├── reference/
-│   │   └── maps/                    # Imagens da planta V7/V8
-│   └── models/                      # Reserva para futuros modelos 3D
+│   └── audio/                       # menu, radio, cameras, characters, effects e jumpscares
+├── scripts/                         # Publicação, validação, configuração e exportação de arte
+├── tests/                           # Suítes Node e verificações de arte em Python
+├── docs/                            # Guia de assets, nota 3D e mapa gerado
+├── reserva/                         # Renders históricos e referências dos exportadores/testes
 └── outros/                          # Arquivos de produção e documentação
-    ├── arte/                        # Referências, PNGs de origem e quadros da Shadow
+    ├── arte/                        # PNGs de origem, referências e jumpscares originais
     ├── audio/                       # Áudio original do rádio
     ├── documentacao/               # V8, checklist, manifesto e hashes
     ├── identidade_visual/          # Bíblia visual, paleta e materiais
-    ├── planta/                     # Fonte técnica em JSON/Python/SVG
+    ├── planta/                     # Fonte técnica e imagens de referência da planta
     └── prompts/                     # Prompt mestre + 12 prompts de câmera
 ```
 
-O arquivo `outros/documentacao/MAPEAMENTO_ORIGINAIS.json` registra a importação dos **60 arquivos originais** do ZIP V8, com os caminhos e hashes SHA-256 da época.
+O arquivo `outros/documentacao/MAPEAMENTO_ORIGINAIS.json` registra a importação dos **60 arquivos originais** do ZIP V8, com os caminhos e hashes SHA-256 da época. Os valores `destino_v1` desse manifesto são históricos e não representam necessariamente os caminhos atuais.
+
+As três imagens de referência da planta ficam em `outros/planta/referencias/`, não em `public/`, pois não são carregadas pelo jogo. Alguns PNGs mestres continuam em `public/images/` para os exportadores e testes de composição; o empacotamento de Pages exclui esses mestres. Modelos 3D ainda não existem; veja `docs/modelos-3d.md`.
 
 As imagens do menu, do computador, da Shadow e da Palhaça usam WebP sem perdas. Os PNGs correspondentes ficam em `outros/arte/`, com a mesma estrutura e extensão `.png`. O arquivo `outros/arte/shadow/jumpscare-frames.zip` guarda os 48 quadros e a animação usada em `public/images/jumpscares/shadow.webp`. As faixas de `public/audio/radio/` são as versões usadas pelo jogo, com as gravações de origem em `outros/audio/radio/`.
 
@@ -63,7 +68,7 @@ As imagens do menu, do computador, da Shadow e da Palhaça usam WebP sem perdas.
 
 1. Crie um repositório no GitHub e coloque **o conteúdo desta pasta** na raiz da branch `main`. `index.html` deve ficar na raiz, não dentro de outra pasta.
 2. Em **Settings → Pages → Build and deployment**, escolha **GitHub Actions** como fonte.
-3. O workflow `.github/workflows/pages.yml` monta o pacote em `dist/` com `node scripts/package-pages.cjs` e o publica. O pacote inclui os arquivos usados pelo jogo e deixa a reserva, as artes-fonte e as ferramentas de desenvolvimento no repositório.
+3. O workflow `.github/workflows/pages.yml` monta o pacote em `dist/`, verifica os assets e publica pelo GitHub Actions. A seleção em `scripts/pages-files.cjs` inclui o código, os JSONs e os recursos de runtime. As artes-fonte, a reserva, a documentação e as ferramentas ficam no repositório.
 4. Acesse a URL indicada em **Settings → Pages**, normalmente `https://seu-usuario.github.io/nome-do-repo/`.
 
 Se `Configure Pages` informar que o site está ausente, confira a fonte da etapa 2 e execute novamente o workflow na aba **Actions**. Os caminhos relativos funcionam tanto no site de projeto quanto no site de usuário.
@@ -74,9 +79,15 @@ Abra `index.html` diretamente para jogar com a cópia local gerada a partir de `
 
 Em HTTP(S), inclusive no GitHub Pages, o jogo carrega `config/` diretamente. Para testar assim no computador, execute `python -m http.server 8000` na raiz e abra [localhost:8000](http://localhost:8000/). Recarregue a página após editar um JSON.
 
-Ao alterar os JSONs, rode `node scripts/sync-local-config.cjs` para atualizar a cópia usada por `file://` e o mapa de referência `NNN_mapa_posicoes_22.json`. Confira ambos com `node scripts/sync-local-config.cjs --check`. Abrir o jogo e publicar no Pages dispensam essa etapa.
+Ao editar os JSONs em `config/`, rode `node scripts/sync-local-config.cjs` para atualizar `src/data/local-config.js` (usado por `file://`) e [o relatório das 26 posições](docs/generated/mapa-posicoes.json). O relatório deriva de `config/map.json`. Por HTTP(S), o jogo lê os JSONs diretamente.
+
+Os catálogos de arte `src/data/camera-layers.js` e `src/data/complex-layers.js` são gerados por `scripts/export_camera_layers.py` e `scripts/export_complex_layers.py`, respectivamente. Edite as fontes de arte, os dados ou os exportadores e atualize o catálogo correspondente ao regenerar as poses.
+
+Consulte o [guia de assets](docs/asset-guidelines.md) para incluir sons, imagens ou poses e conferir a publicação.
 
 Execute `node tests/night-systems.cjs`, `node tests/movement.cjs` e `node tests/camera-gates.cjs` para validar as regras e os controles. Execute `node tests/image-cache.cjs` para conferir o cache. Os testes de arte `tests/test_cam05_images.py` e `tests/test_office_images.py` rodam diretamente com Python e Pillow.
+
+O workflow automático exige apenas os testes de balanceamento, cache e áudio, além da conferência do pacote e das configurações. As suítes históricas completas de movimentação e interface ainda têm expectativas antigas de gameplay: ficam disponíveis como diagnóstico manual do workflow, sem alterar as regras do jogo nesta refatoração.
 
 ### Diagnóstico de desempenho
 
@@ -207,7 +218,18 @@ Na CAM12, o portão hidráulico G06 começa aberto e revela as cortinas vermelha
 
 Cada estado do G06 tem oito combinações com a Padrão, a Yandere ao fundo e a Gótica. Selecione uma com `NathGame.setCam12CorridorState('original-gotica')`, `todas` ou `vazia`. A seleção permanece ao alternar o portão.
 
-O comando `node tests/camera-gates.cjs` testa os controles, as prévias de câmera, os portões, a luz e as camadas do escritório. O comando `node tests/movement.cjs` testa as regras, o relógio e os efeitos usando os JSONs reais. Rode `python -B tests/test_camera_layers.py` com Pillow e NumPy para comparar as composições com as variantes arquivadas. Os comandos `python tests/test_cam05_images.py` e `python tests/test_office_images.py` (Pillow) conferem a consistência dos demais cenários.
+### Validação de desenvolvimento
+
+Com Node.js 24, rode os comandos abaixo na raiz. Use uma pasta vazia para a publicação.
+
+```sh
+node --test tests/*.cjs
+node scripts/sync-local-config.cjs --check
+node scripts/package-pages.cjs
+node scripts/check-assets.cjs dist
+```
+
+Os testes de arte são executáveis diretamente. Use Pillow e NumPy para rodar `python -B tests/test_camera_layers.py`, `python -B tests/test_cam05_images.py` e `python -B tests/test_office_images.py`. As referências históricas em `reserva/` incluem quadros de câmera, composições do escritório e variações de armário e portão usadas pelos exportadores e pelos testes.
 
 Os três estados da nova sala de controle estão em `public/images/office/states/`. O PNG mestre é a arte nova, e a área clicável acompanha o monitor à esquerda da mesa. Prompts e composição: `outros/prompts/ESCRITORIO_ESTADOS_PORTAO.md`.
 
@@ -224,6 +246,6 @@ O mapa da interface usa os **polígonos das salas, aberturas, posições e azimu
 ## Observações
 
 - As referências com personagens ficam em `outros/arte/cameras/CAMxx/` e as artes individuais em `outros/arte/animatronics/`. As máscaras do palco e os recortes do salão ficam em `outros/arte/cameras/CAM03/`. Use `python scripts/compose_cam03.py <pasta>` para recompor as seis variantes parciais do palco e `python scripts/compose_cam03.py --salao <pasta>` para exportar as 19 cenas com personagens fora do palco.
-- O pacote V8 não incluía arquivos 3D `.glb`/`.gltf`; `public/models/` foi preparado sem modelos inventados.
-- Os efeitos de som são sintetizados localmente pelo navegador e começam após o primeiro clique ou tecla, conforme as regras do navegador.
+- O pacote V8 não incluía arquivos 3D `.glb`/`.gltf`; `docs/modelos-3d.md` registra essa ausência, sem manter uma pasta pública vazia.
+- O áudio usa amostras locais e efeitos sintetizados no navegador. O primeiro clique ou tecla libera a reprodução.
 - A sala do escritório é uma **imagem panorâmica pré-renderizada**, não um cenário 3D em tempo real.
