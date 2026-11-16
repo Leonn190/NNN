@@ -266,7 +266,7 @@ function createThreats(config, levels, random, emit, reactionReduction = () => 0
   };
 }
 
-function createApproach(map, effects, random, observingLeft = () => false) {
+function createApproach(map, effects, random, observingLeft = () => false, currentTime = () => 0) {
   const stages = {
     corridor: [map.back, map.front, map.office],
     stock: [map.leftApproach, map.left, map.office]
@@ -283,7 +283,7 @@ function createApproach(map, effects, random, observingLeft = () => false) {
   function options(actor) {
     const { objective, phase } = actor.approach;
     return { to: stages[objective][phase === 'approach' ? 1 : 2], objective,
-      ...effects.attackOdds(actor, objective, phase, observingLeft()) };
+      ...effects.attackOdds(actor, objective, phase, observingLeft(), currentTime()) };
   }
 
   function choose(actor) {

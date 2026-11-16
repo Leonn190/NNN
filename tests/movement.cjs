@@ -707,12 +707,12 @@ for (const key of ['gotica', 'yandere', 'gatinha']) {
   assert(fx.startAudio(0, 'CAM03'));
   assert.equal(fx.audioStatus(2.99).camera, 'CAM03');
   assert.equal(fx.audioStatus(3).camera, null);
-  assert(!fx.startAudio(9.99, 'CAM12'));
+  assert(!fx.startAudio(8.99, 'CAM12'));
   closeTo(fx.weight(actor, 1), 1.75); // 19 is one step from the hall.
   actor.position = 17;
-  closeTo(fx.weight(actor, 15), 1.15); // 17 is out of range, 15 is in ring two.
+  closeTo(fx.weight(actor, 15), 1.1875); // 17 is out of range, 15 is in ring two.
   fx.retain(actor);
-  closeTo(fx.weight(actor, 15), 1.15);
+  closeTo(fx.weight(actor, 15), 1.1875);
   actor.position = 22;
   closeTo(fx.weight(actor, 8, 2), 1);
   assert(fx.startAudio(10, 'CAM12'));
@@ -914,8 +914,8 @@ for (const view of ['office', 'cameras', 'closet-door']) {
   assert(at(0, { camera: 'CAM03' }, { type: 'cameraAudio' }));
   at(4);
   assert.equal(game.snapshot().audio.camera, null);
-  assert.equal(actor('gotica').audioCamera, 'CAM03');
-  assert.equal(actor('padrao').audioCamera, 'CAM03');
+  assert.equal(actor('gotica').audioCamera, null);
+  assert.equal(actor('padrao').audioCamera, null);
   assert(at(10, { camera: 'CAM11' }, { type: 'cameraAudio' }));
   at(12);
   assert.equal(actor('gotica').audioCamera, null);

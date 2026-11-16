@@ -115,10 +115,11 @@ function createMovement(config, { random = Math.random, hallucinationRandom = Ma
     surpriseLimit = yandereLevel < surpriseRules.firstLevel ? 0 : yandereLevel === effectiveMax ? surpriseRules.uses.max
       : yandereLevel >= surpriseRules.secondLevel ? surpriseRules.uses.second : surpriseRules.uses.first;
     surprisesUsed = 0;
-    resetInactivity();
+    surprise = null;
+    inactivityEnds = Infinity;
     cameraScareSeconds = interpolate(cameraScare.observationSeconds, difficultyProgress(levelFor('yandere'), maxLevel));
     effects = createEffects(config, routes, actors);
-    approach = createApproach(map, effects, random, () => input.leftLook);
+    approach = createApproach(map, effects, random, () => input.leftLook, () => now);
     for (const actor of actors) {
       schedule(actor, 1, true);
       actor.due += movementDelay;
@@ -129,6 +130,7 @@ function createMovement(config, { random = Math.random, hallucinationRandom = Ma
     });
     threats = createThreats(config, { palhaca: levelFor('palhaca') }, random, emit, smores.reactionReduction, effectiveMax);
     resources = createResources(config, rules, () => gates.open(officeGate));
+    resetInactivity();
     if (resources.snapshot(now).blackout) gates.open(officeGate);
     const shadowLevel = sanityEnabled ? levelFor('shadow') : 0;
     shadow = createShadow(config.shadow, shadowDifficulty(config.shadow, shadowLevel, effectiveMax), cameraIds, random);
@@ -139,9 +141,21 @@ function createMovement(config, { random = Math.random, hallucinationRandom = Ma
     return eligible.length > 1 ? eligible[Math.floor(random() * eligible.length)] : eligible[0];
   }
 
-  function resetInactivity() {
+  function resetInactivity(start = now, sanity = resources.snapshot(now).sanity) {
     surprise = null;
-    inactivityEnds = surprisesUsed < surpriseLimit ? now + uniform(random, surpriseRules.inactivity) : Infinity;
+    inactivityEnds = surprisesUsed < surpriseLimit && sanityEnabled && sanity < surpriseRules.sanityThreshold
+      ? start + uniform(random, surpriseRules.inactivity) : Infinity;
+  }
+
+  function updateSurpriseSanity(before, after, start, end) {
+    if (!sanityEnabled || surprisesUsed >= surpriseLimit) return;
+    const threshold = surpriseRules.sanityThreshold;
+    if (after >= threshold) {
+      if (inactivityEnds !== Infinity || surprise) resetInactivity(end, after);
+    } else if (before >= threshold) {
+      const crossing = start + (end - start) * (before - threshold) / (before - after);
+      resetInactivity(crossing, after);
+    }
   }
 
   function attackStarted(actor, objective, surpriseAttack = false) {
@@ -251,7 +265,8 @@ function createMovement(config, { random = Math.random, hallucinationRandom = Ma
   }
 
   function retreatChoices(actor, kind) {
-    return weightedChoices(retreat[kind].filter(id => actor.allowed.has(id) && !isFull(id)), () => 1);
+    return weightedChoices(retreat[kind].filter(id => actor.allowed.has(id) && !isFull(id)),
+      id => effects.weight(actor, id, now));
   }
 
   function withdraw(actor, kind, intervalFactor) {
@@ -313,10 +328,10 @@ function createMovement(config, { random = Math.random, hallucinationRandom = Ma
       : neighbors;
     const bonus = factor(effectiveNavigationBonus(actor));
     const weighted = weightedChoices([...choices, from], id => {
-      if (id === from) return movement.weight * movement.stayFactor;
+      if (id === from) return movement.weight * movement.stayFactor * effects.stayWeight(actor, now);
       const progresses = progress.has(id);
       return movement.weight * (id === actor.previous && !progresses ? movement.backtrackFactor : 1)
-        * (progresses ? bonus : 1) * effects.weight(actor, id);
+        * (progresses ? bonus : 1) * effects.weight(actor, id, now);
     });
     if (!actor.rule.watchedNeighborBonus || !watchingCamera()) return weighted;
     const watched = new Set(neighbors.filter(to => cameraObserves(to)
@@ -400,7 +415,7 @@ function createMovement(config, { random = Math.random, hallucinationRandom = Ma
     // A Maid pode desviar para a manutenção antes de iniciar a aproximação central.
     const canEnter = attackRoutes.canNavigate(actor, service) && canUse(actor, routes.connection(back, service));
     return weightedChoices(canEnter ? [back, service] : [back], to =>
-      movement.weight * (to === back ? factor(actor.targetBonus) : effects.weight(actor, to)));
+      movement.weight * (to === back ? factor(actor.targetBonus) : effects.weight(actor, to, now)));
   }
 
   function passingAttack(actor) {
@@ -551,7 +566,6 @@ function createMovement(config, { random = Math.random, hallucinationRandom = Ma
       if (actor.pending || moveDue(actor) > now) continue;
       actor.retreat = null;
       const choice = choose(actor);
-      actor.audioStimulus = null;
       if (!choice) continue;
       if (actor.approach || (!choice.stationary && !choice.stay)) flickerCorridor(actor.position, choice.to);
       if (choice.abandon || (actor.key === 'maid' && actor.approach && choice.stay)) {
@@ -660,7 +674,9 @@ function createMovement(config, { random = Math.random, hallucinationRandom = Ma
     const clownLight = flashlightAvailable && input.clownLight;
     const effectiveCorridorLight = corridorLight && officeLightAvailable();
     const observation = observeSanity(computerOn, corridorLight, clownLight, camera);
+    const previousSanity = resources.snapshot(now).sanity;
     const { end, radio, won } = resources.segment(now, until, input, observation, gates.closed);
+    updateSurpriseSanity(previousSanity, resources.snapshot(end).sanity, now, end);
     if (effectiveCorridorLight && !movementPaused()) {
       // Advance the lit actors' timers by dt / factor, in their original time units.
       const extension = (end - now) * (1 - 1 / config.effects.flashlight.corridorIntervalFactor);
@@ -695,6 +711,20 @@ function createMovement(config, { random = Math.random, hallucinationRandom = Ma
         }
       }
       const camera = observeCamera();
+      if (sanityEnabled && surprisesUsed < surpriseLimit && inactivityEnds === Infinity) {
+        const frame = resources.snapshot(now);
+        if (frame.sanity >= surpriseRules.sanityThreshold) {
+          const lit = resources.flashlightAvailable(now);
+          const observation = observeSanity(resources.computerOn(), lit && input.corridorLight,
+            lit && input.clownLight, camera);
+          const rate = window.NathGame.sanityRate(config.sanity, {
+            ...observation, radio: input.radio && frame.radioAvailable, blackout: frame.blackout
+          });
+          if (rate < 0) {
+            due = Math.min(due, now + (frame.sanity - surpriseRules.sanityThreshold) / -rate + 1e-6);
+          }
+        }
+      }
       const scareDeadline = updateCameraScare(camera, until);
       due = Math.min(due, scareDeadline, hallucinations.nextDeadline());
       // A modifier or a power boundary can leave work due at this instant.
@@ -784,7 +814,7 @@ function createMovement(config, { random = Math.random, hallucinationRandom = Ma
         required: actor.route?.required ?? null, lastReached: actor.route?.lastReached ?? null,
         routeBonus: navigationBonus(actor), approach: actor.approach?.phase ?? null,
         freeMoves: actor.freeMoves, intervalPenalty: actor.intervalPenalty,
-        light: actor.light, noise: actor.noise, audioCamera: actor.audioStimulus?.camera ?? null
+        light: actor.light, noise: actor.noise, audioCamera: effects.audioStimulus(actor, now)?.camera ?? null
       };
     });
   }
@@ -944,7 +974,7 @@ function createMovement(config, { random = Math.random, hallucinationRandom = Ma
       completed: actor.route?.completed, bonus: actor.level ? effectiveNavigationBonus(actor) : null,
       target, status, odds, expiryOdds, attackActive, attackPath: actor.approach?.objective ?? null,
       noise: actor.noise ?? 0, light: actor.light ?? 0, attackOdds,
-      audio: effects.audioStimulus(actor),
+      audio: effects.audioStimulus(actor, now),
       invasions: threats.invasionCount(actor),
       instantInvasion: actor.level > 0 && !outcome && position !== office && threats.instantInvasion(actor),
       reaction: actor.level ? threats.invasionStatus(actor, now)?.reaction ?? threats.reactionTime(actor) : null };

@@ -7,7 +7,7 @@ for (const file of ['data/game-data', 'data/camera-layers', 'data/complex-layers
   'gameplay/effects', 'gameplay/threats', 'gameplay/gates', 'gameplay/electrical', 'gameplay/resources',
   'gameplay/shadow', 'scene-art', 'movement']) require('../src/' + file + '.js');
 
-const { createMovement, createThreats, createAttackRoutes, createRoutes, cameraActorFrame, CAMERAS } = window.NathGame;
+const { createMovement, createThreats, createAttackRoutes, createRoutes, createEffects, cameraActorFrame, CAMERAS } = window.NathGame;
 const base = Object.fromEntries(['night', 'map', 'movement', 'characters', 'effects', 'threats',
   'controls', 'sanity', 'power', 'shadow'].map(name => [name, require('../config/' + name + '.json')]));
 const near = (actual, expected) => assert(Math.abs(actual - expected) < 1e-8, `${actual} != ${expected}`);
@@ -315,4 +315,66 @@ test('Shadow rolls once per real computer return, including while powered off', 
   run.at(0, office);
   assert.equal(run.game.snapshot().shadow.phase, 'inactive');
   assert.equal(run.calls(), 3);
+});
+
+test('Palhaça uses the adjusted growth, wardrobe floor and warning limits', () => {
+  assert.deepEqual(base.threats.clown.growth, [.8, 1.56]);
+  assert.equal(base.threats.clown.floorPerEntry, 8);
+  assert.equal(base.threats.clown.warningAt, 79);
+  assert.equal(base.threats.clown.entryDeathAbove, 82);
+  const run = scenario({ palhaca: 1 }, {}, config => { config.threats.clown.initial = 78; });
+  run.at(1.25);
+  assert.equal(run.emitted('clownWarning').length, 1);
+});
+
+test('camera audio modestly changes corridor retreat and same-camera stay odds', () => {
+  assert.equal(base.effects.cameraAudio.cooldown, 9);
+  assert.equal(base.effects.cameraAudio.factors[2], .25);
+  const graph = createRoutes(base.map);
+  const yandere = { key: 'yandere', rule: base.characters.yandere,
+    allowed: new Set(base.characters.yandere.positions), position: 14, noise: 0, light: 0 };
+  const effect = createEffects(base, graph, [yandere]);
+  assert(effect.startAudio(0, 'CAM05'));
+  const active = effect.attackOdds(yandere, 'corridor', 'entry', false, 1);
+  const expired = effect.attackOdds(yandere, 'corridor', 'entry', false, 3.01);
+  assert(active.advance < expired.advance);
+  assert(active.abandon > expired.abandon);
+  assert(effect.weight(yandere, 6, 1) > effect.weight(yandere, 7, 1));
+  assert.equal(effect.audioStimulus(yandere, 3.01), null);
+  yandere.position = 6;
+  assert.equal(effect.startAudio(8.99, 'CAM05'), false);
+  assert(effect.startAudio(9, 'CAM05'));
+  near(effect.stayWeight(yandere, 9), 1.75);
+  assert(effect.attackOdds(yandere, 'corridor', 'entry', false, 9).stay
+    > effect.attackOdds(yandere, 'corridor', 'entry', false, 12.01).stay);
+
+  const padrao = { key: 'padrao', rule: base.characters.padrao,
+    allowed: new Set(base.characters.padrao.positions), position: 10, noise: 0, light: 0 };
+  const repulsion = createEffects(base, graph, [padrao]);
+  assert(repulsion.startAudio(0, 'CAM08'));
+  const stock = repulsion.attackOdds(padrao, 'stock', 'approach', false, 1);
+  assert(stock.advance < .25);
+  assert(stock.stay < (1 - stock.advance) * .3);
+  near(repulsion.stayWeight(padrao, 1), .5);
+});
+
+test('Yandere surprise requires ongoing sanity below 75', () => {
+  assert.equal(base.threats.yandereSurprise.sanityThreshold, 75);
+  const tune = config => {
+    config.characters.yandere.interval = 1000;
+    config.sanity.initial = 76;
+  };
+  const run = scenario({ yandere: 6 }, { view: 'closet', closet: true }, tune);
+  run.at(55);
+  assert.equal(run.emitted('yandereSabotage').length, 0);
+  run.at(58);
+  assert.equal(run.emitted('yandereSabotage').length, 1);
+
+  const recovered = scenario({ yandere: 6 }, { view: 'office', radio: true }, config => {
+    config.characters.yandere.interval = 1000;
+    config.sanity.initial = 74;
+  });
+  recovered.at(100);
+  assert.equal(recovered.emitted('yandereSabotage').length, 0);
+  assert(recovered.game.snapshot().sanity >= 75);
 });

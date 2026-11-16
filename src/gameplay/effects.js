@@ -15,6 +15,8 @@ function createEffects(config, routes, actors) {
   let volumePeak = 0;
   let volumePeakAt = 0;
   const transientVolume = now => volumePeak * Math.exp(-(now - volumePeakAt) / .22);
+  const activeAudio = (actor, now = 0) => actor.audioStimulus && now < actor.audioStimulus.ends
+    ? actor.audioStimulus : null;
   const audibleNeighbors = actor => routes.neighbors.get(actor.position).filter(to => {
     const edge = routes.connection(actor.position, to);
     return actor.allowed.has(to) && (!edge.actors || edge.actors.includes(actor.key));
@@ -29,7 +31,8 @@ function createEffects(config, routes, actors) {
     readyAt = now + cameraAudio.cooldown;
     for (const actor of actors) {
       const fromDistance = distance.get(actor.position) ?? Infinity;
-      actor.audioStimulus = audibleNeighbors(actor).some(to => (distance.get(to) ?? Infinity) < fromDistance)
+      actor.audioStimulus = fromDistance === 0
+        || audibleNeighbors(actor).some(to => (distance.get(to) ?? Infinity) < fromDistance)
         ? stimulus : null;
     }
     return true;
@@ -61,7 +64,23 @@ function createEffects(config, routes, actors) {
     }
   }
 
-  function attackOdds(actor, objective, phase, leftLook) {
+  function attackAudio(actor, objective, now) {
+    const stimulus = activeAudio(actor, now);
+    if (!stimulus) return { retreat: 0, stay: 0 };
+    const distance = stimulus.distance;
+    const from = distance.get(actor.position) ?? Infinity;
+    const modifier = (actor.rule.audioModifier ?? 0) / 100;
+    const intensity = cameraAudio.factors[from] ?? 0;
+    const retreat = config.movement.retreat[objective].some(to => actor.allowed.has(to)
+      && (modifier > 0 ? (distance.get(to) ?? Infinity) < from
+        : modifier < 0 && (distance.get(to) ?? Infinity) > from));
+    return {
+      retreat: retreat ? Math.min(.04, Math.abs(modifier) * .05 * intensity) : 0,
+      stay: from === 0 ? modifier * .12 : 0
+    };
+  }
+
+  function attackOdds(actor, objective, phase, leftLook, now = 0) {
     const { corridor, stock, stayShare } = config.movement.attack;
     const [quiet, loud] = (objective === 'corridor' ? corridor[actor.key] : stock)[phase];
     const intensity = clamp(actor.noise / noise.max, 0, 1);
@@ -69,19 +88,30 @@ function createEffects(config, routes, actors) {
     const doorObserved = objective === 'stock' && leftLook;
     const modifier = doorObserved ? -stock.observationPenalty : light ? light.advanceDelta * actor.light : 0;
     const minimum = doorObserved ? stock.minimumObservedAdvance : light ? flashlight.minimumAdvance : 0;
-    const advance = clamp(quiet + (loud - quiet) * intensity + modifier, minimum, light ? flashlight.maximumAdvance : 1);
+    const audioEffect = attackAudio(actor, objective, now);
+    const advance = clamp(quiet + (loud - quiet) * intensity + modifier - audioEffect.retreat,
+      minimum, light ? flashlight.maximumAdvance : 1);
     const failure = 1 - advance;
-    return { advance, stay: failure * stayShare, abandon: failure * (1 - stayShare) };
+    const share = clamp(stayShare + audioEffect.stay, 0, 1);
+    return { advance, stay: failure * share, abandon: failure * (1 - share) };
   }
 
-  function weight(actor, to) {
+  function stayWeight(actor, now = 0) {
+    const stimulus = activeAudio(actor, now);
+    return stimulus?.distance.get(actor.position) === 0 ? factor(actor.rule.audioModifier) : 1;
+  }
+
+  function weight(actor, to, now = 0) {
     const from = actor.position;
     let result = 1;
-    const stimulus = actor.audioStimulus;
+    const stimulus = activeAudio(actor, now);
     if (stimulus) {
       const distance = stimulus.distance.get(to) ?? Infinity;
-      if (distance < (stimulus.distance.get(from) ?? Infinity)) {
+      const fromDistance = stimulus.distance.get(from) ?? Infinity;
+      if (distance < fromDistance) {
         result *= factor(actor.rule.audioModifier * cameraAudio.factors[distance]);
+      } else if (to === from && distance === 0) {
+        result *= factor(actor.rule.audioModifier);
       }
     }
     if (actor.rule.hidingPlaces?.includes(to)) result *= factor(actor.rule.hidingBonus);
@@ -89,14 +119,14 @@ function createEffects(config, routes, actors) {
   }
 
   return {
-    startAudio, integrate, weight, attackOdds,
+    startAudio, integrate, weight, stayWeight, attackOdds,
     staticActive: now => now < staticUntil,
     staticDeadline: now => now < staticUntil ? staticUntil : Infinity,
     triggerStatic: now => { staticUntil = now + config.effects.static.duration; },
     audioStatus: now => ({ remaining: Math.max(0, readyAt - now), camera: now < audio?.ends ? audio.camera : null,
       activeRemaining: Math.max(0, (audio?.ends ?? now) - now) }),
-    audioStimulus(actor) {
-      const stimulus = actor.audioStimulus;
+    audioStimulus(actor, now = 0) {
+      const stimulus = activeAudio(actor, now);
       if (!stimulus) return null;
       const distance = stimulus.distance.get(actor.position) ?? Infinity;
       const modifiers = Object.fromEntries(audibleNeighbors(actor).flatMap(to => {
