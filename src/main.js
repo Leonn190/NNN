@@ -330,6 +330,7 @@ const movement = createMovement(config, {
       sound.playSample('reboot', .35);
       announce('Sinal e controle dos portões restaurados.');
     } else if (event === 'loss') {
+      window.NathNotes?.awardDeath(state.shift?.number, value);
       if (value === 'shadow') beginJumpscare(SHADOW_IMAGE);
       else if (value === 'palhaca') {
         beginJumpscare(movement.snapshot().hidden ? CLOWN_BOTTOM_IMAGE : CLOWN_RIGHT_IMAGE);
@@ -1086,7 +1087,10 @@ function finishShift() {
   releaseShiftImages();
   const { number } = state.shift;
   const campaignComplete = number === config.night.campaign.length;
-  if (number) menu.recordWin(number);
+  if (number) {
+    menu.recordWin(number);
+    window.NathNotes?.awardVictory(number);
+  }
   const { hours } = movement.snapshot();
   updateClockUI(hours);
   const { hour, minutes, period } = clockDisplay(hours);
@@ -1281,6 +1285,7 @@ function prepareShift(shift) {
   clearMonitorTransition();
   resourceStateKey = undefined;
   resetCameraApp();
+  window.NathNotes?.hideAll();
   movement.reset(shift.levels, {}, shift.rules);
   const { powerEnabled, sanityEnabled } = shift.rules;
   dom.energyMeter.hidden = $('#energy-label').hidden = !powerEnabled;
