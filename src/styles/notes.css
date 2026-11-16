@@ -1,0 +1,151 @@
+/* Janelas locais do explorador e do criador de notas. */
+.nnn-shortcut-icon {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  border-radius: 9px;
+  background: #243a62c7;
+  font-size: 31px;
+  text-shadow: none;
+  box-shadow: 0 3px 8px #0006;
+}
+.nnn-menu-icon { display: inline-grid; place-items: center; width: 26px; font-size: 21px; }
+.nnn-task-app { font-size: 24px; }
+.nnn-notes-window {
+  --default-width: min(72%, 960px);
+  --default-height: min(80%, 760px);
+  --default-x: 15%;
+  --default-y: 8%;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  color: #e3ebf5;
+  background: #101a29;
+  font: 13px/1.45 Arial, sans-serif;
+}
+#nnn-window-notes {
+  --default-width: min(60%, 760px);
+  --default-height: min(70%, 610px);
+  --default-x: 21%;
+  --default-y: 14%;
+}
+.nnn-notes-window[hidden] { display: none; }
+.nnn-notes-window[data-active] { z-index: 5; }
+.nnn-notes-window .window-titlebar {
+  flex: 0 0 var(--titlebar-height);
+  background: #f5f5f8;
+  color: #2a2c36;
+}
+.nnn-notes-window .window-titlebar .nnn-title-icon {
+  flex: 0 0 30px;
+  margin-left: 4px;
+  font-size: 17px;
+  text-align: center;
+}
+.nnn-notes-window .window-titlebar > span:nth-child(2) {
+  flex: 1;
+  padding-left: 3px;
+  font-size: 13px;
+  font-weight: 600;
+}
+.nnn-notes-window .nnn-notes-body {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: 12px;
+  background: #152033;
+  scrollbar-color: #506a87 transparent;
+}
+.nnn-notes-body h3 {
+  margin: 10px 0;
+  color: #f2f6fd;
+  font-size: 17px;
+}
+.nnn-browser-toolbar {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+  min-height: 38px;
+  padding-bottom: 9px;
+  border-bottom: 1px solid #3b4c61;
+}
+.nnn-browser-toolbar button, .nnn-browser-back, .nnn-save-button {
+  border: 1px solid #65758b;
+  border-radius: 3px;
+  padding: 7px 11px;
+  background: #25364c;
+  color: #f1f4fd;
+  cursor: pointer;
+}
+.nnn-browser-toolbar button:hover, .nnn-browser-back:hover, .nnn-save-button:hover {
+  background: #345172;
+}
+.nnn-browser-path {
+  flex: 1;
+  overflow-wrap: anywhere;
+  color: #cad8e7;
+  font-size: 12px;
+}
+.nnn-browser-info { margin: 10px 0 12px; color: #b7c5d6; }
+.nnn-file-list { display: grid; align-content: start; gap: 3px; }
+.nnn-file-tile {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  width: 100%;
+  padding: 9px 11px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  background: transparent;
+  color: #e1e9f2;
+  text-align: left;
+  cursor: pointer;
+}
+.nnn-file-tile:hover, .nnn-file-tile:focus-visible {
+  border-color: #5e91bb;
+  background: #29415c;
+}
+.nnn-file-icon { flex: 0 0 35px; font-size: 27px; text-align: center; }
+.nnn-file-copy { display: grid; gap: 2px; min-width: 0; }
+.nnn-file-name { font-size: 13px; overflow-wrap: anywhere; }
+.nnn-file-copy small { font-size: 11px; color: #abbcd0; }
+.nnn-empty { padding: 20px 6px; color: #b4c4d4; }
+.nnn-browser-back { margin-top: 12px; }
+.nnn-file-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 18px;
+  padding: 0 0 13px;
+  color: #adbed0;
+  border-bottom: 1px solid #405067;
+}
+.nnn-file-contents {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font: 14px/1.75 Arial, sans-serif;
+  color: #e8eefa;
+  padding: 12px 3px;
+}
+.nnn-user-textarea {
+  display: block;
+  width: 100%;
+  min-height: 52%;
+  box-sizing: border-box;
+  resize: vertical;
+  padding: 14px;
+  border: 1px solid #60768e;
+  border-radius: 4px;
+  background: #e8edf4;
+  color: #182336;
+  font: 14px/1.6 Arial, sans-serif;
+}
+.nnn-editor-footer { display: flex; gap: 12px; align-items: center; justify-content: space-between; flex-wrap: wrap; padding-top: 12px; }
+.nnn-editor-status { flex: 1; color: #bcd1e6; font-size: 12px; }
+.nnn-save-button { background: #2c628b; border-color: #4e85b3; font-weight: 700; }
+@container (max-width: 620px) {
+  .nnn-notes-window { --default-width: calc(100% - 12px); --default-x: 6px; }
+  #nnn-window-notes { --default-width: calc(100% - 12px); --default-x: 6px; }
+  .nnn-file-meta { display: grid; gap: 3px; }
+}
