@@ -378,3 +378,95 @@ test('Yandere surprise requires ongoing sanity below 75', () => {
   assert.equal(recovered.emitted('yandereSabotage').length, 0);
   assert(recovered.game.snapshot().sanity >= 75);
 });
+
+
+test('nine-night campaign honors the new roster, MAX and peaceful opening', () => {
+  const roster = {
+    gotica:  [5, 8, 4, 5, 5, 6, 11, 6, 7],
+    yandere: [4, 4, 9, 2, 3, 5, 11, 6, 7],
+    palhaca: [1, 2, 2, 3, 5, 8, 3, 5, 6],
+    padrao:  [0, 1, 2, 3, 4, 5, 6, 10, 11],
+    gatinha: [0, 0, 0, 2, 10, 4, 5, 5, 7],
+    maid:    [0, 0, 1, 9, 2, 4, 5, 6, 7],
+    smores:  [0, 0, 0, 0, 3, 5, 3, 10, 3],
+    shadow:  [0, 0, 0, 0, 0, 1, 2, 10, 11]
+  };
+  const delays = [45, 40, 35, 30, 25, 20, 15, 10, 10];
+  assert.equal(base.night.campaign.length, 9);
+  assert.equal(base.night.campaignMaxLevel, 11);
+  for (const [index, entry] of base.night.campaign.entries()) {
+    assert.equal(entry.movementDelay, delays[index]);
+    assert.equal(entry.maxClosedGates, index);
+    assert.equal(entry.powerEnabled, index >= 1);
+    assert.equal(entry.sanityEnabled, index >= 2);
+    assert.equal(entry.hoursToWin, index === 8 ? 7 : 6);
+    for (const [key, levels] of Object.entries(roster)) assert.equal(entry.levels[key], levels[index]);
+    const config = structuredClone(base);
+    const game = createMovement(config, { random: () => .99 });
+    const input = { view: 'office', computer: true, radio: false, flashlight: true };
+    const { levels, ...nightRules } = entry;
+    game.reset(levels, input, { ...config.night, ...nightRules, maxLevel: config.night.campaignMaxLevel });
+    const initialPositions = game.diagnostics().map(actor => actor.position);
+    game.advance(delays[index] - .01, input);
+    const before = game.snapshot();
+    assert.equal(before.outcome, null);
+    assert.equal(before.hours, 0);
+    assert.equal(before.energy, 100);
+    assert.equal(before.sanity, 100);
+    assert.equal(before.counter, 1);
+    assert.deepEqual(game.diagnostics().map(actor => actor.position), initialPositions);
+    assert.equal(game.snapshot({ hud: true }).energyLossPerSecond, 0);
+    assert.equal(game.snapshot({ hud: true }).sanityLossPerSecond, 0);
+    game.advance(delays[index], input);
+    assert.equal(game.snapshot().hours, 0);
+    game.advance(delays[index] + .1, input);
+    assert(game.snapshot().hours > 0);
+  }
+});
+
+test('Yandere keeps her early first move after the protected delay', () => {
+  const config = structuredClone(base);
+  config.movement.jitter = { min: 0, max: 0 };
+  Object.assign(config.characters.yandere, { start: 19, positions: [19, 21], interval: 5 });
+  const night = config.night.campaign[1];
+  const { levels, ...rules } = night;
+  const game = createMovement(config, { random: () => 0 });
+  game.reset(levels, {}, { ...config.night, ...rules, maxLevel: 11 });
+  const roster = game.diagnostics();
+  const yandere = roster.find(actor => actor.key === 'yandere');
+  const gotica = roster.find(actor => actor.key === 'gotica');
+  assert(yandere.remaining < gotica.remaining);
+  game.advance(night.movementDelay + yandere.remaining - .001, {});
+  assert.equal(game.diagnostics().find(actor => actor.key === 'yandere').position, 19);
+  game.advance(night.movementDelay + yandere.remaining + .001, {});
+  assert.equal(game.diagnostics().find(actor => actor.key === 'yandere').position, 21);
+});
+
+test('the final campaign night cannot end at 6 AM', () => {
+  const config = structuredClone(base);
+  const night = config.night.campaign[8];
+  const { levels, ...rules } = night;
+  const game = createMovement(config, { random: () => .99 });
+  game.reset({}, {}, { ...config.night, ...rules, maxLevel: 11 });
+  game.advance(night.movementDelay + 360, {});
+  assert.equal(game.snapshot().outcome, null);
+  near(game.snapshot().hours, 6);
+  game.advance(night.movementDelay + 420, {});
+  assert.equal(game.snapshot().outcome, 'win');
+  near(game.snapshot().hours, 7);
+});
+
+test('closet protection and camera effects remain inactive during the opening', () => {
+  const config = structuredClone(base);
+  const game = createMovement(config, { random: () => .99 });
+  const rule = { ...config.night, movementDelay: 45 };
+  const input = { view: 'closet-back', closet: true, clownLight: true, camera: 'CAM03' };
+  game.reset({ palhaca: 1, gotica: 5, yandere: 4 }, input, rule);
+  game.advance(0, input, { type: 'closetEnter' });
+  game.advance(44.9, input);
+  assert.equal(game.snapshot().counter, 1);
+  assert.equal(game.snapshot().floor, 1);
+  assert.equal(game.snapshot().sanity, 100);
+  assert.equal(game.snapshot().hours, 0);
+  assert.equal(game.advance(44.9, input, { type: 'cameraAudio' }), false);
+});
