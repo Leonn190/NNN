@@ -170,13 +170,13 @@ function createThreats(config, levels, random, emit, reactionReduction = () => 0
     invasion.leaveAt = Math.max(now, invasion.arrived + stay + uniform(random, attack.jitter));
   }
 
-  function enterCloset(now) {
-    if (clownEnabled && counter > clown.entryDeathAbove) {
+  function enterCloset(now, peaceful = false) {
+    if (!peaceful && clownEnabled && counter > clown.entryDeathAbove) {
       clownDeath = true;
       return false;
     }
     hidden = true;
-    if (clownEnabled) {
+    if (!peaceful && clownEnabled) {
       const threshold = Math.min(clown.max, ++entries * clown.floorPerEntry);
       if (!thresholds.includes(threshold)) thresholds.push(threshold);
     }
