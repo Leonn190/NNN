@@ -55,6 +55,7 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid #ffd3e8;outline-
 .title-start span[aria-hidden]{margin-right:.25em}
 .title-start:hover,.title-start:focus-visible{color:#ffbfdc}
 .title-actions{display:grid;justify-items:start;gap:4px}
+.campaign-star{position:absolute;z-index:1;right:clamp(18px,4cqw,64px);bottom:calc(clamp(18px,4cqh,52px) + env(safe-area-inset-bottom));font:900 clamp(42px,8cqw,94px)/1 Georgia,serif;color:#ffd66f;text-shadow:0 2px 2px #59360c,0 0 14px #f8b942aa,0 0 32px #c7934777;pointer-events:none}
 @container(max-height:680px){
   .title-content{padding-block:clamp(12px,5cqh,28px);gap:clamp(8px,4cqh,22px)}
   .title-content h1{font-size:clamp(34px,min(10.3cqw,15cqh),80px)}
