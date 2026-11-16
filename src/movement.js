@@ -711,6 +711,20 @@ function createMovement(config, { random = Math.random, hallucinationRandom = Ma
         }
       }
       const camera = observeCamera();
+      if (sanityEnabled && surprisesUsed < surpriseLimit && inactivityEnds === Infinity) {
+        const frame = resources.snapshot(now);
+        if (frame.sanity >= surpriseRules.sanityThreshold) {
+          const lit = resources.flashlightAvailable(now);
+          const observation = observeSanity(resources.computerOn(), lit && input.corridorLight,
+            lit && input.clownLight, camera);
+          const rate = window.NathGame.sanityRate(config.sanity, {
+            ...observation, radio: input.radio && frame.radioAvailable, blackout: frame.blackout
+          });
+          if (rate < 0) {
+            due = Math.min(due, now + (frame.sanity - surpriseRules.sanityThreshold) / -rate + 1e-6);
+          }
+        }
+      }
       const scareDeadline = updateCameraScare(camera, until);
       due = Math.min(due, scareDeadline, hallucinations.nextDeadline());
       // A modifier or a power boundary can leave work due at this instant.
