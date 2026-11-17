@@ -21,7 +21,7 @@ function createNotesUI(system, { openCameras } = {}) {
   const tasks = new Map([[explorer, taskExplorer], [editor, taskNotes]]);
   const history = [{ kind: 'root' }];
   let historyIndex = 0;
-  let topLayer = 6;
+
 
   const view = () => history[historyIndex];
   const node = (tag, className, label) => {
@@ -169,9 +169,12 @@ function createNotesUI(system, { openCameras } = {}) {
   }
 
   function raise(panel) {
-    for (const win of windows) win.removeAttribute('data-active');
+    for (const win of windows) {
+      win.removeAttribute('data-active');
+      win.style.zIndex = '6';
+    }
     panel.setAttribute('data-active', '');
-    panel.style.zIndex = String(++topLayer);
+    panel.style.zIndex = '7';
   }
 
   function close(panel) {
