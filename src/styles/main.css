@@ -50,7 +50,7 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid #ffd3e8;outline-
 .title-screen::after{background:repeating-linear-gradient(180deg,#0004 0 1px,transparent 1px 4px)}
 .title-screen .feed-noise{--noise-opacity:.085;--noise-period:1.94s}
 .title-content{position:absolute;z-index:1;inset:0;display:flex;flex-direction:column;align-items:flex-start;gap:clamp(16px,7cqh,64px);padding:clamp(16px,12cqh,100px) clamp(24px,8cqw,120px);overflow:auto;text-shadow:0 2px 14px #000}
-.title-content h1{margin:0;font:400 clamp(34px,min(10.3cqw,20cqh),144px)/.94 Arial,sans-serif;letter-spacing:-.045em}
+.title-content h1{margin:0;font:400 clamp(34px,min(10.6cqw,20cqh),148px)/.94 Arial,sans-serif;letter-spacing:-.045em}
 .title-start{min-height:44px;padding:4px 0;border:0;background:none;font:700 clamp(22px,3.2cqw,40px)/1.2 var(--mono);text-shadow:inherit}
 .title-start span[aria-hidden]{margin-right:.25em}
 .title-start:hover,.title-start:focus-visible{color:#ffbfdc}
@@ -58,7 +58,7 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid #ffd3e8;outline-
 .campaign-star{position:absolute;z-index:1;right:clamp(18px,4cqw,64px);bottom:calc(clamp(18px,4cqh,52px) + env(safe-area-inset-bottom));font:900 clamp(42px,8cqw,94px)/1 Georgia,serif;color:#ffd66f;text-shadow:0 2px 2px #59360c,0 0 14px #f8b942aa,0 0 32px #c7934777;pointer-events:none}
 @container(max-height:680px){
   .title-content{padding-block:clamp(12px,5cqh,28px);gap:clamp(8px,4cqh,22px)}
-  .title-content h1{font-size:clamp(34px,min(10.3cqw,15cqh),80px)}
+  .title-content h1{font-size:clamp(34px,min(10.6cqw,15cqh),82px)}
 }
 .custom-night{position:absolute;inset:0;z-index:2;overflow:auto;padding:clamp(16px,7cqh,60px) 8cqw;background:#100b18e8}
 .custom-night h2{margin:0 0 18px;font:700 clamp(26px,5cqw,46px) var(--mono)}
@@ -74,7 +74,7 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid #ffd3e8;outline-
   .title-glitch--back{object-position:54% top}
   .title-screen::before{background:linear-gradient(0deg,#030203 27%,transparent 74%)}
   .title-content{justify-content:flex-end;gap:clamp(12px,3cqh,30px);padding-bottom:max(15cqh,env(safe-area-inset-bottom))}
-  .title-content h1{font-size:clamp(34px,min(15.5cqw,13cqh),96px)}
+  .title-content h1{font-size:clamp(34px,min(15.9cqw,13cqh),98px)}
 }
 @media(prefers-reduced-motion:reduce){.title-glitch{display:none}}
 .night-intro {
