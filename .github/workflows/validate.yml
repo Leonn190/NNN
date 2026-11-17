@@ -24,7 +24,7 @@ jobs:
           node scripts/package-pages.cjs
           node scripts/check-assets.cjs dist
       - name: Testar balanceamento, cache e áudio
-        run: node --test tests/balance.cjs tests/image-cache.cjs tests/sound.cjs
+        run: node --test tests/balance.cjs tests/image-cache.cjs tests/sound.cjs tests/notes.cjs
       # As suítes históricas de simulação ainda contêm expectativas antigas.
       # Execute-as manualmente, sem mascarar falhas nos checks obrigatórios do push.
       - name: Diagnóstico opcional da suíte histórica

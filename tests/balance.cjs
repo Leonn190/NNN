@@ -48,10 +48,10 @@ test('route bonuses interpolate independently and interval reductions accumulate
   const hunt = scenario({ padrao: 1, gotica: 1, maid: 1 }, {}, config => {
     Object.assign(config.characters.padrao, { start: 7, interval: 1, routes: { CV: 100 } });
   });
-  near(hunt.debug('padrao').bonus, 32 + 25);
+  near(hunt.debug('padrao').bonus, 32 + 30);
   hunt.at(1);
   near(hunt.debug('padrao').bonus, 32 + 4 - 20);
-  near(hunt.debug('gotica').bonus, 25 + 25);
+  near(hunt.debug('gotica').bonus, 25 + 30);
   near(hunt.debug('maid').bonus, 10);
 });
 

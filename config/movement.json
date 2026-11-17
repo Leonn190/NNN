@@ -14,7 +14,7 @@
     "padraoBonus": [32, 48],
     "perMove": [3, 5],
     "padraoPerMove": [4, 6],
-    "huntBonus": 25,
+    "huntBonus": 30,
     "huntPenalty": 20,
     "blockedProgressRetention": 0.50,
     "definitions": {

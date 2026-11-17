@@ -3,7 +3,8 @@
 const {
   CAMERAS, OFFICE, makeCameraMap, SoundEngine, createMovement, createNightMenu,
   cameraActorFrame, hasCameraState, closetFrame, closetVentImage, officeCharacterImage, corridorSlots, loadConfig,
-  createImageCache, clearImageSource, setImageSource, createCameraInterference, renderVolume, renderResources
+  createImageCache, clearImageSource, setImageSource, createCameraInterference, renderVolume, renderResources,
+  createNotesSystem, createNotesUI
 } = window.NathGame;
 const shopCamera = CAMERAS.find(cam => cam.id === 'CAM01');
 const serviceCamera = CAMERAS.find(cam => cam.id === 'CAM09');
@@ -31,12 +32,14 @@ try {
   return;
 }
 const { controls } = config;
+const notesSystem = createNotesSystem(window.NathGame.notesCatalog);
 const radioMusic = $('#radio-music');
 const dom = {
   game: $('#game'), office: $('#office-view'), cameras: $('#cameras-view'), desktop: $('#computer-desktop'),
   computerScreen: $('#computer-screen'),
   playfield: $('#playfield'), scareArt: $('#jumpscare-art'),
   gameOver: $('#game-over'), returnToMenu: $('#return-to-menu'), scareSound: $('#jumpscare-sound'),
+  guardHud: $('#guard-hud'), guardHudCount: $('#guard-hud-count'), guardHudName: $('#guard-hud-name'),
   officeScene: $('#office-scene'), officeMonitor: $('#office-monitor'), officeArt: $('#office-art'),
   desktopPower: $('#desktop-power'), shutdownDesktop: $('#shutdown-desktop'),
   officeCharacters: $('#office-characters'), corridorCharacters: $('#corridor-characters'),
@@ -73,6 +76,7 @@ const cameraApp = {
   launchEndAt: null,
   open: false
 };
+const notesUI = createNotesUI(notesSystem, { openCameras: showCameraApp });
 const desktopTime = new Intl.DateTimeFormat('pt-BR', { hour: '2-digit', minute: '2-digit' });
 const desktopDate = new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
 let lastDesktopMinute;
@@ -693,6 +697,7 @@ function setMode(mode, withSound = true, force = false) {
   if (!force && (state.complete || state.mode === mode)) return;
   const watching = mode === 'cameras';
   const hiding = mode === 'closet';
+  if (mode !== 'desktop') notesUI.hide();
   if (state.mode === 'cameras' && !watching) movement.interruptCameraObservation();
   state.mode = mode;
   if (!watching) {
@@ -841,6 +846,7 @@ function renderCameraApp() {
 }
 
 function showCameraApp() {
+  notesUI.hide();
   const now = performance.now();
   if (state.monitorTransition || cameraApp.launchEndAt !== null) advanceGame(now);
   if (state.complete || dom.desktop.hidden || dom.computerScreen.inert || cameraApp.launchEndAt !== null) return;
@@ -1086,7 +1092,10 @@ function finishShift() {
   releaseShiftImages();
   const { number } = state.shift;
   const campaignComplete = number === config.night.campaign.length;
-  if (number) menu.recordWin(number);
+  if (number) {
+    notesSystem.completeNight(number);
+    menu.recordWin(number);
+  }
   const { hours } = movement.snapshot();
   updateClockUI(hours);
   const { hour, minutes, period } = clockDisplay(hours);
@@ -1194,7 +1203,28 @@ function loadJumpscare(source) {
   });
 }
 
+function deathCause(source) {
+  const name = source.toLowerCase();
+  if (name.includes('palhaca')) return 'palhaca';
+  if (name === SHADOW_IMAGE || name.includes('shadow')) return 'shadow';
+  if (name.includes('yandere')) return 'yandere';
+  if (name.includes('gotica')) return 'gotica';
+  if (name.includes('maid')) return 'maid';
+  if (name.includes('platinada') || name.includes('gatinha')) return 'gatinha';
+  if (name.includes('smores')) return 'smores';
+  return 'principal';
+}
+
 function beginJumpscare(source) {
+  if (state.complete || dom.game.dataset.defeat) return;
+  const death = state.shift?.number ? notesSystem.recordDeath(state.shift.number, deathCause(source)) : null;
+  $('#game-over-guards').textContent = notesSystem.counter();
+  $('#game-over-next-guard').textContent = death
+    ? (death.nextGuard ? death.deadGuard + ' desapareceu. Próximo: ' + death.nextGuard
+      + ' · ' + death.unlocked.length + ' anotações recuperadas.'
+      : 'Não restam guardas. A campanha terminou.')
+    : 'Noite personalizada: nenhum guarda foi perdido.';
+  $('#retry-night').textContent = death?.exhausted ? 'RECOMEÇAR CAMPANHA' : 'TENTAR NOVAMENTE';
   let audio = 'scream.wav';
   if (source === SHADOW_IMAGE) {
     dom.game.dataset.scare = 'shadow';
@@ -1272,6 +1302,10 @@ function prepareShift(shift) {
   delete dom.game.dataset.defeat;
   delete dom.game.dataset.scare;
   $('#game-over-status').textContent = 'SINAL PERDIDO';
+  $('#retry-night').textContent = 'TENTAR NOVAMENTE';
+  dom.guardHud.hidden = !shift.number;
+  dom.guardHudCount.textContent = notesSystem.counter();
+  dom.guardHudName.textContent = notesSystem.activeGuard() || 'Sem guardas';
   $('#night-mode').textContent = shift.label;
   clearTimeout(toastTimeout);
   dom.toast.classList.remove('show');
@@ -1895,9 +1929,26 @@ $('#show-desktop').addEventListener('click', () => {
   setStartMenu(false);
   setMode('desktop');
 });
+for (const [id, openApp] of [
+  ['open-file-explorer', () => notesUI.openExplorer()],
+  ['start-file-explorer', () => notesUI.openExplorer()],
+  ['taskbar-explorer', () => notesUI.openExplorer()],
+  ['open-notes-editor', () => notesUI.openEditor()],
+  ['start-notes-editor', () => notesUI.openEditor()],
+  ['taskbar-notes', () => notesUI.openEditor()]
+]) {
+  $( '#' + id ).addEventListener('click', () => {
+    if (state.complete || dom.computerScreen.inert) return;
+    if (state.mode === 'cameras') hideCameraApp();
+    if (state.mode !== 'desktop') return;
+    setStartMenu(false);
+    openApp();
+  });
+}
 dom.cameraAudio.addEventListener('click', playCameraAudio);
 dom.closeDesktop.addEventListener('click', closeComputer);
-const replayShift = () => menu.play(state.shift);
+const replayShift = () => notesSystem.remaining() === 0 && state.shift?.number
+  ? menu.restartCampaign() : menu.play(state.shift);
 dom.restart.addEventListener('click', replayShift);
 $('#retry-night').addEventListener('click', replayShift);
 dom.nextShift.addEventListener('click', () => menu.playCampaign(state.shift.number + 1));
@@ -2095,7 +2146,10 @@ function warmShiftImages(levels) {
 const menu = createNightMenu(config, {
   prepareShift,
   startShift,
-  onEnter: () => sound.preloadSamples(attackSamples)
+  onEnter: () => sound.preloadSamples(attackSamples),
+  canPlayCampaign: () => notesSystem.remaining() > 0,
+  hasCampaignHistory: () => notesSystem.files().length > 0 || notesSystem.remaining() < 12,
+  onNewCampaign: () => notesSystem.reset()
 });
 dom.game.style.setProperty('--shadow-manifest-duration', `${config.shadow.manifestSeconds}s`);
 dom.game.style.setProperty('--shadow-found-duration', `${config.shadow.foundSeconds}s`);
