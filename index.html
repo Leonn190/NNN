@@ -128,6 +128,27 @@
                 <circle cx="19.5" cy="25" r="5" fill="#e1f6ff"/>
                 <circle cx="21" cy="23.5" r="2" fill="#65bdec"/>
               </symbol>
+              <symbol id="icon-folder" viewBox="0 0 48 48">
+                <path fill="#d99826" d="M4 11q0-4 4-4h12l4 5h16q4 0 4 4v24q0 3-4 3H8q-4 0-4-4z"/>
+                <path fill="#ffd46b" d="M4 20h40l-4 21H8z"/>
+                <path fill="#fff2b0" opacity=".65" d="M8 23h31l-1 3H7z"/>
+              </symbol>
+              <symbol id="icon-notes" viewBox="0 0 48 48">
+                <rect x="9" y="5" width="32" height="38" rx="3" fill="#f3f6ff"/>
+                <path fill="#a8d3ff" d="M9 9q0-4 4-4h24q4 0 4 4v6H9z"/>
+                <path stroke="#3a69a8" stroke-width="2.4" stroke-linecap="round" d="M15 21h20M15 27h20M15 33h15"/>
+                <path fill="#e6b15d" d="m30 37 10-13 4 3-10 13-6 2z"/>
+              </symbol>
+              <symbol id="icon-file" viewBox="0 0 48 48">
+                <path fill="#e5f0ff" d="M10 4h20l9 9v30H10z"/>
+                <path fill="#94bcea" d="M30 4v10h9z"/>
+                <path stroke="#6b94c7" stroke-width="2.4" stroke-linecap="round" d="M16 22h16M16 28h16M16 34h12"/>
+              </symbol>
+              <symbol id="icon-pc" viewBox="0 0 48 48">
+                <rect x="4" y="8" width="40" height="28" rx="3" fill="#3b82c7"/>
+                <rect x="8" y="12" width="32" height="20" rx="1" fill="#c5e9ff"/>
+                <path d="M21 36h6v5h10v3H11v-3h10z" fill="#9fb9ca"/>
+              </symbol>
               <symbol id="icon-power" viewBox="0 0 16 16">
                 <path d="M8 1v7m-3.4-5a6 6 0 1 0 6.8 0" fill="none" stroke="currentColor"/>
               </symbol>
@@ -148,20 +169,50 @@
                   Câmeras
                 </button>
                 <button class="desktop-shortcut" id="open-file-explorer" type="button">
-                  <span class="shortcut-image notes-shortcut-icon" aria-hidden="true">📁</span>Explorador de Arquivos
+                  <span class="shortcut-image notes-shortcut-icon" aria-hidden="true"><svg><use href="#icon-folder"/></svg></span>Explorador de Arquivos
                 </button>
                 <button class="desktop-shortcut" id="open-notes-editor" type="button">
-                  <span class="shortcut-image notes-shortcut-icon" aria-hidden="true">📝</span>Notas
+                  <span class="shortcut-image notes-shortcut-icon" aria-hidden="true"><svg><use href="#icon-notes"/></svg></span>Notas
                 </button>
               </div>
 
               <section class="notes-app-window" id="file-explorer-window" aria-label="Explorador de Arquivos" hidden>
-                <header class="notes-window-top"><strong>Explorador de Arquivos</strong><button type="button" id="file-explorer-close" aria-label="Fechar Explorador">×</button></header>
-                <div class="file-explorer-toolbar"><button type="button" id="file-explorer-back" aria-label="Voltar">←</button><span id="file-explorer-location">Este computador</span></div>
-                <div class="file-explorer-content" id="file-explorer-content"></div>
+                <header class="notes-window-top" id="file-explorer-titlebar">
+                  <svg aria-hidden="true"><use href="#icon-folder"/></svg><strong>Explorador de Arquivos</strong>
+                  <div class="notes-window-controls">
+                    <button type="button" id="file-explorer-minimize" aria-label="Minimizar Explorador" title="Minimizar"><span class="notes-control-minimize"></span></button>
+                    <button type="button" id="file-explorer-maximize" aria-label="Maximizar janela" title="Maximizar"><span class="notes-control-maximize"></span></button>
+                    <button type="button" id="file-explorer-close" aria-label="Fechar Explorador" title="Fechar"><span class="notes-control-close">×</span></button>
+                  </div>
+                </header>
+                <div class="file-explorer-menu" aria-hidden="true"><span>Arquivo</span><span>Início</span><span>Compartilhar</span><span>Exibir</span></div>
+                <div class="file-explorer-toolbar">
+                  <button type="button" id="file-explorer-back" aria-label="Voltar" title="Voltar">‹</button>
+                  <button type="button" id="file-explorer-forward" aria-label="Avançar" title="Avançar">›</button>
+                  <button type="button" id="file-explorer-up" aria-label="Subir uma pasta" title="Subir">↑</button>
+                  <div class="file-explorer-address" id="file-explorer-location">Este computador</div>
+                  <input id="file-explorer-search" type="search" aria-label="Pesquisar arquivos" placeholder="Pesquisar" autocomplete="off" spellcheck="false">
+                </div>
+                <div class="file-explorer-layout">
+                  <aside class="file-explorer-sidebar" id="file-explorer-sidebar" aria-label="Navegação de pastas"></aside>
+                  <div class="file-explorer-main">
+                    <div class="file-explorer-columns" aria-hidden="true"><span>Nome</span><span>Tipo</span><span>Detalhes</span></div>
+                    <div class="file-explorer-content" id="file-explorer-content"></div>
+                  </div>
+                </div>
+                <footer class="file-explorer-status" id="file-explorer-status">0 itens</footer>
+                <div class="notes-resize-handle" aria-hidden="true"></div>
               </section>
-              <section class="notes-app-window" id="notes-editor-window" aria-label="Aplicativo Notas" hidden>
-                <header class="notes-window-top"><strong>Notas</strong><button type="button" id="notes-editor-close" aria-label="Fechar Notas">×</button></header>
+              <section class="notes-app-window notes-editor-window" id="notes-editor-window" aria-label="Aplicativo Notas" hidden>
+                <header class="notes-window-top" id="notes-editor-titlebar">
+                  <svg aria-hidden="true"><use href="#icon-notes"/></svg><strong>Bloco de Notas</strong>
+                  <div class="notes-window-controls">
+                    <button type="button" id="notes-editor-minimize" aria-label="Minimizar Notas" title="Minimizar"><span class="notes-control-minimize"></span></button>
+                    <button type="button" id="notes-editor-maximize" aria-label="Maximizar janela" title="Maximizar"><span class="notes-control-maximize"></span></button>
+                    <button type="button" id="notes-editor-close" aria-label="Fechar Notas" title="Fechar"><span class="notes-control-close">×</span></button>
+                  </div>
+                </header>
+                <div class="file-explorer-menu" aria-hidden="true"><span>Arquivo</span><span>Editar</span><span>Exibir</span></div>
                 <div class="notes-editor-content">
                   <label for="personal-notes-input">Nova anotação</label>
                   <textarea id="personal-notes-input" placeholder="Escreva aqui..." spellcheck="true"></textarea>
@@ -170,6 +221,8 @@
                     <button type="button" id="personal-notes-open-folder">Abrir pasta Outras</button>
                   </div>
                 </div>
+                <footer class="file-explorer-status">Texto simples · UTF-8</footer>
+                <div class="notes-resize-handle" aria-hidden="true"></div>
               </section>
               <div class="camera-launch" id="camera-launch" role="status" hidden>
                 <svg class="camera-launch-icon" aria-hidden="true"><use href="#icon-cameras"/></svg>
@@ -225,8 +278,8 @@
             <div class="desktop-start-menu" id="start-menu" aria-label="Menu Iniciar" hidden>
               <span class="start-heading">Iniciar</span>
               <button id="start-cameras" type="button"><svg aria-hidden="true"><use href="#icon-cameras"/></svg>Câmeras</button>
-              <button id="start-file-explorer" type="button">📁 Explorador de Arquivos</button>
-              <button id="start-notes-editor" type="button">📝 Notas</button>
+              <button id="start-file-explorer" type="button"><svg aria-hidden="true"><use href="#icon-folder"/></svg>Explorador de Arquivos</button>
+              <button id="start-notes-editor" type="button"><svg aria-hidden="true"><use href="#icon-notes"/></svg>Notas</button>
               <button id="shutdown-desktop" type="button"><svg aria-hidden="true"><use href="#icon-power"/></svg>Desligar computador</button>
               <button class="start-power" id="close-desktop" type="button"><svg aria-hidden="true"><use href="#icon-power"/></svg>Voltar ao escritório</button>
             </div>
@@ -235,8 +288,8 @@
                 <svg viewBox="0 0 20 20" aria-hidden="true"><path fill="currentColor" d="M1 4l7-1v6H1zm8-1.2L19 1v8H9zM1 10h7v6L1 15zm8 0h10v9L9 17z"/></svg>
               </button>
               <button class="task-app" id="taskbar-cameras" type="button" aria-label="Câmeras" aria-controls="cameras-view" aria-pressed="false" title="Câmeras"><svg aria-hidden="true"><use href="#icon-cameras"/></svg></button>
-              <button class="task-app" id="taskbar-explorer" type="button" aria-label="Explorador de Arquivos" aria-pressed="false" title="Explorador de Arquivos">📁</button>
-              <button class="task-app" id="taskbar-notes" type="button" aria-label="Notas" aria-pressed="false" title="Notas">📝</button>
+              <button class="task-app" id="taskbar-explorer" type="button" aria-label="Explorador de Arquivos" aria-pressed="false" title="Explorador de Arquivos"><svg aria-hidden="true"><use href="#icon-folder"/></svg></button>
+              <button class="task-app" id="taskbar-notes" type="button" aria-label="Notas" aria-pressed="false" title="Notas"><svg aria-hidden="true"><use href="#icon-notes"/></svg></button>
               <div class="task-tray">
                 <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M1.5 3.5h13v8h-13zM8 12v2m-3.5.5h7" fill="none" stroke="currentColor"/></svg>
                 <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 6h3l4-3v10l-4-3H2zm9-1q3 3 0 6m1-8q5 5 0 10" fill="none" stroke="currentColor" stroke-linejoin="round"/></svg>
@@ -265,7 +318,6 @@
         <div class="night-clock"><div class="clock-time" id="clock-label">12 <small>AM</small></div><span id="night-mode">NOITE <strong>01</strong></span></div>
       </header>
 
-      <div class="guard-hud" id="guard-hud" hidden><span id="guard-hud-count">12/12</span><small id="guard-hud-name">Pedro Garcia</small></div>
 
       <div class="resource-hud" id="resource-hud" hidden>
         <div class="volume-detector" id="volume-detector" role="meter" aria-labelledby="volume-label"
@@ -319,7 +371,6 @@
         <p class="game-over-status" id="game-over-status">SINAL PERDIDO</p>
         <h2 id="game-over-title" lang="en">GAME OVER</h2>
         <p class="game-over-guards" id="game-over-guards" aria-live="polite">11/12</p>
-        <p class="game-over-next-guard" id="game-over-next-guard"></p>
         <button class="game-over-return" id="retry-night" type="button">TENTAR NOVAMENTE</button>
         <button class="game-over-return" id="return-to-menu" type="button">VOLTAR AO MENU</button>
       </div>

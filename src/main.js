@@ -39,7 +39,6 @@ const dom = {
   computerScreen: $('#computer-screen'),
   playfield: $('#playfield'), scareArt: $('#jumpscare-art'),
   gameOver: $('#game-over'), returnToMenu: $('#return-to-menu'), scareSound: $('#jumpscare-sound'),
-  guardHud: $('#guard-hud'), guardHudCount: $('#guard-hud-count'), guardHudName: $('#guard-hud-name'),
   officeScene: $('#office-scene'), officeMonitor: $('#office-monitor'), officeArt: $('#office-art'),
   desktopPower: $('#desktop-power'), shutdownDesktop: $('#shutdown-desktop'),
   officeCharacters: $('#office-characters'), corridorCharacters: $('#corridor-characters'),
@@ -1218,12 +1217,9 @@ function deathCause(source) {
 function beginJumpscare(source) {
   if (state.complete || dom.game.dataset.defeat) return;
   const death = state.shift?.number ? notesSystem.recordDeath(state.shift.number, deathCause(source)) : null;
-  $('#game-over-guards').textContent = notesSystem.counter();
-  $('#game-over-next-guard').textContent = death
-    ? (death.nextGuard ? death.deadGuard + ' desapareceu. Próximo: ' + death.nextGuard
-      + ' · ' + death.unlocked.length + ' anotações recuperadas.'
-      : 'Não restam guardas. A campanha terminou.')
-    : 'Noite personalizada: nenhum guarda foi perdido.';
+  const guardCounter = $('#game-over-guards');
+  guardCounter.hidden = !death;
+  if (death) guardCounter.textContent = death.counter;
   $('#retry-night').textContent = death?.exhausted ? 'RECOMEÇAR CAMPANHA' : 'TENTAR NOVAMENTE';
   let audio = 'scream.wav';
   if (source === SHADOW_IMAGE) {
@@ -1303,9 +1299,6 @@ function prepareShift(shift) {
   delete dom.game.dataset.scare;
   $('#game-over-status').textContent = 'SINAL PERDIDO';
   $('#retry-night').textContent = 'TENTAR NOVAMENTE';
-  dom.guardHud.hidden = !shift.number;
-  dom.guardHudCount.textContent = notesSystem.counter();
-  dom.guardHudName.textContent = notesSystem.activeGuard() || 'Sem guardas';
   $('#night-mode').textContent = shift.label;
   clearTimeout(toastTimeout);
   dom.toast.classList.remove('show');
@@ -1926,6 +1919,7 @@ dom.desktop.addEventListener('pointerdown', event => {
 $('#show-desktop').addEventListener('click', () => {
   if (state.complete) return;
   cameraApp.panel.hidden = true;
+  notesUI.hide();
   setStartMenu(false);
   setMode('desktop');
 });

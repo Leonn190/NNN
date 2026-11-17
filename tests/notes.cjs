@@ -92,12 +92,32 @@ const html = fs.readFileSync(require('node:path').join(__dirname, '../index.html
 for (const id of [
   'open-file-explorer', 'open-notes-editor', 'file-explorer-window',
   'notes-editor-window', 'file-explorer-content', 'personal-notes-input',
-  'taskbar-explorer', 'taskbar-notes', 'game-over-guards', 'guard-hud'
+  'taskbar-explorer', 'taskbar-notes', 'game-over-guards',
+  'file-explorer-titlebar', 'notes-editor-titlebar',
+  'file-explorer-sidebar', 'file-explorer-search', 'file-explorer-status',
+  'file-explorer-back', 'file-explorer-forward', 'file-explorer-up',
+  'file-explorer-minimize', 'file-explorer-maximize',
+  'notes-editor-minimize', 'notes-editor-maximize'
 ]) assert(html.includes('id="' + id + '"'), 'missing desktop id ' + id);
 for (const script of ['data/notes-content.js', 'notes-system.js', 'notes-ui.js']) {
   assert(html.includes('./src/' + script), 'missing script ' + script);
 }
 assert(html.includes('./src/styles/notes.css'));
+assert(!html.includes('id="guard-hud"'), 'guard HUD must not appear while playing');
+assert(!html.includes('id="game-over-next-guard"'), 'guard identities must stay off the game-over screen');
+for (const icon of ['folder', 'notes', 'file', 'pc']) {
+  assert(html.includes('id="icon-' + icon + '"'), 'missing vector icon ' + icon);
+}
+const notesUi = fs.readFileSync(require('node:path').join(__dirname, '../src/notes-ui.js'), 'utf8');
+assert(notesUi.includes("setPointerCapture(event.pointerId)"), 'window dragging and resizing must support pointer capture');
+assert(notesUi.includes("function toggleMaximize()"), 'application windows must maximize and restore');
+assert(notesUi.includes("search.addEventListener('input', render)"), 'explorer search must be interactive');
+const gameSource = fs.readFileSync(require('node:path').join(__dirname, '../src/main.js'), 'utf8');
+assert(!gameSource.includes('guardHud'), 'guard HUD logic must be removed');
+assert(gameSource.includes('guardCounter.hidden = !death'), 'only campaign deaths should show the counter');
+assert(gameSource.includes('guardCounter.textContent = death.counter'), 'game over should show only the remaining-guards counter');
+const style = fs.readFileSync(require('node:path').join(__dirname, '../src/styles/main.css'), 'utf8');
+assert(style.includes('min(10.6cqw,20cqh)'), 'title should be slightly larger on desktop');
 
 // Only the requested two gameplay parameters may change here.
 require('../src/gameplay/resources.js');
