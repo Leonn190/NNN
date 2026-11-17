@@ -1,7 +1,8 @@
 (() => {
 'use strict';
 
-function createNightMenu(config, { prepareShift, startShift, onEnter }) {
+function createNightMenu(config, { prepareShift, startShift, onEnter,
+  canPlayCampaign = () => true, onNewCampaign = () => {}, hasCampaignHistory = () => false }) {
   const $ = selector => document.querySelector(selector);
   const entry = $('#entry-screen');
   const entryButton = $('#enter-game');
@@ -112,7 +113,7 @@ function createNightMenu(config, { prepareShift, startShift, onEnter }) {
   function show() {
     completed = Math.max(completed, readProgress());
     campaignStar.hidden = completed < campaign.length;
-    continueButton.hidden = completed === 0;
+    continueButton.hidden = completed === 0 || !canPlayCampaign();
     continueLabel.textContent = completed === campaign.length ? `Rejogar noite ${campaign.length}`
       : `Continuar · Noite ${completed + 1}`;
     title.hidden = false;
@@ -137,10 +138,20 @@ function createNightMenu(config, { prepareShift, startShift, onEnter }) {
   }
 
   function playCampaign(number, options) {
+    if (!canPlayCampaign()) return;
     const entry = campaign[number - 1];
     if (!entry || number > completed + 1) return;
     const { levels, ...rules } = entry;
     play({ number, label: `NOITE ${number}`, levels, rules: { ...defaults, ...rules, maxLevel: campaignMaxLevel } }, options);
+  }
+
+  function restartCampaign() {
+    if (pendingShift) return;
+    onNewCampaign();
+    completed = 0;
+    campaignStar.hidden = true;
+    try { localStorage.removeItem(progressKey); } catch {}
+    playCampaign(1, { newspaper: true });
   }
 
   introTitle.addEventListener('animationend', event => {
@@ -170,7 +181,11 @@ function createNightMenu(config, { prepareShift, startShift, onEnter }) {
     show();
     onEnter();
   }
-  start.addEventListener('click', () => playCampaign(1, { newspaper: true }));
+  start.addEventListener('click', () => {
+    if ((completed > 0 || hasCampaignHistory())
+        && !window.confirm('Iniciar uma nova campanha? Isso reinicia os guardas e apaga as anotações desta campanha.')) return;
+    restartCampaign();
+  });
   continueButton.addEventListener('click', () => playCampaign(Math.min(completed + 1, campaign.length)));
   customButton.addEventListener('click', () => showCustom(true, inputs.values().next().value));
   $('#close-custom').addEventListener('click', () => showCustom(false, customButton));
@@ -191,7 +206,7 @@ function createNightMenu(config, { prepareShift, startShift, onEnter }) {
   document.addEventListener('visibilitychange', updateGlitches);
   reducedMotion?.addEventListener('change', updateGlitches);
   entryButton.addEventListener('click', enter, { once: true });
-  return { show, play, playCampaign, recordWin };
+  return { show, play, playCampaign, recordWin, restartCampaign };
 }
 
 window.NathGame.createNightMenu = createNightMenu;

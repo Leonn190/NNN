@@ -1019,7 +1019,7 @@ window.NathGame.localConfig = {
         4,
         6
       ],
-      "huntBonus": 25,
+      "huntBonus": 30,
       "huntPenalty": 20,
       "blockedProgressRetention": 0.5,
       "definitions": {
@@ -1230,9 +1230,9 @@ window.NathGame.localConfig = {
     "rulesVersion": "1.1.3",
     "clock": {
       "fastSanity": 90,
-      "slowSanity": 10,
+      "slowSanity": 5,
       "fastSecondsPerHour": 60,
-      "slowSecondsPerHour": 240
+      "slowSecondsPerHour": 180
     },
     "startHour": 12,
     "hoursToWin": 6,

@@ -344,16 +344,17 @@ assert.deepEqual(cameraRoster(), startingRoster);
 assert.deepEqual(inactive.events, [['win', undefined]]);
 assert.equal(inactive.calls(), 0);
 
-for (const [sanity, seconds] of [[100, 60], [90, 60], [70, 105], [50, 150], [30, 195], [10, 240], [9.9, 240]]) {
+for (const [sanity, seconds] of [[100, 60], [90, 60], [70, 60 + 20 * 120 / 85], [50, 60 + 40 * 120 / 85],
+  [30, 60 + 60 * 120 / 85], [5, 180], [4.9, 180]]) {
   near(hourDuration(base.night.clock, sanity), seconds);
   const test = scenario({ tune(config) {
     config.sanity.initial = sanity;
     config.sanity.recovery.passive = 0;
   } });
   test.at(seconds);
-  near(test.state().hours, sanity < 10 ? 0 : 1);
+  near(test.state().hours, sanity < 5 ? 0 : 1);
   near(test.state().energy, 100 - .025 * 60);
-  if (sanity < 10) continue;
+  if (sanity < 5) continue;
   test.at(6 * seconds - .001);
   assert.equal(test.state().outcome, null);
   test.at(6 * seconds + 1);
@@ -362,7 +363,13 @@ for (const [sanity, seconds] of [[100, 60], [90, 60], [70, 105], [50, 150], [30,
   assert.equal(test.state().hours, 6);
 }
 
-const dynamic = scenario({ input: { closet: true }, tune: config => { config.sanity.initial = 70; } });
+// Keep the original integration cases as regression tests for arbitrary clock configurations.
+const legacyClock = config => { config.night.clock.slowSanity = 10; config.night.clock.slowSecondsPerHour = 240; };
+near(clockProgress(base.night.clock, 5, 0, 180), 1);
+near(clockProgress(base.night.clock, 4.999, 0, 3600), 0);
+assert.equal(base.movement.routes.huntBonus, 30);
+
+const dynamic = scenario({ input: { closet: true }, tune: config => { config.sanity.initial = 70; legacyClock(config); } });
 dynamic.at(10, { radio: true });
 near(dynamic.state().hours, Math.log(118.5 / 105) / 1.35);
 near(dynamic.state().energy, 100 - .025 * 60 * dynamic.state().hours);
@@ -374,6 +381,7 @@ near(dynamic.state().energy, firstEnergy - .085 * 60 * (dynamic.state().hours - 
 
 const fastThreshold = scenario({ input: { closet: true }, tune(config) {
   config.sanity.initial = 91;
+  legacyClock(config);
 } });
 fastThreshold.at(10);
 const fastTime = 1 / .6;
@@ -383,6 +391,7 @@ near(fastThreshold.state().energy, 100 - .025 * 60 * fastHours);
 
 const pausedClock = scenario({ input: { closet: true }, tune(config) {
   config.sanity.initial = 11;
+  legacyClock(config);
 } });
 pausedClock.at(10, { radio: true });
 const pausedHours = Math.log(240 / 237.75) / 1.35;
@@ -398,6 +407,7 @@ near(pausedClock.state().hours, pausedHours + Math.log(240 / 239.685) / .315);
 const thresholdWin = scenario({ input: { radio: true }, tune(config) {
   config.sanity.initial = 9.9;
   config.night.hoursToWin = 0;
+  legacyClock(config);
 } });
 thresholdWin.at(1);
 near(thresholdWin.state().now, .1 / .14);
