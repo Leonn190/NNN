@@ -180,7 +180,7 @@ for (const [id, crossings] of Object.entries(gateCrossings)) {
   assert.equal(routing.bonus(11, 120), 640);
   for (const [key, weights] of Object.entries(expected)) {
     const rule = base.characters[key];
-    const actor = { key, rule, allowed: new Set(rule.positions), position: rule.start, lastRoute: 'CV' };
+    const actor = { key, rule, allowed: new Set(rule.positions), position: rule.start, lastRoute: null };
     const odds = routing.selectionOdds(actor);
     assert.deepEqual(odds.map(({ route }) => route.id), Object.keys(weights));
     for (const { route, probability } of odds) {
@@ -203,10 +203,52 @@ for (const [id, crossings] of Object.entries(gateCrossings)) {
   assert.equal(actor.lastRoute, 'EL');
   const closedVip = (_, edge) => open(null, edge) && edge.gateId !== 'G02';
   const available = createAttackRoutes(base, routes, () => 0, closedVip, closedVip).selectionOdds(actor);
-  assert.deepEqual(available.map(({ route, probability }) => [route.id, probability]), [['EL', 3 / 7], ['AR', 4 / 7]]);
+  assert.deepEqual(available.map(({ route, probability }) => [route.id, probability]), [['AR', 1]]);
   actor.lastRoute = null;
   assert.deepEqual(createAttackRoutes(base, routes, () => 0, closedVip, closedVip).selectionOdds(actor)
     .map(({ route, probability }) => [route.id, probability]), [['EL', 1]]);
+}
+
+
+// Weighted route occupancy: VIP and CAM12 share families, the shop route is separate,
+// and ES/EE/AR are special routes exempt from occupancy penalties.
+{
+  assert.equal(base.movement.routes.huntBonus, 35);
+  assert.deepEqual(base.threats.yandereSurprise.inactivity, { min: 40, max: 50 });
+  const open = (_, edge) => Boolean(edge);
+  const owners = [];
+  const rule = base.characters.padrao;
+  const actor = { key: 'padrao', rule, allowed: new Set(rule.positions), position: rule.start, lastRoute: null };
+  const routing = createAttackRoutes(base, routes, () => 0, open, open, () => owners);
+  function expectWeights(weights) {
+    const odds = routing.selectionOdds(actor);
+    const total = Object.values(weights).reduce((sum, value) => sum + value, 0);
+    assert.deepEqual(odds.map(({ route }) => route.id), Object.keys(weights));
+    for (const { route, probability } of odds) closeTo(probability, weights[route.id] / total);
+  }
+  owners.push({ route: { id: 'CV' } });
+  expectWeights({ CV: 19 * .6, CC: 19, EL: 16, EC: 15, EV: 10 * .6, ES: 21 });
+  owners.push({ route: { id: 'EV' } });
+  expectWeights({ CV: 19 * .2, CC: 19, EL: 16, EC: 15, EV: 10 * .2, ES: 21 });
+  owners.splice(0, 2, { route: { id: 'CC' } });
+  expectWeights({ CV: 19, CC: 19 * .6, EL: 16, EC: 15 * .6, EV: 10, ES: 21 });
+  owners[0].route.id = 'EL';
+  expectWeights({ CV: 19, CC: 19, EL: 16 * .6, EC: 15, EV: 10, ES: 21 });
+  owners[0].route.id = 'ES';
+  expectWeights({ CV: 19, CC: 19, EL: 16, EC: 15, EV: 10, ES: 21 });
+  owners[0].route.id = 'AR';
+  expectWeights({ CV: 19, CC: 19, EL: 16, EC: 15, EV: 10, ES: 21 });
+  owners.length = 0;
+  actor.lastRoute = 'CV';
+  assert(!routing.selectionOdds(actor).some(({ route }) => route.id === 'CV'));
+  for (const [key, lastRoute] of [['yandere', 'EE'], ['gatinha', 'AR'], ['padrao', 'ES']]) {
+    const character = base.characters[key];
+    const agent = { key, rule: character, allowed: new Set(character.positions),
+      position: character.start, lastRoute };
+    const odds = routing.selectionOdds(agent);
+    assert(odds.length > 0);
+    assert(!odds.some(({ route }) => route.id === lastRoute));
+  }
 }
 
 // Beginning at the stockroom still requires CAM12. Its intermediate corridor visit cannot start an attack.

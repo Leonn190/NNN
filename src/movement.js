@@ -39,7 +39,7 @@ function createMovement(config, { random = Math.random, hallucinationRandom = Ma
     && (!edge.route || edge.route === actor.route?.id);
   const passable = (actor, edge) => canUse(actor, edge) && !gates.closed.has(edge.gateId);
   const clear = (actor, edge, from, to) => passable(actor, edge) && !isFull(to) && !observed(from, to);
-  const attackRoutes = createAttackRoutes(config, routes, random, passable, clear);
+  const attackRoutes = createAttackRoutes(config, routes, random, passable, clear, () => actors ?? []);
 
   function flickerCorridor(from, to) {
     if (corridorLit()

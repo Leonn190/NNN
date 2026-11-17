@@ -59,9 +59,19 @@ function createRoutes(map) {
   return { positions, neighbors, distances, connection, gate: (a, b) => connection(a, b)?.gateId };
 }
 
-function createAttackRoutes(config, graph, random, passable, clear) {
+function createAttackRoutes(config, graph, random, passable, clear, getActors = () => []) {
   const { map, movement } = config;
-  const { definitions, bonus: initialBonus, padraoBonus, perMove, padraoPerMove } = movement.routes;
+  const { definitions, bonus: initialBonus, padraoBonus, perMove, padraoPerMove,
+    occupancyPenaltyPerActor = 0, occupancyGroups = {} } = movement.routes;
+  const routeGroups = new Map(Object.entries(occupancyGroups)
+    .flatMap(([group, ids]) => ids.map(id => [id, group])));
+  function occupancyFactor(actor, routeId) {
+    const group = routeGroups.get(routeId);
+    if (!group) return 1;
+    const occupants = getActors().filter(other => other !== actor && other.route
+      && routeGroups.get(other.route.id) === group).length;
+    return Math.max(0, 1 - occupants * occupancyPenaltyPerActor / 100);
+  }
   const permitsEdge = (actor, edge) => edge && (!edge.actors || edge.actors.includes(actor.key));
   function routeOptions(actor) {
     const { routes, firstRoutes } = actor.rule;
@@ -113,12 +123,15 @@ function createAttackRoutes(config, graph, random, passable, clear) {
   }
 
   function selectionOdds(actor, exclude) {
-    const options = routeOptions(actor).filter(({ id, objective, weight }) => id !== exclude && weight > 0
-      && !(objective === 'electrical' && actor.lastRoute === id && actor.route?.id !== id));
+    const options = routeOptions(actor).filter(({ id, weight }) =>
+      id !== exclude && id !== actor.lastRoute && weight > 0);
     const candidates = usable => options.map(option => candidate(actor, option, usable)).filter(Boolean);
     let eligible = candidates(passable);
     // If every route is gated, keep a physical option so the actor can wait for a door.
     if (!eligible.length && exclude === undefined && actor.key !== 'gatinha') eligible = candidates(permitsEdge);
+    eligible = eligible.map(({ route, weight }) =>
+      ({ route, weight: weight * occupancyFactor(actor, route.id) }))
+      .filter(({ weight }) => weight > 0);
     const total = eligible.reduce((sum, { weight }) => sum + weight, 0);
     return eligible.map(({ route, weight }) => ({ route, probability: weight / total }));
   }

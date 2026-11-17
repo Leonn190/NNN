@@ -6,7 +6,7 @@
     "sound": "audio/jumpscares/yandere-camera.ogg"
   },
   "yandereSurprise": {
-    "inactivity": { "min": 55, "max": 65 },
+    "inactivity": { "min": 40, "max": 50 },
     "sanityThreshold": 75,
     "warningSeconds": 1,
     "firstLevel": 5,
