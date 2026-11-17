@@ -86,4 +86,28 @@ assert.equal(restored.counter(), '12/12');
 assert.equal(restored.activeGuard(), 'Pedro Garcia');
 assert.equal(restored.files().length, 0);
 assert.equal(restored.completeNight(1).length, 3);
-console.log('Notas, arquivos e guardas: OK');
+// The static deployment must include both new apps and preserve the computer shell.
+const fs = require('node:fs');
+const html = fs.readFileSync(require('node:path').join(__dirname, '../index.html'), 'utf8');
+for (const id of [
+  'open-file-explorer', 'open-notes-editor', 'file-explorer-window',
+  'notes-editor-window', 'file-explorer-content', 'personal-notes-input',
+  'taskbar-explorer', 'taskbar-notes', 'game-over-guards', 'guard-hud'
+]) assert(html.includes('id="' + id + '"'), 'missing desktop id ' + id);
+for (const script of ['data/notes-content.js', 'notes-system.js', 'notes-ui.js']) {
+  assert(html.includes('./src/' + script), 'missing script ' + script);
+}
+assert(html.includes('./src/styles/notes.css'));
+
+// Only the requested two gameplay parameters may change here.
+require('../src/gameplay/resources.js');
+const night = require('../config/night.json');
+const movement = require('../config/movement.json');
+const { hourDuration, clockProgress } = window.NathGame;
+assert.equal(hourDuration(night.clock, 90), 60);
+assert.equal(hourDuration(night.clock, 5), 180);
+assert.equal(clockProgress(night.clock, 5, 0, 180), 1);
+assert.equal(clockProgress(night.clock, 4.99, 0, 3600), 0);
+assert.equal(movement.routes.huntBonus, 30);
+assert.deepEqual(movement.routes.bonus, [25, 40]);
+console.log('Notas, arquivos, guardas e limites de balanceamento: OK');
