@@ -8,7 +8,29 @@ const PAD_X = 18;
 const PAD_Y = 18;
 const X = value => PAD_X + value * SCALE;
 const Y = value => PAD_Y + (VENUE.height - value) * SCALE;
-const directions = { w: [0, 1], s: [0, -1], a: [-1, 0], d: [1, 0] };
+// O teclado segue as fileiras do minimapa, sem pular câmeras próximas.
+const directions = { w: [-1, 0], s: [1, 0], a: [0, -1], d: [0, 1] };
+const cameraGrid = [
+  ['CAM10', 'CAM11', 'CAM12'],
+  ['CAM09', 'CAM05', 'CAM03'],
+  ['CAM08', 'CAM06', 'CAM04'],
+  ['CAM01', 'CAM02', 'CAM07'],
+];
+// Pinos são pontos de seleção no mapa, não a localização física das lentes.
+const cameraPinPositions = {
+  CAM01: [4.6, 2.8],
+  CAM02: [17.0, 2.4],
+  CAM03: [19.5, 19.9],
+  CAM04: [19.5, 10.1],
+  CAM05: [9.5, 19.2],
+  CAM06: [9.5, 12.8],
+  CAM07: [30.0, 5.6],
+  CAM08: [2.2, 12.9],
+  CAM09: [2.2, 19.1],
+  CAM10: [5.2, 26.1],
+  CAM11: [14.5, 26.2],
+  CAM12: [31.2, 23.5],
+};
 
 function makeSvg(tag, attrs = {}, content = null) {
   const element = document.createElementNS(SVG_NS, tag);
@@ -85,7 +107,8 @@ function makeCameraMap({ canvas, onSelect, onToggleGate }) {
 
   const cameraNodes = new Map();
   for (const cam of CAMERAS) {
-    const px = X(cam.x), py = Y(cam.y);
+    const [pinX, pinY] = cameraPinPositions[cam.id] ?? [cam.x, cam.y];
+    const px = X(pinX), py = Y(pinY);
     const g = makeSvg('g', {
       class:`map-camera ${cam.renderAvailable?'has-render':'no-render'}`,
       'data-cam':cam.id,
@@ -120,21 +143,14 @@ function makeCameraMap({ canvas, onSelect, onToggleGate }) {
   let activeCamera;
   return {
     moveSelection(key) {
-      const [dx, dy] = directions[key];
-      let nearest;
-      let best = Infinity;
-      for (const camera of CAMERAS) {
-        const x = camera.x - activeCamera.x;
-        const y = camera.y - activeCamera.y;
-        const forward = x * dx + y * dy;
-        const lateral = Math.abs(x * dy - y * dx);
-        if (forward <= 0 || lateral > forward * 1.75) continue;
-        const distance = Math.hypot(forward, 2 * lateral);
-        if (distance >= best) continue;
-        nearest = camera;
-        best = distance;
-      }
-      if (nearest) onSelect(nearest.id);
+      const direction = directions[key];
+      if (!direction || !activeCamera) return;
+      const row = cameraGrid.findIndex(cameras => cameras.includes(activeCamera.id));
+      if (row < 0) return;
+      const column = cameraGrid[row].indexOf(activeCamera.id);
+      const [dr, dc] = direction;
+      const next = cameraGrid[row + dr]?.[column + dc];
+      if (next) onSelect(next);
     },
     pulseAudio(id) { cameraNodes.get(id)?.classList.add('audio-pulse'); },
     clearAudioPulses() {

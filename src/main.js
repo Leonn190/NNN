@@ -732,7 +732,7 @@ function setMode(mode, withSound = true, force = false) {
 }
 
 function openComputer() {
-  if (state.mode !== 'office' || state.closetTransition || state.complete) return;
+  if (state.mode !== 'office' || state.closetTransition || state.complete || movement.snapshot().blackout) return;
   if (state.monitorTransition || cameraApp.launchEndAt !== null) {
     const now = performance.now();
     advanceGame(now);
@@ -1557,6 +1557,7 @@ function renderResourceState({ energy, blackout, computerOn, radioAvailable, fla
   }
   dom.computerScreen.inert = !computerOn || Boolean(state.monitorTransition);
   dom.desktopPower.disabled = blackout;
+  dom.officeMonitor.disabled = blackout;
   dom.desktopPower.setAttribute('aria-pressed', String(computerOn));
   dom.officeRadio.disabled = !radioAvailable;
   if (dom.closetLight.disabled !== !flashlightAvailable) {
@@ -1982,7 +1983,10 @@ dom.office.addEventListener('pointermove', event => {
   if (event.target === dom.officeCloset) state.targetPan = Math.min(state.pan, state.targetPan);
 });
 dom.office.addEventListener('pointerleave', event => {
-  if (event.pointerType !== 'touch' && !state.closetTransition && !state.dragging) state.targetPan = 0;
+  if (event.pointerType === 'touch' || state.closetTransition || state.dragging) return;
+  // Ao levar o cursor às faixas pretas laterais, mantenha o lado observado.
+  const { left, pointerWidth } = viewport;
+  if (event.clientX > left && event.clientX < left + pointerWidth) state.targetPan = 0;
 });
 dom.office.addEventListener('pointerdown', event => {
   if (state.closetTransition || event.pointerType !== 'touch' || event.target.closest('button')) return;
@@ -2034,6 +2038,11 @@ let lastCameraKeyAt = -Infinity;
 document.addEventListener('keydown', event => {
   if (dom.game.hidden || state.complete || event.altKey || event.ctrlKey || event.metaKey) return;
   const key = event.key.toLowerCase();
+  if (key === 'escape' && !dom.desktop.hidden) {
+    event.preventDefault();
+    if (!event.repeat) closeComputer();
+    return;
+  }
   if (state.mode === 'cameras' && !dom.computerScreen.inert && !cameraApp.panel.inert
       && !cameraApp.panel.hidden && /^[wasd]$/.test(key)) {
     if (event.target?.isContentEditable || event.target?.closest?.('input, textarea, select, [role="textbox"]')) return;
