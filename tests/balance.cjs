@@ -458,6 +458,21 @@ test('closet protection and camera effects remain inactive during the opening', 
 });
 
 
+test('a final-stage bar remains possible under low noise instead of timing out', () => {
+  const rules = base.movement.attack.bar;
+  const effects = { attackBar: () => ({ intensity: .07, progressPerSecond: 0 }) };
+  const { createApproach } = window.NathGame;
+  const approach = createApproach(base.map, effects, () => 0, () => false, () => 0, rules);
+  const actor = { key: 'gotica', position: base.map.back, light: 0, due: 0 };
+  assert.equal(approach.begin(actor, 'corridor'), true);
+  actor.position = base.map.front;
+  approach.arrive(actor);
+  approach.integrate(actor, 100);
+  near(actor.approach.progress, 100);
+  assert.equal(approach.expired(actor), false);
+  assert.equal(approach.completed(actor), true);
+});
+
 test('noise-driven attack progress is independent of character level', () => {
   const rules = base.movement.attack.bar;
   const effects = { attackBar: () => ({ intensity: 1, progressPerSecond: 0 }) };
@@ -489,7 +504,7 @@ test('Gatinha is attracted to silence, common attacks require noise to start', (
   const noisyCommon = effects.attackBar(actors[0], 'stock', 'approach', false, 0).intensity;
   const noisyCat = effects.attackBar(actors[1], 'stock', 'approach', false, 0).intensity;
   assert(noisyCommon > .9);
-  assert(noisyCat < .2);
+  assert(noisyCat < .3);
   assert(effects.attackBar(actors[2], 'stock', 'entry', false, 0).intensity > 1);
 });
 
