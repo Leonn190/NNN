@@ -1094,7 +1094,9 @@ function finishShift() {
   const campaignComplete = number === config.night.campaign.length;
   if (number) {
     notesSystem.completeNight(number);
-    menu.recordWin(number);
+    menu.recordWin(number, state.shift);
+  } else if (!debugEnabled()) {
+    menu.recordCustomWin(state.shift);
   }
   const { hours } = movement.snapshot();
   updateClockUI(hours);
@@ -1221,6 +1223,7 @@ function beginJumpscare(source) {
   const guardCounter = $('#game-over-guards');
   guardCounter.hidden = !death;
   if (death) guardCounter.textContent = death.counter;
+  if (death?.exhausted) menu.endExhaustedCampaign(state.shift.campaignId);
   $('#retry-night').textContent = death?.exhausted ? 'RECOMEÇAR CAMPANHA' : 'TENTAR NOVAMENTE';
   let audio = 'scream.wav';
   if (source === SHADOW_IMAGE) {
@@ -1943,8 +1946,15 @@ for (const [id, openApp] of [
 }
 dom.cameraAudio.addEventListener('click', playCameraAudio);
 dom.closeDesktop.addEventListener('click', closeComputer);
-const replayShift = () => notesSystem.remaining() === 0 && state.shift?.number
-  ? menu.restartCampaign() : menu.play(state.shift);
+const replayShift = () => {
+  const shift = state.shift;
+  if (!shift?.campaignId) return menu.play(shift);
+  if (!menu.hasCampaign(shift.campaignId)) {
+    if (!dom.complete.hidden) return returnToMenu();
+    return menu.restartCampaign();
+  }
+  return menu.playCampaign(shift.number, {}, shift.campaignId);
+};
 dom.restart.addEventListener('click', replayShift);
 $('#retry-night').addEventListener('click', replayShift);
 dom.nextShift.addEventListener('click', () => menu.playCampaign(state.shift.number + 1));
@@ -2152,8 +2162,9 @@ const menu = createNightMenu(config, {
   startShift,
   onEnter: () => sound.preloadSamples(attackSamples),
   canPlayCampaign: () => notesSystem.remaining() > 0,
-  hasCampaignHistory: () => notesSystem.files().length > 0 || notesSystem.remaining() < 12,
-  onNewCampaign: () => notesSystem.reset()
+  onSelectCampaign: id => notesSystem.selectCampaign(id),
+  onDeleteCampaign: id => notesSystem.deleteCampaign(id),
+  remainingGuards: () => notesSystem.remaining()
 });
 dom.game.style.setProperty('--shadow-manifest-duration', `${config.shadow.manifestSeconds}s`);
 dom.game.style.setProperty('--shadow-found-duration', `${config.shadow.foundSeconds}s`);

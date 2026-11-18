@@ -18,9 +18,10 @@ function newSave() {
   return { version: 1, deaths: 0, deathsByNight: {}, files: [], nextNumber: 1 };
 }
 
-function restore() {
+function restore(key = STORAGE_KEY, allowLegacy = false) {
   try {
-    const loaded = JSON.parse(localStorage.getItem(STORAGE_KEY));
+    const value = localStorage.getItem(key);
+    const loaded = JSON.parse(value === null && allowLegacy ? localStorage.getItem(STORAGE_KEY) : value);
     if (!loaded || loaded.version !== 1 || !Array.isArray(loaded.files)) return newSave();
     const files = loaded.files.filter(file => file && typeof file === 'object'
       && typeof file.nome_visivel === 'string' && typeof file.texto === 'string'
@@ -44,15 +45,31 @@ function createNotesSystem(catalog) {
     throw new Error('Catálogo de notas do NNN incompleto.');
   }
   let save = restore();
+  let currentKey = STORAGE_KEY;
   const listeners = new Set();
+  const notify = () => { for (const callback of listeners) callback(); };
+  const campaignKey = id => 'nnn.notes.v2.' + id;
+
+  function selectCampaign(id) {
+    if (!Number.isSafeInteger(id) || id < 1) throw new Error('Campanha inválida.');
+    currentKey = campaignKey(id);
+    save = restore(currentKey, id === 1);
+    // Preserve the pre-migration save on the first selection.
+    persist();
+  }
+
+  function deleteCampaign(id) {
+    if (!Number.isSafeInteger(id) || id < 1) return;
+    try { localStorage.removeItem(campaignKey(id)); } catch {}
+  }
 
   function persist() {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(save));
-      for (const callback of listeners) callback();
+      localStorage.setItem(currentKey, JSON.stringify(save));
+      notify();
       return true;
     } catch {
-      for (const callback of listeners) callback();
+      notify();
       return false;
     }
   }
@@ -163,7 +180,7 @@ function createNotesSystem(catalog) {
   }
 
   return { guards: GUARDS, folders: FOLDERS, files, remaining, counter, activeGuard,
-    completeNight, recordDeath, savePersonal, reset, subscribe,
+    completeNight, recordDeath, savePersonal, reset, subscribe, selectCampaign, deleteCampaign,
     deathsByNight: () => ({ ...save.deathsByNight }) };
 }
 

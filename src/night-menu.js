@@ -2,7 +2,8 @@
 'use strict';
 
 function createNightMenu(config, { prepareShift, startShift, onEnter,
-  canPlayCampaign = () => true, onNewCampaign = () => {}, hasCampaignHistory = () => false }) {
+  canPlayCampaign = () => true, onSelectCampaign = () => {},
+  onDeleteCampaign = () => {}, remainingGuards = () => 12 }) {
   const $ = selector => document.querySelector(selector);
   const entry = $('#entry-screen');
   const entryButton = $('#enter-game');
@@ -13,47 +14,45 @@ function createNightMenu(config, { prepareShift, startShift, onEnter,
   const music = $('#menu-music');
   const titleContent = $('.title-content');
   const start = $('#start-game');
-  const continueButton = $('#continue-game');
-  const continueLabel = $('#continue-game-label');
-  const campaignStar = $('#campaign-star');
+  const continuation = [
+    { button: $('#continue-game'), label: $('#continue-game-label') },
+    { button: $('#continue-game-2'), label: $('#continue-game-label-2') }
+  ];
+  const starsDisplay = $('#campaign-stars');
   const customButton = $('#open-custom');
+  const extrasButton = $('#open-extras');
   const customScreen = $('#custom-night');
+  const extrasScreen = $('#extras-menu');
+  const preview = $('#extras-preview');
+  const previewImage = $('#extras-jumpscare-image');
+  const previewSound = $('#extras-jumpscare-sound');
+  const maxButton = $('#custom-max');
   const debugButton = $('#custom-debug');
-  let debug = false;
   const fields = $('#custom-levels');
   const settings = config.controls.menuMusic;
   const { campaign, campaignMaxLevel, levels: [min, max], defaultLevel, ...defaults } = config.night;
-  const progressKey = 'nnn.campaign.completed';
-  let completed = readProgress();
+  const store = window.NathGame.createCampaignStore();
+  const inputs = new Map();
+  let selectedId = null;
   let pendingShift;
   let musicFrame;
   let glitchTimer;
   let lastGlitchArt;
+  let previewCount = 0;
+  let debug = false;
   const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)');
-  const inputs = new Map();
-
-  function readProgress() {
-    try {
-      const saved = Number(localStorage.getItem(progressKey));
-      if (Number.isInteger(saved) && saved >= 0 && saved <= campaign.length) return saved;
-    } catch {}
-    return 0;
-  }
-
-  function recordWin(number) {
-    completed = Math.max(number, completed, readProgress());
-    campaignStar.hidden = completed < campaign.length;
-    try {
-      localStorage.setItem(progressKey, String(completed));
-    } catch {}
-  }
 
   for (const [id, { name }] of Object.entries({
     ...config.characters, palhaca: config.threats.clown, shadow: config.shadow, smores: config.threats.smores
   })) {
     const label = document.createElement('label');
+    const nameElement = document.createElement('span');
     const select = document.createElement('select');
+    label.className = 'custom-character';
+    nameElement.className = 'custom-character-name';
+    nameElement.textContent = name;
     select.name = id;
+    select.setAttribute('aria-label', 'Dificuldade: ' + name);
     for (let level = min; level <= max; level++) {
       const option = document.createElement('option');
       option.value = String(level);
@@ -61,16 +60,45 @@ function createNightMenu(config, { prepareShift, startShift, onEnter,
       select.append(option);
     }
     select.value = String(defaultLevel);
-    label.append(name, select);
+    select.addEventListener('change', updateMaxButton);
+    label.append(nameElement, select);
     fields.append(label);
     inputs.set(id, select);
   }
 
-  function showCustom(open, focus) {
-    titleContent.hidden = open;
-    customScreen.hidden = !open;
+  function updateMaxButton() {
+    const allMax = [...inputs.values()].every(select => Number(select.value) === max);
+    maxButton.setAttribute('aria-pressed', String(allMax));
+    maxButton.textContent = allMax ? 'ZERAR TODAS' : 'MAX NIGHT';
+  }
+
+  function renderStars() {
+    const bits = store.stars();
+    starsDisplay.hidden = bits === 0;
+    starsDisplay.querySelectorAll('[data-star]').forEach(star => {
+      star.hidden = !(bits & Number(star.dataset.star));
+    });
+    starsDisplay.setAttribute('aria-label', [bits & 1 ? 'Nove noites concluídas' : '',
+      bits & 2 ? 'Campanha vencida com guardas restantes' : '',
+      bits & 4 ? 'Custom Night MAX vencida' : ''].filter(Boolean).join('; '));
+  }
+
+  function stopPreview() {
+    previewSound.pause();
+    previewSound.removeAttribute('src');
+    previewImage.removeAttribute('src');
+    preview.hidden = true;
+    if (!title.hidden && !title.inert && music.paused) music.play().catch(() => {});
+  }
+
+  function showSubmenu(mode, focus) {
+    stopPreview();
+    if (mode) title.dataset.submenu = mode;
+    else delete title.dataset.submenu;
+    customScreen.hidden = mode !== 'custom';
+    extrasScreen.hidden = mode !== 'extras';
     updateGlitches();
-    focus.focus();
+    focus?.focus();
   }
 
   function updateGlitches() {
@@ -78,15 +106,13 @@ function createNightMenu(config, { prepareShift, startShift, onEnter,
     delete title.dataset.glitch;
     delete title.dataset.doubleGlitch;
     title.toggleAttribute('data-page-hidden', Boolean(document.hidden));
-    if (title.hidden || title.inert || !customScreen.hidden || document.hidden || reducedMotion?.matches) return;
-
-    // Sample outside the gameplay RNG and avoid showing the same art twice in a row.
+    if (title.hidden || title.inert || document.hidden || reducedMotion?.matches) return;
     const random = window.crypto.getRandomValues(new Uint16Array(4));
     glitchTimer = setTimeout(() => {
       lastGlitchArt = lastGlitchArt === undefined ? random[0] % 3 : (lastGlitchArt + 1 + random[0] % 2) % 3;
       const double = random[1] < 16384;
       const duration = (double ? 410 : 230) + random[2] / 65535 * 165;
-      title.style.setProperty('--glitch-duration', `${duration}ms`);
+      title.style.setProperty('--glitch-duration', duration + 'ms');
       title.toggleAttribute('data-double-glitch', double);
       title.dataset.glitch = String(lastGlitchArt);
       glitchTimer = setTimeout(updateGlitches, duration);
@@ -100,24 +126,26 @@ function createNightMenu(config, { prepareShift, startShift, onEnter,
     music.volume = settings.initialVolume + (settings.volume - settings.initialVolume) * progress;
     if (progress < 1) musicFrame = requestAnimationFrame(fadeMusic);
   }
-
   function startMusicFade() {
     if (musicFrame === undefined && music.volume !== settings.volume) fadeMusic();
   }
-
   function cancelMusicFade() {
     if (musicFrame !== undefined) cancelAnimationFrame(musicFrame);
     musicFrame = undefined;
   }
 
   function show() {
-    completed = Math.max(completed, readProgress());
-    campaignStar.hidden = completed < campaign.length;
-    continueButton.hidden = completed === 0 || !canPlayCampaign();
-    continueLabel.textContent = completed === campaign.length ? `Rejogar noite ${campaign.length}`
-      : `Continuar · Noite ${completed + 1}`;
+    const slots = store.all();
+    continuation.forEach(({ button, label }, index) => {
+      const slot = slots[index];
+      button.hidden = !slot;
+      if (!slot) return;
+      label.textContent = 'Campanha ' + (index + 1) + ' · Noite ' + (slot.completed + 1);
+    });
+    renderStars();
     title.hidden = false;
-    showCustom(false, continueButton.hidden ? start : continueButton);
+    title.inert = false;
+    showSubmenu(null, slots.length ? continuation[0].button : start);
     music.currentTime = settings.startSeconds;
     music.volume = settings.initialVolume;
     cancelMusicFade();
@@ -130,6 +158,7 @@ function createNightMenu(config, { prepareShift, startShift, onEnter,
     introTitle.textContent = shift.label;
     title.inert = true;
     game.inert = true;
+    stopPreview();
     updateGlitches();
     cancelMusicFade();
     music.pause();
@@ -137,21 +166,59 @@ function createNightMenu(config, { prepareShift, startShift, onEnter,
     intro.hidden = false;
   }
 
-  function playCampaign(number, options) {
+  function playCampaign(number, options = {}, id = selectedId) {
+    const slot = store.get(id);
+    if (!slot || !Number.isInteger(number) || number < 1 || number > slot.completed + 1) return;
+    if (selectedId !== id) {
+      onSelectCampaign(id);
+      selectedId = id;
+    }
     if (!canPlayCampaign()) return;
-    const entry = campaign[number - 1];
-    if (!entry || number > completed + 1) return;
-    const { levels, ...rules } = entry;
-    play({ number, label: `NOITE ${number}`, levels, rules: { ...defaults, ...rules, maxLevel: campaignMaxLevel } }, options);
+    const night = campaign[number - 1];
+    if (!night) return;
+    const { levels, ...rules } = night;
+    play({ campaignId: id, number, label: 'NOITE ' + number,
+      levels, rules: { ...defaults, ...rules, maxLevel: campaignMaxLevel } }, options);
   }
 
   function restartCampaign() {
     if (pendingShift) return;
-    onNewCampaign();
-    completed = 0;
-    campaignStar.hidden = true;
-    try { localStorage.removeItem(progressKey); } catch {}
-    playCampaign(1, { newspaper: true });
+    if (store.all().length === 2) {
+      const victim = store.eviction();
+      const index = store.all().findIndex(slot => slot.id === victim.id) + 1;
+      if (!window.confirm('Limite de duas campanhas. Criar outra vai apagar a Campanha '
+          + index + ' (Noite ' + (victim.completed + 1) + ') e suas notas. Continuar?')) return;
+    }
+    const { slot, removed } = store.create();
+    if (removed) onDeleteCampaign(removed.id);
+    selectedId = null;
+    playCampaign(1, { newspaper: true }, slot.id);
+  }
+
+  function recordWin(number, shift) {
+    const id = shift?.campaignId ?? selectedId;
+    const result = store.advance(id, number);
+    if (!result) return;
+    if (result.closed) {
+      store.awardCampaign(remainingGuards());
+      onDeleteCampaign(id);
+      if (selectedId === id) selectedId = null;
+      renderStars();
+    }
+  }
+
+  function recordCustomWin(shift) {
+    if (shift?.customMax && !shift.debug) {
+      store.awardMaxNight();
+      renderStars();
+    }
+  }
+
+  function endExhaustedCampaign(id) {
+    if (!id) return;
+    if (!store.remove(id)) return;
+    onDeleteCampaign(id);
+    if (selectedId === id) selectedId = null;
   }
 
   introTitle.addEventListener('animationend', event => {
@@ -161,14 +228,12 @@ function createNightMenu(config, { prepareShift, startShift, onEnter,
     prepareShift(pendingShift);
     intro.dataset.phase = 'reveal';
   });
-
   intro.addEventListener('animationend', event => {
     if (event.target !== intro) return;
-    const { phase } = intro.dataset;
+    const phase = intro.dataset.phase;
     if ((phase === 'newspaper' && event.animationName === 'night-intro')
-        || (phase === 'cover' && event.animationName === 'night-cover')) {
-      intro.dataset.phase = 'card';
-    } else if (phase === 'reveal' && event.animationName === 'night-reveal') {
+        || (phase === 'cover' && event.animationName === 'night-cover')) intro.dataset.phase = 'card';
+    else if (phase === 'reveal' && event.animationName === 'night-reveal') {
       intro.hidden = true;
       delete intro.dataset.phase;
       pendingShift = undefined;
@@ -181,14 +246,23 @@ function createNightMenu(config, { prepareShift, startShift, onEnter,
     show();
     onEnter();
   }
-  start.addEventListener('click', () => {
-    if ((completed > 0 || hasCampaignHistory())
-        && !window.confirm('Iniciar uma nova campanha? Isso reinicia os guardas e apaga as anotações desta campanha.')) return;
-    restartCampaign();
+  start.addEventListener('click', restartCampaign);
+  continuation.forEach(({ button }, index) => button.addEventListener('click', () => {
+    const slot = store.all()[index];
+    if (slot) playCampaign(slot.completed + 1, {}, slot.id);
+  }));
+  customButton.addEventListener('click', () => {
+    updateMaxButton();
+    showSubmenu('custom', inputs.values().next().value);
   });
-  continueButton.addEventListener('click', () => playCampaign(Math.min(completed + 1, campaign.length)));
-  customButton.addEventListener('click', () => showCustom(true, inputs.values().next().value));
-  $('#close-custom').addEventListener('click', () => showCustom(false, customButton));
+  extrasButton.addEventListener('click', () => showSubmenu('extras', $('#extras-list button')));
+  $('#close-custom').addEventListener('click', () => showSubmenu(null, customButton));
+  $('#close-extras').addEventListener('click', () => showSubmenu(null, extrasButton));
+  maxButton.addEventListener('click', () => {
+    const target = [...inputs.values()].every(select => Number(select.value) === max) ? 0 : max;
+    inputs.forEach(select => { select.value = String(target); });
+    updateMaxButton();
+  });
   debugButton.addEventListener('click', () => {
     debug = !debug;
     debugButton.setAttribute('aria-pressed', String(debug));
@@ -197,7 +271,39 @@ function createNightMenu(config, { prepareShift, startShift, onEnter,
   $('#custom-form').addEventListener('submit', event => {
     event.preventDefault();
     const levels = Object.fromEntries([...inputs].map(([id, select]) => [id, Number(select.value)]));
-    play({ label: 'CUSTOM NIGHT', levels, rules: defaults, debug });
+    const customMax = Object.values(levels).every(level => level === max);
+    play({ label: 'CUSTOM NIGHT', levels, rules: defaults, debug, customMax });
+  });
+
+  const sounds = { 'palhaca-direita.gif': 'palhaca.ogg', 'palhaca-baixo.gif': 'palhaca.ogg',
+    'shadow.webp': 'shadow.ogg', 'yandere-camera.gif': 'yandere-camera.ogg' };
+  $('#extras-list').addEventListener('click', event => {
+    const button = event.target.closest('button[data-scare]');
+    if (!button) return;
+    const file = button.dataset.scare;
+    const allowed = ['original.gif', 'gotica.gif', 'yandere.gif', 'maid.gif', 'platinada.gif',
+      'palhaca-direita.gif', 'palhaca-baixo.gif', 'shadow.webp', 'yandere-camera.gif'];
+    if (!allowed.includes(file)) return;
+    music.pause();
+    preview.hidden = false;
+    // Alternate identities to restart animated GIF playback without modifying the asset.
+    previewImage.src = './public/images/jumpscares/' + file + '?extras=' + (previewCount++ % 2);
+    const sound = sounds[file] || 'scream.wav';
+    previewSound.src = './public/audio/jumpscares/' + sound;
+    previewSound.volume = config.controls.jumpscare.volume;
+    previewSound.currentTime = 0;
+    previewSound.play().catch(() => {});
+    $('#close-extras-preview').focus();
+  });
+  $('#close-extras-preview').addEventListener('click', () => {
+    stopPreview();
+    $('#extras-list button').focus();
+  });
+  document.addEventListener('keydown', event => {
+    if (event.key !== 'Escape' || title.hidden || title.inert) return;
+    if (!preview.hidden) { stopPreview(); $('#extras-list button').focus(); }
+    else if (!customScreen.hidden) showSubmenu(null, customButton);
+    else if (!extrasScreen.hidden) showSubmenu(null, extrasButton);
   });
   entryButton.disabled = false;
   music.addEventListener('playing', startMusicFade);
@@ -206,7 +312,9 @@ function createNightMenu(config, { prepareShift, startShift, onEnter,
   document.addEventListener('visibilitychange', updateGlitches);
   reducedMotion?.addEventListener('change', updateGlitches);
   entryButton.addEventListener('click', enter, { once: true });
-  return { show, play, playCampaign, recordWin, restartCampaign };
+
+  return { show, play, playCampaign, recordWin, recordCustomWin, restartCampaign,
+    endExhaustedCampaign, hasCampaign: id => Boolean(store.get(id)) };
 }
 
 window.NathGame.createNightMenu = createNightMenu;

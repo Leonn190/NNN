@@ -24,6 +24,7 @@
   <script defer src="./src/scene-art.js"></script>
   <script defer src="./src/map.js"></script>
   <script defer src="./src/sound.js"></script>
+  <script defer src="./src/campaigns.js"></script>
   <script defer src="./src/night-menu.js"></script>
   <script defer src="./src/image-cache.js"></script>
   <script defer src="./src/camera-interference.js"></script>
@@ -51,21 +52,46 @@
       <nav class="title-actions" aria-label="Modos de jogo">
         <button class="title-start" id="start-game" type="button"><span aria-hidden="true">&gt;&gt;</span> New Game</button>
         <button class="title-start" id="continue-game" type="button" lang="pt-BR" hidden><span aria-hidden="true">&gt;&gt;</span> <span id="continue-game-label"></span></button>
+        <button class="title-start" id="continue-game-2" type="button" lang="pt-BR" hidden><span aria-hidden="true">&gt;&gt;</span> <span id="continue-game-label-2"></span></button>
         <button class="title-start" id="open-custom" type="button"><span aria-hidden="true">&gt;&gt;</span> Custom Night</button>
+        <button class="title-start" id="open-extras" type="button"><span aria-hidden="true">&gt;&gt;</span> Extras</button>
       </nav>
     </div>
-    <span id="campaign-star" class="campaign-star" role="img" aria-label="Campanha concluída" title="Campanha concluída" hidden>★</span>
-    <section class="custom-night" id="custom-night" aria-labelledby="custom-title" hidden>
-      <h2 id="custom-title" lang="en">Custom Night</h2>
+    <div id="campaign-stars" class="campaign-stars" role="img" aria-label="Conquistas desbloqueadas" hidden>
+      <span data-star="1" title="Vencer as nove noites" hidden>★</span>
+      <span data-star="2" title="Concluir a campanha com guardas restantes" hidden>★</span>
+      <span data-star="4" title="Vencer a Custom Night com todos no MAX" hidden>★</span>
+    </div>
+    <section class="custom-night title-submenu" id="custom-night" aria-label="Custom Night" hidden>
       <form id="custom-form">
         <div id="custom-levels"></div>
         <div class="custom-actions">
           <button type="button" id="close-custom">Voltar</button>
-          <button type="button" id="custom-debug" aria-pressed="false">Debug desativado</button>
-          <button type="submit">Iniciar noite</button>
+          <button type="button" id="custom-max" aria-pressed="false">MAX NIGHT</button>
+          <button type="submit" id="start-custom">Jogar</button>
+          <button type="button" id="custom-debug" aria-pressed="false" hidden>Debug desativado</button>
         </div>
       </form>
     </section>
+    <section class="extras-menu title-submenu" id="extras-menu" aria-label="Extras: sustos" hidden>
+      <div id="extras-list" class="extras-grid">
+        <button type="button" data-scare="original.gif">Principal</button>
+        <button type="button" data-scare="gotica.gif">Gótica</button>
+        <button type="button" data-scare="yandere.gif">Yandere</button>
+        <button type="button" data-scare="maid.gif">Maid</button>
+        <button type="button" data-scare="platinada.gif">Gatinha</button>
+        <button type="button" data-scare="palhaca-direita.gif">Palhaça · Direita</button>
+        <button type="button" data-scare="palhaca-baixo.gif">Palhaça · Baixo</button>
+        <button type="button" data-scare="shadow.webp">Shadow</button>
+        <button type="button" data-scare="yandere-camera.gif">Yandere · Câmeras</button>
+      </div>
+      <div class="custom-actions"><button type="button" id="close-extras">Voltar</button></div>
+    </section>
+    <div id="extras-preview" class="extras-preview" role="dialog" aria-modal="true" aria-label="Prévia do susto" hidden>
+      <img id="extras-jumpscare-image" alt="Animação de susto" draggable="false">
+      <button type="button" id="close-extras-preview">Fechar susto ×</button>
+      <audio id="extras-jumpscare-sound" preload="none"></audio>
+    </div>
   </main>
 
   <div class="game night-intro" id="night-intro" hidden>
