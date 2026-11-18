@@ -606,10 +606,11 @@ function updateMovementDebug() {
     renderDebugOdds(expiry, actor.expiryOdds, 'Se expirar');
     const path = { corridor: 'corredor', stock: 'estoque' }[actor.attackPath] ?? '—';
     setText(attack, `Ataque ${actor.attackActive ? 'ativo' : 'inativo'} · ${path}`
-      + ` · barulho ${actor.noise.toFixed(1)} / ${config.effects.noise.max} · lanterna ${debugPercent.format(actor.light)}`);
-    const chances = actor.attackOdds;
-    renderDebugOdds(attackOdds, chances ? { Avançar: chances.advance, Permanecer: chances.stay,
-      Recuar: chances.abandon, ...(chances.blocked > 0 && { Bloqueio: chances.blocked }) } : {});
+      + ` · barulho recebido ${actor.noise.toFixed(1)} / ${config.effects.noise.max}`
+      + ` · lanterna ${debugPercent.format(actor.light)}`
+      + (actor.attackProgress === null ? '' : ` · barra ${actor.attackProgress.toFixed(1)}%`));
+    setText(attackOdds, actor.attackIntensity === null ? ''
+      : `Intensidade ${(actor.attackIntensity * 100).toFixed(1)}% · áudio ${actor.attackProgressPerSecond.toFixed(1)} pts/s`);
   }
   setText(debugClown, `Palhaça · ${clown.counter.toFixed(1)} / ${clown.max} · ${clown.status}`);
   debugProgress.max = clown.max;
