@@ -306,7 +306,8 @@ function createApproach(map, effects, random, observingLeft = () => false, curre
 
   function expired(actor) {
     return actor.approach && actor.approach.phase !== 'invasion'
-      && (actor.approach.elapsed >= limit || actor.approach.stalled >= stallLimit);
+      && (actor.approach.elapsed >= (actor.approach.phase === 'entry' ? rules.maxEntrySeconds ?? limit : limit)
+        || actor.approach.stalled >= stallLimit);
   }
 
   function arrive(actor) {
