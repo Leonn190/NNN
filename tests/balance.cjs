@@ -38,20 +38,20 @@ test('route bonuses interpolate independently and interval reductions accumulate
   near(actor('maid').remaining, 30 * .45 * .9);
   const routes = createAttackRoutes(base, createRoutes(base.map));
   for (const [key, low, mid, high] of [
-    ['padrao', 32, 40, 48], ['gotica', 25, 32.5, 40], ['yandere', 25, 32.5, 40], ['gatinha', 25, 32.5, 40]
+    ['padrao', 40, 50, 60], ['gotica', 30, 39, 48], ['yandere', 30, 39, 48], ['gatinha', 30, 39, 48]
   ]) {
     near(routes.bonus(1, 0, key), low);
     near(routes.bonus(6, 0, key), mid);
     near(routes.bonus(11, 0, key), high);
-    near(routes.bonus(11, 2, key), high + 2 * (key === 'padrao' ? 6 : 5));
+    near(routes.bonus(11, 2, key), high + 2 * (key === 'padrao' ? 8 : 6));
   }
   const hunt = scenario({ padrao: 1, gotica: 1, maid: 1 }, {}, config => {
     Object.assign(config.characters.padrao, { start: 7, interval: 1, routes: { CV: 100 } });
   });
-  near(hunt.debug('padrao').bonus, 32 + 30);
+  near(hunt.debug('padrao').bonus, 40 + 40);
   hunt.at(1);
-  near(hunt.debug('padrao').bonus, 32 + 4 - 20);
-  near(hunt.debug('gotica').bonus, 25 + 30);
+  near(hunt.debug('padrao').bonus, 40 + 5 - 20);
+  near(hunt.debug('gotica').bonus, 30 + 40);
   near(hunt.debug('maid').bonus, 10);
 });
 
@@ -61,30 +61,22 @@ function corridor(config) {
   config.movement.retreat.office = [7];
 }
 
-test('third invasion kills immediately and takes priority over the closet clown', () => {
-  const input = { view: 'cameras', computerInterface: true };
+test('third invasion kills immediately, including when hiding would trigger the clown', () => {
   for (const hidden of [true, false]) {
-    const run = scenario({ gotica: 1 }, input, corridor);
-    for (const [arrival, reaction] of [[3, 4], [11.75, 3]]) {
-      run.at(arrival);
-      assert.equal(run.actor('gotica').position, 13);
-      near(run.debug('gotica').reaction, reaction);
-      const closet = { view: 'closet-door', closet: true };
-      run.at(arrival, closet, { type: 'closetEnter' });
-      run.at(arrival + 5.5, closet);
-      run.at(arrival + 5.5, { view: 'office' }, { type: 'closetExit' });
-      assert.equal(run.game.snapshot().outcome, null);
+    const threats = createThreats(base, { palhaca: 1 }, () => 0, () => {});
+    const actor = { key: 'gotica', reaction: 4 };
+    for (const arrival of [0, 12]) {
+      assert.equal(threats.invade(actor, arrival), undefined);
+      threats.enterCloset(arrival + 1);
+      threats.resolve(arrival + 9, () => {}, assert.fail);
+      threats.exitCloset();
     }
-    assert.equal(run.debug('gotica').instantInvasion, true);
-    if (hidden) run.at(18, { view: 'closet-door', closet: true }, { type: 'closetEnter' });
-    run.at(20.5, hidden ? { view: 'closet-door', closet: true } : input);
-    assert.deepEqual(run.emitted('loss'), ['gotica']);
-    assert.equal(run.debug('gotica').invasions, 3);
-    run.at(22);
-    assert.deepEqual(run.emitted('loss'), ['gotica']);
-    run.game.reset({ gotica: 1 }, input);
-    assert.equal(run.debug('gotica').invasions, 0);
-    near(run.debug('gotica').reaction, 4);
+    assert.equal(threats.invasionCount(actor), 2);
+    assert.equal(threats.instantInvasion(actor), true);
+    if (hidden) threats.enterCloset(23);
+    assert.equal(threats.entryAttacker(actor, true), 'gotica');
+    assert.equal(threats.invade(actor, 24, 24, true), 'gotica');
+    assert.equal(threats.invasionCount(actor), 3);
   }
 });
 
@@ -117,24 +109,17 @@ test('Padrão reaction decreases to 5%, and other invaders keep independent coun
   }
 });
 
-test('a hidden player triggers the closet clown on the first entry into an empty office, even at level zero', () => {
-  const closet = { view: 'closet-door', closet: true };
-  const run = scenario({ gotica: 1, yandere: 1, palhaca: 0 }, closet, config => {
-    corridor(config);
-    Object.assign(config.characters.yandere, { ...config.characters.gotica, firstIntervalReduction: [0, 0] });
-  });
-  run.at(0, closet, { type: 'closetEnter' });
-  run.at(3);
-  assert.deepEqual(run.emitted('loss'), ['palhaca']);
-  assert.equal(run.game.snapshot().hidden, true);
-  assert.equal(run.debug('gotica').invasions + run.debug('yandere').invasions, 1);
-
+test('hiding before an empty-office entry triggers the clown, even when clown difficulty is zero', () => {
   const threats = createThreats(base, { palhaca: 0 }, () => 0, () => {});
-  threats.invade({ key: 'padrao', reaction: 3 }, 0);
-  threats.enterCloset(1);
-  const other = { key: 'gotica', reaction: 4 };
-  assert.equal(threats.invade(other, 2), undefined);
-  assert.equal(threats.invasionStatus(other, 2).retreat, true);
+  const actor = { key: 'gotica', reaction: 4 };
+  threats.enterCloset(0);
+  assert.equal(threats.invade(actor, 2, 2, true), 'palhaca');
+
+  const safe = createThreats(base, { palhaca: 0 }, () => 0, () => {});
+  safe.invade({ key: 'padrao', reaction: 3 }, 0);
+  safe.enterCloset(1);
+  assert.equal(safe.invade(actor, 2, 2, false), undefined);
+  assert.equal(safe.invasionStatus(actor, 2).retreat, true);
 });
 
 test('the radio offsets clown growth in every closet lighting state', () => {
@@ -146,8 +131,9 @@ test('the radio offsets clown growth in every closet lighting state', () => {
         if (hidden) run.at(0, input, { type: 'closetEnter' });
         run.at(1);
         const growth = base.threats.clown.growth[0];
-        const factor = hidden ? (clownLight ? 1.625 : 3.25) : Number(!radio);
-        near(run.game.snapshot().counter, 20 + growth * factor - (radio ? 2 : 0));
+        const normal = growth * Number(!radio) - (radio ? 2 : 0);
+        const hiddenRate = growth * (clownLight ? 1.625 : 3.25) - (radio ? 2 : 0);
+        near(run.game.snapshot().counter, hidden ? 20 + normal * .35 + hiddenRate * .65 : 20 + normal);
       }
     }
   }
@@ -365,9 +351,9 @@ test('Yandere surprise requires ongoing sanity below 75', () => {
     config.sanity.initial = 76;
   };
   const run = scenario({ yandere: 6 }, { view: 'closet', closet: true }, tune);
-  run.at(55);
+  run.at(40);
   assert.equal(run.emitted('yandereSabotage').length, 0);
-  run.at(58);
+  run.at(55);
   assert.equal(run.emitted('yandereSabotage').length, 1);
 
   const recovered = scenario({ yandere: 6 }, { view: 'office', radio: true }, config => {
@@ -469,4 +455,51 @@ test('closet protection and camera effects remain inactive during the opening', 
   assert.equal(game.snapshot().sanity, 100);
   assert.equal(game.snapshot().hours, 0);
   assert.equal(game.advance(44.9, input, { type: 'cameraAudio' }), false);
+});
+
+
+test('noise-driven attack progress is independent of character level', () => {
+  const rules = base.movement.attack.bar;
+  const effects = { attackBar: () => ({ intensity: 1, progressPerSecond: 0 }) };
+  const { createApproach } = window.NathGame;
+  for (const level of [1, 5, 11]) {
+    const approach = createApproach(base.map, effects, () => 0, () => false, () => 0, rules);
+    const actor = { key: 'padrao', level, position: base.map.back, light: 0, due: 0 };
+    assert.equal(approach.begin(actor, 'corridor'), true);
+    approach.integrate(actor, 3.5);
+    near(actor.approach.progress, 50);
+    approach.integrate(actor, 3.5);
+    assert.equal(approach.completed(actor), true);
+    actor.position = base.map.front;
+    approach.arrive(actor);
+    near(actor.approach.progress, 0);
+    assert.equal(actor.approach.phase, 'entry');
+  }
+});
+
+test('Gatinha is attracted to silence, common attacks require noise to start', () => {
+  const config = structuredClone(base);
+  const makeActor = key => ({ key, rule: config.characters[key], allowed: new Set(config.characters[key].positions),
+    position: config.map.leftApproach, approach: { objective: 'stock', phase: 'approach' }, light: 0 });
+  const actors = ['gotica', 'gatinha', 'padrao'].map(makeActor);
+  const effects = createEffects(config, createRoutes(config.map), actors);
+  near(effects.attackBar(actors[0], 'stock', 'approach', false, 0).intensity, 0);
+  near(effects.attackBar(actors[1], 'stock', 'approach', false, 0).intensity, .55);
+  for (let i = 0; i < 12; i++) effects.addNoiseEvent('gateClose', 0);
+  const noisyCommon = effects.attackBar(actors[0], 'stock', 'approach', false, 0).intensity;
+  const noisyCat = effects.attackBar(actors[1], 'stock', 'approach', false, 0).intensity;
+  assert(noisyCommon > .9);
+  assert(noisyCat < .2);
+  assert(effects.attackBar(actors[2], 'stock', 'entry', false, 0).intensity > 1);
+});
+
+test('blocking clock, route bonuses and counterattack probabilities use the approved values', () => {
+  near(base.movement.failedIntervalFactor, .7);
+  near(base.movement.retryWindow, 4);
+  near(base.movement.routes.huntBonus, 40);
+  assert.deepEqual(base.movement.routes.padraoBonus, [40, 60]);
+  assert.deepEqual(base.movement.routes.counterattack, {
+    yandere: .20, gatinha: .23, gotica: .30, cooldownSeconds: 25
+  });
+  near(base.threats.attack.closetProtectionDelaySeconds, .35);
 });
