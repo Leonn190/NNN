@@ -1,22 +1,35 @@
 {
   "yandereCameraScare": {
-    "observationSeconds": [8, 3],
+    "observationSeconds": [
+      8,
+      3
+    ],
     "durationSeconds": 1.21,
     "image": "./public/images/jumpscares/yandere-camera.gif",
     "sound": "audio/jumpscares/yandere-camera.ogg"
   },
   "yandereSurprise": {
-    "inactivity": { "min": 40, "max": 50 },
+    "inactivity": {
+      "min": 40,
+      "max": 50
+    },
     "sanityThreshold": 75,
     "warningSeconds": 1,
     "firstLevel": 5,
     "secondLevel": 8,
-    "uses": { "first": 1, "second": 2, "max": 3 }
+    "uses": {
+      "first": 1,
+      "second": 2,
+      "max": 3
+    }
   },
   "smores": {
     "name": "Smores",
     "radioSeconds": 18,
-    "radioResetSeconds": { "min": 2, "max": 4 },
+    "radioResetSeconds": {
+      "min": 2,
+      "max": 4
+    },
     "roomSoundSeconds": 4.5,
     "roomSoundChance": 0.65,
     "silenceSeconds": 10,
@@ -24,10 +37,26 @@
     "finalSeconds": 10,
     "quietRoomSpeed": 2,
     "targetBonusMultiplier": 2,
-    "level1": { "ventChance": 15, "roomSeconds": 35, "intervalReduction": 1, "reactionReduction": 0.3 },
-    "maxLevel": { "ventChance": 20, "roomSeconds": 50, "intervalReduction": 2, "reactionReduction": 0.4 }
+    "level1": {
+      "ventChance": 15,
+      "roomSeconds": 35,
+      "intervalReduction": 1,
+      "reactionReduction": 0.3
+    },
+    "maxLevel": {
+      "ventChance": 20,
+      "roomSeconds": 50,
+      "intervalReduction": 2,
+      "reactionReduction": 0.4
+    }
   },
-  "closetVent": { "waitSeconds": 15, "lightSeconds": { "min": 1.5, "max": 3.5 } },
+  "closetVent": {
+    "waitSeconds": 15,
+    "lightSeconds": {
+      "min": 1.5,
+      "max": 3.5
+    }
+  },
   "attack": {
     "secondReactionFactor": 0.75,
     "padraoReactionStep": 0.05,
@@ -38,7 +67,8 @@
     "jitter": {
       "min": -2.5,
       "max": 2.5
-    }
+    },
+    "closetProtectionDelaySeconds": 0.35
   },
   "clown": {
     "name": "Palhaça",
@@ -53,7 +83,10 @@
     ],
     "entryDeathAbove": 82,
     "floorPerEntry": 8,
-    "growth": [0.8, 1.56],
+    "growth": [
+      0.8,
+      1.56
+    ],
     "warningAt": 79,
     "closetGrowthFactor": 3.25,
     "litClosetGrowthFactor": 1.625,

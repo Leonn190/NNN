@@ -390,12 +390,12 @@ window.NathGame.localConfig = {
       "corridorIntervalFactor": 1.25,
       "modifiers": {
         "gotica": {
-          "secondsToMax": 8,
-          "advanceDelta": -0.65
+          "secondsToMax": 5,
+          "advanceDelta": -0.7
         },
         "gatinha": {
-          "secondsToMax": 6,
-          "advanceDelta": 0.65
+          "secondsToMax": 5,
+          "advanceDelta": 0.55
         }
       },
       "decayPerSecond": 0.2,
@@ -404,16 +404,18 @@ window.NathGame.localConfig = {
     },
     "noise": {
       "rates": {
-        "radio": 6,
-        "computer": 0.75,
-        "viewMoving": 0.25
+        "radio": 7,
+        "computer": 0.5,
+        "viewMoving": 0.3
       },
       "events": {
-        "closetEnter": 5,
-        "closetExit": 5,
-        "flashlightOn": 8,
-        "computerOn": 12,
-        "workshopDoorClose": 8
+        "closetEnter": 9,
+        "closetExit": 6,
+        "flashlightOn": 3,
+        "computerOn": 8,
+        "workshopDoorClose": 12,
+        "gateClose": 12,
+        "gateOpen": 7
       },
       "corridorMultiplier": 0.8,
       "decay": 3,
@@ -999,29 +1001,43 @@ window.NathGame.localConfig = {
     "weight": 1,
     "stayFactor": 0.25,
     "backtrackFactor": 0.5,
-    "retryWindow": 5,
-    "failedIntervalFactor": 0.35,
+    "retryWindow": 4,
+    "failedIntervalFactor": 0.7,
     "failedModifierRetention": 0.75,
     "routes": {
       "bonus": [
-        25,
-        40
-      ],
-      "padraoBonus": [
-        32,
+        30,
         48
       ],
-      "perMove": [
-        3,
-        5
+      "padraoBonus": [
+        40,
+        60
       ],
-      "padraoPerMove": [
+      "perMove": [
         4,
         6
       ],
-      "huntBonus": 30,
+      "padraoPerMove": [
+        5,
+        8
+      ],
+      "huntBonus": 40,
       "huntPenalty": 20,
-      "blockedProgressRetention": 0.5,
+      "occupancyPenaltyPerActor": 40,
+      "occupancyGroups": {
+        "vip": [
+          "CV",
+          "EV"
+        ],
+        "cam12": [
+          "CC",
+          "EC"
+        ],
+        "shop": [
+          "EL"
+        ]
+      },
+      "blockedProgressRetention": 0.75,
       "definitions": {
         "CV": {
           "objective": "corridor",
@@ -1130,6 +1146,12 @@ window.NathGame.localConfig = {
           "objective": "electrical",
           "target": 21
         }
+      },
+      "counterattack": {
+        "yandere": 0.2,
+        "gatinha": 0.23,
+        "gotica": 0.3,
+        "cooldownSeconds": 25
       }
     },
     "attack": {
@@ -1194,10 +1216,89 @@ window.NathGame.localConfig = {
           0.5,
           0.99
         ],
-        "observationPenalty": 0.35,
+        "observationPenalty": 0.12,
         "minimumObservedAdvance": 0.05
       },
-      "stayShare": 0.3
+      "stayShare": 0.3,
+      "bar": {
+        "secondsAtFull": 7,
+        "stepSeconds": 0.2,
+        "stallSeconds": 15,
+        "maxPhaseSeconds": 55,
+        "padraoMultiplier": 1.35,
+        "stock": {
+          "approach": {
+            "base": 0,
+            "perNoise": 0.018,
+            "cap": 0.95
+          },
+          "entry": {
+            "base": 0.07,
+            "perNoise": 0.009,
+            "cap": 0.97
+          }
+        },
+        "corridor": {
+          "approach": {
+            "base": 0,
+            "perNoise": 0.018,
+            "cap": 0.94
+          },
+          "entry": {
+            "base": 0.08,
+            "perNoise": 0.01,
+            "cap": 0.88
+          }
+        },
+        "gotica": {
+          "approach": {
+            "base": 0,
+            "perNoise": 0.0084,
+            "cap": 0.84
+          },
+          "entry": {
+            "base": 0.12,
+            "perNoise": 0.0068,
+            "cap": 0.8
+          },
+          "lightPenalty": 0.7,
+          "minimumEntry": 0.05
+        },
+        "gatinhaCorridor": {
+          "approach": {
+            "base": 0.25,
+            "perNoise": -0.001,
+            "lightBonus": 0.55
+          },
+          "entry": {
+            "base": 0.3,
+            "perNoise": -0.0016,
+            "lightBonus": 0.5
+          }
+        },
+        "gatinhaStock": {
+          "approach": {
+            "base": 0.55,
+            "perNoise": -0.0036
+          },
+          "entry": {
+            "base": 0.5,
+            "perNoise": -0.004
+          }
+        },
+        "lookPenalty": 0.12,
+        "minimumEntry": 0.05,
+        "audio": {
+          "padraoPenalty": 0.5,
+          "padraoProgress": -8,
+          "nearPenalty": 0.3,
+          "farPenalty": 0.12,
+          "nearProgress": -4,
+          "farProgress": -2,
+          "towardPenalty": -0.2,
+          "towardProgress": 4
+        }
+      }
     },
     "retreat": {
       "stock": [
@@ -1218,7 +1319,7 @@ window.NathGame.localConfig = {
       ]
     },
     "recovery": {
-      "intervalFactor": 1.25,
+      "intervalFactor": 1.2,
       "freeMoves": 1
     },
     "difficulty": {
@@ -1510,8 +1611,8 @@ window.NathGame.localConfig = {
     },
     "yandereSurprise": {
       "inactivity": {
-        "min": 55,
-        "max": 65
+        "min": 40,
+        "max": 50
       },
       "sanityThreshold": 75,
       "warningSeconds": 1,
@@ -1567,7 +1668,8 @@ window.NathGame.localConfig = {
       "jitter": {
         "min": -2.5,
         "max": 2.5
-      }
+      },
+      "closetProtectionDelaySeconds": 0.35
     },
     "clown": {
       "name": "Palhaça",

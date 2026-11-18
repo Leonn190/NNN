@@ -14,6 +14,7 @@ function createEffects(config, routes, actors) {
   let staticUntil = 0;
   let volumePeak = 0;
   let volumePeakAt = 0;
+  let globalNoise = 0;
   const transientVolume = now => volumePeak * Math.exp(-(now - volumePeakAt) / .22);
   const activeAudio = (actor, now = 0) => actor.audioStimulus && now < actor.audioStimulus.ends
     ? actor.audioStimulus : null;
@@ -50,18 +51,74 @@ function createEffects(config, routes, actors) {
     return rate;
   }
 
+  function perceivedNoise(actor) {
+    if (!actor.approach) return globalNoise;
+    if (actor.approach.objective === 'stock') {
+      return globalNoise * (actor.approach.phase === 'entry' ? 1 : 0.8);
+    }
+    return globalNoise * (actor.approach.phase === 'entry' ? 0.8 : 0.6);
+  }
+
   function integrate(dt, input) {
     const equilibrium = noiseRate(input) * noise.max / noise.decay;
     const blend = -Math.expm1(-dt * noise.decay / noise.max);
+    globalNoise = clamp(globalNoise + (equilibrium - globalNoise) * blend, 0, noise.max);
     for (const actor of actors) {
       if (!actor.approach) continue;
-      addNoise(actor, (equilibrium * noiseMultiplier(actor) - actor.noise) * blend);
+      actor.noise = perceivedNoise(actor);
       const light = flashlight.modifiers[actor.key];
       if (!light) continue;
       const lit = actor.approach.objective === 'corridor' && input.corridorLight && corridor.includes(actor.position);
       const lightRate = lit ? 1 / light.secondsToMax : -flashlight.decayPerSecond;
       actor.light = clamp(actor.light + lightRate * dt, 0, 1);
     }
+  }
+
+  function attackBar(actor, objective, phase, leftLook, now = 0) {
+    const rules = config.movement.attack.bar;
+    const branch = actor.key === 'gatinha'
+      ? objective === 'stock' ? rules.gatinhaStock : rules.gatinhaCorridor
+      : actor.key === 'gotica' && objective === 'corridor' ? rules.gotica
+        : rules[objective];
+    const stage = branch[phase];
+    const heard = perceivedNoise(actor);
+    let intensity = clamp(stage.base + stage.perNoise * heard, 0, stage.cap ?? 1);
+    if (objective === 'corridor') {
+      if (actor.key === 'gotica') intensity = Math.max(phase === 'entry' ? rules.gotica.minimumEntry : 0,
+        intensity - rules.gotica.lightPenalty * actor.light);
+      if (actor.key === 'gatinha') intensity = clamp(intensity + stage.lightBonus * actor.light, 0, 1);
+    } else if (leftLook) {
+      intensity = Math.max(phase === 'entry' ? rules.minimumEntry : 0, intensity - rules.lookPenalty);
+    }
+    if (actor.key === 'padrao') intensity = Math.min(1.35, intensity * rules.padraoMultiplier);
+
+    let progressPerSecond = 0;
+    const stimulus = audio && now < audio.ends ? audio : null;
+    const distance = stimulus?.distance;
+    const from = distance?.get(actor.position) ?? Infinity;
+    if (stimulus && from <= 2) {
+      const target = objective === 'stock'
+        ? phase === 'approach' ? config.map.left : config.map.office
+        : phase === 'approach' ? config.map.front : config.map.office;
+      if (actor.key === 'padrao') {
+        if (objective === 'stock' && stimulus.camera === 'CAM08' && from <= 1) {
+          intensity -= rules.audio.padraoPenalty;
+          progressPerSecond += rules.audio.padraoProgress;
+        }
+      } else {
+        const next = distance.get(target) ?? Infinity;
+        const close = from <= 1;
+        if (next < from) {
+          intensity -= rules.audio.towardPenalty;
+          progressPerSecond += rules.audio.towardProgress;
+        } else {
+          intensity -= close ? rules.audio.nearPenalty : rules.audio.farPenalty;
+          progressPerSecond += close ? rules.audio.nearProgress : rules.audio.farProgress;
+        }
+      }
+    }
+    intensity = clamp(intensity, 0, actor.key === 'padrao' ? 1.35 : 1);
+    return { intensity, progressPerSecond, advance: intensity, stay: 0, abandon: 0 };
   }
 
   function attackAudio(actor, objective, now) {
@@ -119,7 +176,7 @@ function createEffects(config, routes, actors) {
   }
 
   return {
-    startAudio, integrate, weight, stayWeight, attackOdds,
+    startAudio, integrate, weight, stayWeight, attackOdds, attackBar,
     staticActive: now => now < staticUntil,
     staticDeadline: now => now < staticUntil ? staticUntil : Infinity,
     triggerStatic: now => { staticUntil = now + config.effects.static.duration; },
@@ -136,18 +193,16 @@ function createEffects(config, routes, actors) {
       return { camera: stimulus.camera, modifiers };
     },
     // HUD gains map continuous rates and brief events onto the same 0–100 scale.
-    noiseIntensity: (now, input) => clamp(noiseRate(input) * 12 + transientVolume(now), 0, 100),
+    noiseIntensity: () => globalNoise,
     addNoiseEvent(event, now = volumePeakAt) {
       const amount = noise.events[event] ?? 0;
       volumePeak = transientVolume(now) + amount * 7;
       volumePeakAt = now;
-      for (const actor of actors) {
-        if (actor.approach) addNoise(actor, amount * noiseMultiplier(actor));
-      }
+      globalNoise = clamp(globalNoise + amount, 0, noise.max);
+      for (const actor of actors) if (actor.approach) actor.noise = perceivedNoise(actor);
     },
     retain(actor) {
       const retain = config.movement.failedModifierRetention;
-      actor.noise *= retain;
       actor.light *= retain;
     }
   };

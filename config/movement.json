@@ -6,61 +6,329 @@
   "weight": 1,
   "stayFactor": 0.25,
   "backtrackFactor": 0.5,
-  "retryWindow": 5,
-  "failedIntervalFactor": 0.35,
+  "retryWindow": 4,
+  "failedIntervalFactor": 0.7,
   "failedModifierRetention": 0.75,
   "routes": {
-    "bonus": [25, 40],
-    "padraoBonus": [32, 48],
-    "perMove": [3, 5],
-    "padraoPerMove": [4, 6],
-    "huntBonus": 35,
+    "bonus": [
+      30,
+      48
+    ],
+    "padraoBonus": [
+      40,
+      60
+    ],
+    "perMove": [
+      4,
+      6
+    ],
+    "padraoPerMove": [
+      5,
+      8
+    ],
+    "huntBonus": 40,
     "huntPenalty": 20,
     "occupancyPenaltyPerActor": 40,
     "occupancyGroups": {
-      "vip": ["CV", "EV"],
-      "cam12": ["CC", "EC"],
-      "shop": ["EL"]
+      "vip": [
+        "CV",
+        "EV"
+      ],
+      "cam12": [
+        "CC",
+        "EC"
+      ],
+      "shop": [
+        "EL"
+      ]
     },
-    "blockedProgressRetention": 0.50,
+    "blockedProgressRetention": 0.75,
     "definitions": {
-      "CV": { "objective": "corridor", "target": 15, "paths": [[6, 15], [7, 15]] },
-      "CC": { "objective": "corridor", "target": 15, "paths": [[19, 18, 15], [19, 18, 17, 15]] },
-      "EL": { "objective": "stock", "target": 10, "paths": [[5, 9, 10]] },
-      "EC": { "objective": "stock", "target": 10, "paths": [[19, 18, 15, 10], [19, 18, 17, 15, 10]] },
-      "EV": { "objective": "stock", "target": 10, "paths": [[6, 15, 10], [7, 15, 10]] },
-      "AR": { "objective": "closetVent", "target": 26, "paths": [[3, 26]] },
-      "ES": { "objective": "stock", "target": 10, "paths": [[8, 11, 10], [22, 11, 10]] },
-      "EE": { "objective": "electrical", "target": 21 }
+      "CV": {
+        "objective": "corridor",
+        "target": 15,
+        "paths": [
+          [
+            6,
+            15
+          ],
+          [
+            7,
+            15
+          ]
+        ]
+      },
+      "CC": {
+        "objective": "corridor",
+        "target": 15,
+        "paths": [
+          [
+            19,
+            18,
+            15
+          ],
+          [
+            19,
+            18,
+            17,
+            15
+          ]
+        ]
+      },
+      "EL": {
+        "objective": "stock",
+        "target": 10,
+        "paths": [
+          [
+            5,
+            9,
+            10
+          ]
+        ]
+      },
+      "EC": {
+        "objective": "stock",
+        "target": 10,
+        "paths": [
+          [
+            19,
+            18,
+            15,
+            10
+          ],
+          [
+            19,
+            18,
+            17,
+            15,
+            10
+          ]
+        ]
+      },
+      "EV": {
+        "objective": "stock",
+        "target": 10,
+        "paths": [
+          [
+            6,
+            15,
+            10
+          ],
+          [
+            7,
+            15,
+            10
+          ]
+        ]
+      },
+      "AR": {
+        "objective": "closetVent",
+        "target": 26,
+        "paths": [
+          [
+            3,
+            26
+          ]
+        ]
+      },
+      "ES": {
+        "objective": "stock",
+        "target": 10,
+        "paths": [
+          [
+            8,
+            11,
+            10
+          ],
+          [
+            22,
+            11,
+            10
+          ]
+        ]
+      },
+      "EE": {
+        "objective": "electrical",
+        "target": 21
+      }
+    },
+    "counterattack": {
+      "yandere": 0.2,
+      "gatinha": 0.23,
+      "gotica": 0.3,
+      "cooldownSeconds": 25
     }
   },
   "attack": {
     "corridor": {
-      "gotica": { "approach": [0.60, 0.85], "entry": [0.80, 0.99] },
-      "yandere": { "approach": [0.60, 0.85], "entry": [0.80, 0.99] },
-      "gatinha": { "approach": [0.15, 0.45], "entry": [0.25, 0.65] },
-      "maid": { "approach": [0.65, 0.76], "entry": [0.85, 0.96] },
-      "padrao": { "approach": [0.45, 0.80], "entry": [0.60, 0.98] }
+      "gotica": {
+        "approach": [
+          0.6,
+          0.85
+        ],
+        "entry": [
+          0.8,
+          0.99
+        ]
+      },
+      "yandere": {
+        "approach": [
+          0.6,
+          0.85
+        ],
+        "entry": [
+          0.8,
+          0.99
+        ]
+      },
+      "gatinha": {
+        "approach": [
+          0.15,
+          0.45
+        ],
+        "entry": [
+          0.25,
+          0.65
+        ]
+      },
+      "maid": {
+        "approach": [
+          0.65,
+          0.76
+        ],
+        "entry": [
+          0.85,
+          0.96
+        ]
+      },
+      "padrao": {
+        "approach": [
+          0.45,
+          0.8
+        ],
+        "entry": [
+          0.6,
+          0.98
+        ]
+      }
     },
     "stock": {
-      "approach": [0.25, 0.94],
-      "entry": [0.50, 0.99],
-      "observationPenalty": 0.35,
+      "approach": [
+        0.25,
+        0.94
+      ],
+      "entry": [
+        0.5,
+        0.99
+      ],
+      "observationPenalty": 0.12,
       "minimumObservedAdvance": 0.05
     },
-    "stayShare": 0.30
+    "stayShare": 0.3,
+    "bar": {
+      "secondsAtFull": 7,
+      "stepSeconds": 0.2,
+      "stallSeconds": 15,
+      "maxPhaseSeconds": 55,
+      "padraoMultiplier": 1.35,
+      "stock": {
+        "approach": {
+          "base": 0,
+          "perNoise": 0.018,
+          "cap": 0.95
+        },
+        "entry": {
+          "base": 0.07,
+          "perNoise": 0.009,
+          "cap": 0.97
+        }
+      },
+      "corridor": {
+        "approach": {
+          "base": 0,
+          "perNoise": 0.018,
+          "cap": 0.94
+        },
+        "entry": {
+          "base": 0.08,
+          "perNoise": 0.01,
+          "cap": 0.88
+        }
+      },
+      "gotica": {
+        "approach": {
+          "base": 0,
+          "perNoise": 0.0084,
+          "cap": 0.84
+        },
+        "entry": {
+          "base": 0.12,
+          "perNoise": 0.0068,
+          "cap": 0.8
+        },
+        "lightPenalty": 0.7,
+        "minimumEntry": 0.05
+      },
+      "gatinhaCorridor": {
+        "approach": {
+          "base": 0.25,
+          "perNoise": -0.001,
+          "lightBonus": 0.55
+        },
+        "entry": {
+          "base": 0.3,
+          "perNoise": -0.0016,
+          "lightBonus": 0.5
+        }
+      },
+      "gatinhaStock": {
+        "approach": {
+          "base": 0.55,
+          "perNoise": -0.0036
+        },
+        "entry": {
+          "base": 0.5,
+          "perNoise": -0.004
+        }
+      },
+      "lookPenalty": 0.12,
+      "minimumEntry": 0.05,
+      "audio": {
+        "padraoPenalty": 0.5,
+        "padraoProgress": -8,
+        "nearPenalty": 0.3,
+        "farPenalty": 0.12,
+        "nearProgress": -4,
+        "farProgress": -2,
+        "towardPenalty": -0.2,
+        "towardProgress": 4
+      }
+    }
   },
   "retreat": {
-    "stock": [9, 6, 11],
-    "corridor": [17, 6, 7],
-    "office": [6, 7, 9, 11]
+    "stock": [
+      9,
+      6,
+      11
+    ],
+    "corridor": [
+      17,
+      6,
+      7
+    ],
+    "office": [
+      6,
+      7,
+      9,
+      11
+    ]
   },
   "recovery": {
-    "intervalFactor": 1.25,
+    "intervalFactor": 1.2,
     "freeMoves": 1
   },
   "difficulty": {
     "maxIntervalReduction": 0.55,
-    "maxReactionReduction": 0.20
+    "maxReactionReduction": 0.2
   }
 }
