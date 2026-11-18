@@ -80,16 +80,17 @@
         <button type="button" data-scare="yandere.gif">Yandere</button>
         <button type="button" data-scare="maid.gif">Maid</button>
         <button type="button" data-scare="platinada.gif">Gatinha</button>
-        <button type="button" data-scare="palhaca-direita.gif">Palhaça · Direita</button>
-        <button type="button" data-scare="palhaca-baixo.gif">Palhaça · Baixo</button>
         <button type="button" data-scare="shadow.webp">Shadow</button>
-        <button type="button" data-scare="yandere-camera.gif">Yandere · Câmeras</button>
+        <button type="button" data-scare="palhaca-direita.gif">Palhaça 1</button>
+        <button type="button" data-scare="palhaca-baixo.gif">Palhaça 2</button>
       </div>
       <div class="custom-actions"><button type="button" id="close-extras">Voltar</button></div>
     </section>
-    <div id="extras-preview" class="extras-preview" role="dialog" aria-modal="true" aria-label="Prévia do susto" hidden>
-      <img id="extras-jumpscare-image" alt="Animação de susto" draggable="false">
-      <button type="button" id="close-extras-preview">Fechar susto ×</button>
+    <div id="extras-preview" class="extras-preview" role="dialog" aria-modal="true" aria-label="Prévia do susto" tabindex="-1" hidden>
+      <div class="jumpscare" aria-hidden="true">
+        <img class="jumpscare-art" id="extras-jumpscare-image" alt="" draggable="false">
+      </div>
+      <div class="death-flash" aria-hidden="true"></div>
       <audio id="extras-jumpscare-sound" preload="none"></audio>
     </div>
   </main>

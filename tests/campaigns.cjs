@@ -107,3 +107,27 @@ test('custom-night/extras UI and achievements remain in static site', () => {
   assert(style.includes('grid-template-rows:repeat(4'), 'four cards per column');
   assert(style.includes('title-screen[data-submenu] .title-actions{display:none}'));
 });
+
+test('extras use game scare layers and submenus preserve title and fast static', () => {
+  const fs = require('node:fs');
+  const path = require('node:path');
+  const root = path.join(__dirname, '..');
+  const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+  const menu = fs.readFileSync(path.join(root, 'src/night-menu.js'), 'utf8');
+  const css = fs.readFileSync(path.join(root, 'src/styles/main.css'), 'utf8');
+  const extras = html.slice(html.indexOf('id="extras-menu"'), html.indexOf('</section>', html.indexOf('id="extras-menu"')));
+  assert(extras.includes('data-scare="palhaca-direita.gif">Palhaça 1'));
+  assert(extras.includes('data-scare="palhaca-baixo.gif">Palhaça 2'));
+  assert(!extras.includes('data-scare="yandere-camera.gif"'));
+  assert(extras.indexOf('Palhaça 1') < extras.indexOf('Palhaça 2'));
+  assert(html.includes('<div class="jumpscare" aria-hidden="true">'));
+  assert(html.includes('class="jumpscare-art" id="extras-jumpscare-image"'));
+  assert(html.includes('<div class="death-flash" aria-hidden="true"></div>'));
+  assert(!css.includes('.title-screen[data-submenu] .title-content h1'));
+  assert(!css.includes('.title-screen[data-submenu] .title-content{'));
+  assert(css.includes('.title-screen[data-submenu] .title-actions{visibility:hidden;pointer-events:none}'));
+  assert(css.includes('--noise-period:.34s'));
+  assert(css.includes('animation:noise-drift .22s'));
+  for (const state of ['blackout', 'scare', 'flash']) assert(menu.includes("title.dataset.defeat = '" + state + "'"));
+  assert(menu.includes('timing.clownBottomCycleMs'));
+});

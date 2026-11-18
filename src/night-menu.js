@@ -38,7 +38,10 @@ function createNightMenu(config, { prepareShift, startShift, onEnter,
   let musicFrame;
   let glitchTimer;
   let lastGlitchArt;
-  let previewCount = 0;
+  let previewToken = 0;
+  let previewTimer;
+  let previewRequest;
+  let previewObjectUrl;
   let debug = false;
   const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)');
 
@@ -83,12 +86,87 @@ function createNightMenu(config, { prepareShift, startShift, onEnter,
       bits & 4 ? 'Custom Night MAX vencida' : ''].filter(Boolean).join('; '));
   }
 
-  function stopPreview() {
+  function stopPreview({ resumeMusic = true } = {}) {
+    previewToken++;
+    clearTimeout(previewTimer);
+    previewRequest?.abort();
+    previewRequest = undefined;
     previewSound.pause();
     previewSound.removeAttribute('src');
+    previewSound.load();
     previewImage.removeAttribute('src');
+    previewImage.onload = null;
+    previewImage.onerror = null;
+    if (previewObjectUrl) URL.revokeObjectURL(previewObjectUrl);
+    previewObjectUrl = undefined;
+    delete title.dataset.defeat;
+    delete title.dataset.scare;
     preview.hidden = true;
-    if (!title.hidden && !title.inert && music.paused) music.play().catch(() => {});
+    if (resumeMusic && !title.hidden && !title.inert && music.paused) music.play().catch(() => {});
+  }
+
+  function showScare(file) {
+    stopPreview({ resumeMusic: false });
+    const token = previewToken;
+    const timing = config.controls.jumpscare;
+    const isShadow = file === 'shadow.webp';
+    const isBottomClown = file === 'palhaca-baixo.gif';
+    const sound = isShadow ? 'shadow.ogg'
+      : file.startsWith('palhaca-') ? 'palhaca.ogg' : 'scream.wav';
+    const source = './public/images/jumpscares/' + file;
+    preview.hidden = false;
+    title.dataset.scare = isShadow ? 'shadow' : isBottomClown ? 'clown-bottom' : 'default';
+    title.dataset.defeat = 'blackout';
+    preview.focus({ preventScroll: true });
+    music.pause();
+    previewSound.src = './public/audio/jumpscares/' + sound;
+    previewSound.volume = timing.volume;
+    previewSound.currentTime = 0;
+    previewSound.play().catch(() => {});
+
+    const request = previewRequest = new AbortController();
+    let loaded = false;
+    let failed = false;
+    previewImage.onload = () => { if (token === previewToken) loaded = true; };
+    previewImage.onerror = () => { if (token === previewToken) failed = true; };
+    fetch(source, { signal: request.signal }).then(response => {
+      if (!response.ok) throw new Error('Imagem indisponível');
+      return response.blob();
+    }).then(blob => {
+      if (token !== previewToken) return;
+      previewObjectUrl = URL.createObjectURL(blob);
+      previewImage.src = previewObjectUrl;
+    }).catch(() => {
+      if (token !== previewToken) return;
+      previewImage.src = source + '?extras=' + token;
+    }).finally(() => {
+      if (previewRequest === request) previewRequest = undefined;
+    });
+
+    const deadline = performance.now() + timing.blackoutMs + timing.imageLoadWaitMs;
+    function flash() {
+      if (token !== previewToken) return;
+      title.dataset.defeat = 'flash';
+      previewImage.removeAttribute('src');
+      previewTimer = setTimeout(() => {
+        if (token !== previewToken) return;
+        stopPreview();
+        $('#extras-list button').focus({ preventScroll: true });
+      }, timing.flashMs);
+    }
+    function reveal() {
+      if (token !== previewToken) return;
+      if (!loaded && !failed && performance.now() < deadline) {
+        previewTimer = setTimeout(reveal, 30);
+        return;
+      }
+      if (!loaded) return flash();
+      title.dataset.defeat = 'scare';
+      const cycle = isShadow ? config.shadow.jumpscareMs
+        : isBottomClown ? timing.clownBottomCycleMs : timing.cycleMs;
+      previewTimer = setTimeout(flash, cycle + timing.finalHoldMs);
+    }
+    previewTimer = setTimeout(reveal, timing.blackoutMs);
   }
 
   function showSubmenu(mode, focus) {
@@ -97,6 +175,7 @@ function createNightMenu(config, { prepareShift, startShift, onEnter,
     else delete title.dataset.submenu;
     customScreen.hidden = mode !== 'custom';
     extrasScreen.hidden = mode !== 'extras';
+    titleContent.querySelector('.title-actions').inert = Boolean(mode);
     updateGlitches();
     focus?.focus();
   }
@@ -275,29 +354,14 @@ function createNightMenu(config, { prepareShift, startShift, onEnter,
     play({ label: 'CUSTOM NIGHT', levels, rules: defaults, debug, customMax });
   });
 
-  const sounds = { 'palhaca-direita.gif': 'palhaca.ogg', 'palhaca-baixo.gif': 'palhaca.ogg',
-    'shadow.webp': 'shadow.ogg', 'yandere-camera.gif': 'yandere-camera.ogg' };
   $('#extras-list').addEventListener('click', event => {
     const button = event.target.closest('button[data-scare]');
     if (!button) return;
     const file = button.dataset.scare;
-    const allowed = ['original.gif', 'gotica.gif', 'yandere.gif', 'maid.gif', 'platinada.gif',
-      'palhaca-direita.gif', 'palhaca-baixo.gif', 'shadow.webp', 'yandere-camera.gif'];
+    const allowed = ['original.gif', 'gotica.gif', 'yandere.gif', 'maid.gif',
+      'platinada.gif', 'palhaca-direita.gif', 'palhaca-baixo.gif', 'shadow.webp'];
     if (!allowed.includes(file)) return;
-    music.pause();
-    preview.hidden = false;
-    // Alternate identities to restart animated GIF playback without modifying the asset.
-    previewImage.src = './public/images/jumpscares/' + file + '?extras=' + (previewCount++ % 2);
-    const sound = sounds[file] || 'scream.wav';
-    previewSound.src = './public/audio/jumpscares/' + sound;
-    previewSound.volume = config.controls.jumpscare.volume;
-    previewSound.currentTime = 0;
-    previewSound.play().catch(() => {});
-    $('#close-extras-preview').focus();
-  });
-  $('#close-extras-preview').addEventListener('click', () => {
-    stopPreview();
-    $('#extras-list button').focus();
+    showScare(file);
   });
   document.addEventListener('keydown', event => {
     if (event.key !== 'Escape' || title.hidden || title.inert) return;

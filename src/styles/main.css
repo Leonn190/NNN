@@ -48,7 +48,7 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid #ffd3e8;outline-
 .title-screen::before,.title-screen::after{content:"";position:absolute;inset:0;pointer-events:none}
 .title-screen::before{background:linear-gradient(90deg,#030203c9,transparent 63%),linear-gradient(0deg,#030203a8,transparent 28%)}
 .title-screen::after{background:repeating-linear-gradient(180deg,#0004 0 1px,transparent 1px 4px)}
-.title-screen .feed-noise{--noise-opacity:.085;--noise-period:1.94s}
+.title-screen .feed-noise{--noise-opacity:.135;--noise-period:.34s}
 .title-content{position:absolute;z-index:1;inset:0;display:flex;flex-direction:column;align-items:flex-start;gap:clamp(16px,7cqh,64px);padding:clamp(16px,12cqh,100px) clamp(24px,8cqw,120px);overflow:auto;text-shadow:0 2px 14px #000}
 .title-content h1{margin:0;font:400 clamp(34px,min(10.6cqw,20cqh),148px)/.94 Arial,sans-serif;letter-spacing:-.045em}
 .title-start{min-height:44px;padding:4px 0;border:0;background:none;font:700 clamp(22px,3.2cqw,40px)/1.2 var(--mono);text-shadow:inherit}
@@ -56,9 +56,7 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid #ffd3e8;outline-
 .title-start:hover,.title-start:focus-visible{color:#ffbfdc}
 .title-actions{display:grid;justify-items:start;gap:4px}
 .campaign-stars{position:absolute;z-index:3;left:clamp(16px,3cqw,48px);bottom:max(15px,3cqh);display:flex;gap:clamp(2px,.4cqw,8px);font:900 clamp(28px,5cqw,62px)/1 Georgia,serif;color:#ffd66f;text-shadow:0 2px 2px #59360c,0 0 14px #f8b942aa,0 0 32px #c7934777;pointer-events:none}
-.title-screen[data-submenu] .title-actions{display:none}
-.title-screen[data-submenu] .title-content{gap:0;pointer-events:none}
-.title-screen[data-submenu] .title-content h1{font-size:clamp(28px,min(7.2cqw,11.5cqh),90px)}
+.title-screen[data-submenu] .title-actions{visibility:hidden;pointer-events:none}
 .title-submenu{position:absolute;z-index:2;left:clamp(22px,7cqw,112px);bottom:max(7cqh,28px);width:min(57cqw,710px);max-height:56cqh;overflow:auto;padding:0;color:#f9f1f7;text-shadow:0 2px 8px #000}
 #custom-levels{display:grid;grid-template-rows:repeat(4,minmax(0,1fr));grid-template-columns:repeat(2,minmax(0,1fr));grid-auto-flow:column;gap:clamp(3px,.7cqh,8px)}
 .custom-character{display:flex;justify-content:space-between;align-items:center;gap:8px;min-width:0;min-height:clamp(34px,5.7cqh,52px);padding:3px clamp(7px,1cqw,13px);border:1px solid #e7b5c077;background:rgba(14,9,20,.83);box-shadow:inset 0 0 12px #e09db51c}
@@ -71,9 +69,8 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid #ffd3e8;outline-
 #custom-debug[aria-pressed="true"]{border-color:#b8e0db;color:#d0fff6}
 .extras-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:clamp(4px,1cqh,10px)}
 .extras-grid button{text-align:left;min-width:0}
-.extras-preview{position:absolute;z-index:8;inset:0;display:grid;place-items:center;background:#000f}
-.extras-preview img{width:100%;height:100%;object-fit:contain}
-#close-extras-preview{position:absolute;z-index:1;right:3cqw;top:3cqh;min-height:42px;padding:8px 14px;border:1px solid #f1d3e5;background:#140d18ec;color:#fff}
+.extras-preview{position:absolute;z-index:8;inset:0;background:#000;outline:none}
+.extras-preview .jumpscare,.extras-preview .death-flash{position:absolute;inset:0}
 @container(max-height:680px){
   .title-content{padding-block:clamp(12px,5cqh,28px);gap:clamp(8px,4cqh,22px)}
   .title-content h1{font-size:clamp(34px,min(10.6cqw,15cqh),82px)}
@@ -88,8 +85,6 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid #ffd3e8;outline-
 }
 @media(max-aspect-ratio:1/1){
   .title-submenu{left:5cqw;width:90cqw;bottom:7cqh;max-height:65cqh}
-  .title-screen[data-submenu] .title-content{justify-content:flex-start;padding:5cqh 5cqw}
-  .title-screen[data-submenu] .title-content h1{font-size:clamp(28px,6cqh,55px)}
   .custom-character-name{font-size:clamp(11px,2.6cqw,16px)}
   .extras-grid button{font-size:clamp(11px,2.6cqw,16px)}
 }
@@ -587,14 +582,19 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid #ffd3e8;outline-
   /* Overscan covers the largest grain offset at every viewport size. */
   position:absolute;inset:-32px;background:url("../../public/images/cameras/grain.webp") repeat;pointer-events:none;
 }
-.feed-noise{--noise-opacity:.063;--noise-period:1.72s;opacity:var(--noise-opacity)}
+.feed-noise{--noise-opacity:.095;--noise-period:.36s;opacity:var(--noise-opacity)}
 @keyframes noise-drift{
   0%{transform:translate(0,0)}
-  16%{transform:translate(-17px,23px)}
-  35%{transform:translate(11px,-17px)}
-  50%{transform:translate(-31px,-9px)}
-  68%{transform:translate(23px,13px)}
-  86%{transform:translate(-7px,5px)}
+  10%{transform:translate(-21px,17px)}
+  20%{transform:translate(27px,-14px)}
+  30%{transform:translate(-12px,-29px)}
+  40%{transform:translate(30px,8px)}
+  50%{transform:translate(-29px,-3px)}
+  60%{transform:translate(17px,28px)}
+  70%{transform:translate(-6px,-21px)}
+  80%{transform:translate(25px,12px)}
+  90%{transform:translate(-18px,30px)}
+  100%{transform:translate(0,0)}
 }
 @keyframes scanline-instability{
   0%,32%,34%,78%,80%,100%{opacity:var(--scanline-opacity)}
@@ -845,7 +845,7 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid #ffd3e8;outline-
 }
 
 @media(prefers-reduced-motion:no-preference){
-  .title-screen:not([inert],[data-page-hidden]):not(:has(.custom-night:not([hidden]))) .feed-noise,
+  .title-screen:not([inert],[data-page-hidden]):not([data-defeat]) .feed-noise,
   .game[data-mode="cameras"]:not([data-computer-off],[data-monitor-transition],[data-defeat],[data-page-hidden])
     .camera-feed:not(:has(.camera-static[data-kind="electrical"],.camera-scare:not([hidden]))) .feed-noise{
     animation:noise-drift var(--noise-period) step-end infinite;
@@ -854,7 +854,7 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid #ffd3e8;outline-
     animation:noise-drift var(--noise-period) step-end infinite,game-over-noise 8.9s step-end infinite;
   }
   .game:not([inert],[data-page-hidden]) .game-over-status::before{animation:signal-lost-pulse 5.6s ease-in-out infinite}
-  .title-screen:not([inert],[data-page-hidden]):not(:has(.custom-night:not([hidden])))::after{
+  .title-screen:not([inert],[data-page-hidden]):not([data-defeat])::after{
     --scanline-opacity:1;animation:scanline-instability 12.4s step-end infinite;
   }
   .game[data-mode="cameras"]:not([data-computer-off],[data-monitor-transition],[data-defeat],[data-page-hidden])
@@ -862,9 +862,9 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid #ffd3e8;outline-
     --scanline-opacity:.56;animation:scanline-instability 10.9s step-end infinite;
   }
   .game[data-mode="cameras"]:not([data-computer-off],[data-monitor-transition],[data-defeat],[data-page-hidden])
-    .camera-static:not([hidden]) .camera-static-grain{animation:noise-drift .51s step-end infinite}
+    .camera-static:not([hidden]) .camera-static-grain{animation:noise-drift .22s step-end infinite}
   .game[data-mode="cameras"]:not([data-computer-off],[data-monitor-transition],[data-defeat],[data-page-hidden])
-    .camera-static[data-kind="electrical"] .camera-static-grain{animation-duration:.85s}
+    .camera-static[data-kind="electrical"] .camera-static-grain{animation-duration:.28s}
   .game[data-mode="cameras"]:not([data-computer-off],[data-monitor-transition],[data-defeat],[data-page-hidden])
     .camera-static[data-kind="electrical"] .camera-static-band{animation:electrical-band-roll 1.7s steps(9,end) infinite}
 }
