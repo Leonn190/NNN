@@ -1036,6 +1036,11 @@ function createMovement(config, { random = Math.random, hallucinationRandom = Ma
       completed: actor.route?.completed, bonus: actor.level ? effectiveNavigationBonus(actor) : null,
       target, status, odds, expiryOdds, attackActive, attackPath: actor.approach?.objective ?? null,
       noise: actor.noise ?? 0, light: actor.light ?? 0, attackOdds,
+      attackProgress: actor.approach?.progress ?? null,
+      attackIntensity: actor.approach && actor.approach.phase !== 'invasion'
+        ? approach.options(actor).intensity : null,
+      attackProgressPerSecond: actor.approach && actor.approach.phase !== 'invasion'
+        ? approach.options(actor).progressPerSecond : null,
       audio: effects.audioStimulus(actor, now),
       invasions: threats.invasionCount(actor),
       instantInvasion: actor.level > 0 && !outcome && position !== office && threats.instantInvasion(actor),
