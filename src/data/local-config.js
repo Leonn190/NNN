@@ -1297,7 +1297,8 @@ window.NathGame.localConfig = {
           "farProgress": -2,
           "towardPenalty": -0.2,
           "towardProgress": 4
-        }
+        },
+        "maxEntrySeconds": 150
       }
     },
     "retreat": {
