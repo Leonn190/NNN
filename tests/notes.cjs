@@ -119,7 +119,7 @@ assert(gameSource.includes('guardCounter.textContent = death.counter'), 'game ov
 const style = fs.readFileSync(require('node:path').join(__dirname, '../src/styles/main.css'), 'utf8');
 assert(style.includes('min(10.6cqw,20cqh)'), 'title should be slightly larger on desktop');
 
-// Only the requested two gameplay parameters may change here.
+// Check the campaign clock and the approved route-balancing parameters.
 require('../src/gameplay/resources.js');
 const night = require('../config/night.json');
 const movement = require('../config/movement.json');
@@ -128,6 +128,6 @@ assert.equal(hourDuration(night.clock, 90), 60);
 assert.equal(hourDuration(night.clock, 5), 180);
 assert.equal(clockProgress(night.clock, 5, 0, 180), 1);
 assert.equal(clockProgress(night.clock, 4.99, 0, 3600), 0);
-assert.equal(movement.routes.huntBonus, 30);
-assert.deepEqual(movement.routes.bonus, [25, 40]);
+assert.equal(movement.routes.huntBonus, 40);
+assert.deepEqual(movement.routes.bonus, [30, 48]);
 console.log('Notas, arquivos, guardas e limites de balanceamento: OK');

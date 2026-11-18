@@ -266,42 +266,60 @@ function createThreats(config, levels, random, emit, reactionReduction = () => 0
   };
 }
 
-function createApproach(map, effects, random, observingLeft = () => false, currentTime = () => 0) {
+function createApproach(map, effects, random, observingLeft = () => false, currentTime = () => 0, rules = {}) {
   const stages = {
     corridor: [map.back, map.front, map.office],
     stock: [map.leftApproach, map.left, map.office]
   };
+  const fullSeconds = rules.secondsAtFull ?? 7;
+  const limit = rules.maxPhaseSeconds ?? 55;
+  const stallLimit = rules.stallSeconds ?? 15;
 
   function begin(actor, objective) {
-    if (actor.position !== stages[objective][0]) return;
-    actor.noise = 0;
+    if (actor.position !== stages[objective][0]) return false;
     actor.light = 0;
-    actor.approach = { objective, phase: 'approach' };
+    actor.approach = { objective, phase: 'approach', progress: 0, elapsed: 0, stalled: 0 };
+    actor.due = Infinity;
     return true;
   }
 
   function options(actor) {
-    const { objective, phase } = actor.approach;
-    return { to: stages[objective][phase === 'approach' ? 1 : 2], objective,
-      ...effects.attackOdds(actor, objective, phase, observingLeft(), currentTime()) };
+    const { objective, phase, progress } = actor.approach;
+    return { to: stages[objective][phase === 'approach' ? 1 : 2], objective, progress,
+      ...effects.attackBar(actor, objective, phase, observingLeft(), currentTime()) };
   }
 
-  function choose(actor) {
-    const { to, objective, advance, stay } = options(actor);
-    const draw = random();
-    if (draw < advance) return { to };
-    return draw < advance + stay ? { stay: true } : { abandon: objective };
+  function integrate(actor, dt) {
+    if (!actor.approach || actor.approach.phase === 'invasion' || dt <= 0) return;
+    const { intensity, progressPerSecond } = options(actor);
+    const speed = intensity * 100 / fullSeconds + progressPerSecond;
+    const attack = actor.approach;
+    const previous = attack.progress;
+    attack.progress = Math.min(100, Math.max(0, previous + dt * speed));
+    attack.elapsed += dt;
+    attack.stalled = Math.abs(attack.progress - previous) < 1e-9 ? attack.stalled + dt : 0;
+  }
+
+  function completed(actor) {
+    return actor.approach && actor.approach.phase !== 'invasion' && actor.approach.progress >= 100 - 1e-9;
+  }
+
+  function expired(actor) {
+    return actor.approach && actor.approach.phase !== 'invasion'
+      && (actor.approach.elapsed >= (actor.approach.phase === 'entry' ? rules.maxEntrySeconds ?? limit : limit)
+        || actor.approach.stalled >= stallLimit);
   }
 
   function arrive(actor) {
-    if (actor.position === map.office) {
-      if (actor.approach) actor.approach.phase = 'invasion';
-    } else if (actor.approach) {
-      if (actor.position === stages[actor.approach.objective][1]) actor.approach.phase = 'entry';
+    if (!actor.approach) return;
+    if (actor.position === map.office) actor.approach.phase = 'invasion';
+    else if (actor.position === stages[actor.approach.objective][1]) {
+      Object.assign(actor.approach, { phase: 'entry', progress: 0, elapsed: 0, stalled: 0 });
+      actor.due = Infinity;
     }
   }
 
-  return { begin, choose, options, arrive };
+  return { begin, options, integrate, completed, expired, arrive };
 }
 
 Object.assign(window.NathGame, { createThreats, createSmores, createApproach });
