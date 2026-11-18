@@ -473,6 +473,21 @@ test('a final-stage bar remains possible under low noise instead of timing out',
   assert.equal(approach.completed(actor), true);
 });
 
+
+test('a real attack completes its two bars and can invade without RNG advance rolls', () => {
+  const run = scenario({ gotica: 1 }, { view: 'office', radio: true }, config => {
+    corridor(config);
+    config.effects.noise.rates.radio = 200;
+  });
+  run.at(1.01);
+  assert.equal(run.actor('gotica').position, base.map.back);
+  assert.equal(run.debug('gotica').attackPath, 'corridor');
+  run.at(8);
+  assert(run.debug('gotica').attackProgress > 0);
+  run.at(35);
+  assert.deepEqual(run.emitted('loss'), ['gotica']);
+});
+
 test('noise-driven attack progress is independent of character level', () => {
   const rules = base.movement.attack.bar;
   const effects = { attackBar: () => ({ intensity: 1, progressPerSecond: 0 }) };
