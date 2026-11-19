@@ -51,7 +51,10 @@ function createMovement(config, { random = Math.random, hallucinationRandom = Ma
     const extra = actor.rule.extraIntervalReduction ?? 0;
     const acceleration = initial ? actor.rule.initialIntervalReduction ?? 0 : 0;
     const firstFactor = first ? 1 - actor.firstIntervalReduction : 1;
-    const regularFactor = (1 - difficulty.maxIntervalReduction * actor.progress)
+    const maxReduction = actor.key === 'padrao'
+      ? (difficulty.padraoMaxIntervalReduction ?? difficulty.maxIntervalReduction)
+      : difficulty.maxIntervalReduction;
+    const regularFactor = (1 - maxReduction * actor.progress)
       * factor(-extra * actor.progress) * factor(-acceleration * actor.progress);
     const intervalFactor = regularFactor * firstFactor;
     const seconds = actor.rule.interval * intervalFactor

@@ -9,6 +9,7 @@
   <link rel="icon" type="image/svg+xml" href="./public/images/branding/favicon.svg">
   <link rel="stylesheet" href="./src/styles/main.css">
   <link rel="stylesheet" href="./src/styles/notes.css">
+  <link rel="stylesheet" href="./src/styles/endings.css">
   <script defer src="./src/data/game-data.js"></script>
   <script defer src="./src/data/camera-layers.js"></script>
   <script defer src="./src/data/complex-layers.js"></script>
@@ -32,6 +33,7 @@
   <script defer src="./src/data/notes-content.js"></script>
   <script defer src="./src/notes-system.js"></script>
   <script defer src="./src/notes-ui.js"></script>
+  <script defer src="./src/ending-sequences.js"></script>
   <script defer src="./src/main.js"></script>
 </head>
 <body>
@@ -73,7 +75,7 @@
         </div>
       </form>
     </section>
-    <section class="extras-menu title-submenu" id="extras-menu" aria-label="Extras: sustos" hidden>
+    <section class="extras-menu title-submenu" id="extras-menu" aria-label="Extras: sustos e finais" hidden>
       <div id="extras-list" class="extras-grid">
         <button type="button" data-scare="original.gif">Principal</button>
         <button type="button" data-scare="gotica.gif">Gótica</button>
@@ -83,6 +85,8 @@
         <button type="button" data-scare="shadow.gif">Shadow</button>
         <button type="button" data-scare="palhaca-direita.gif">Palhaça 1</button>
         <button type="button" data-scare="palhaca-baixo.gif">Palhaça 2</button>
+        <button type="button" data-cinematic="credits">Créditos · Final das 9 noites</button>
+        <button type="button" data-cinematic="death">12ª morte · Armários</button>
       </div>
       <div class="custom-actions"><button type="button" id="close-extras">Voltar</button></div>
     </section>
@@ -401,5 +405,22 @@
       </div>
     </section>
   </main>
+  <section class="cinematic" id="cinematic" role="dialog" aria-modal="true" aria-label="Sequência cinematográfica" hidden>
+    <div class="cinematic-viewport" aria-hidden="true">
+      <img class="cinematic-image" id="cinematic-image" alt="" draggable="false">
+    </div>
+    <div class="cinematic-shade" aria-hidden="true"></div>
+    <div class="cinematic-credits" id="cinematic-credits" aria-label="Créditos" hidden>
+      <div class="cinematic-credit"><p class="cinematic-credit-role"></p><p class="cinematic-credit-name"></p></div>
+      <div class="cinematic-credit"><p class="cinematic-credit-role"></p><p class="cinematic-credit-name"></p></div>
+    </div>
+    <p class="cinematic-quote" id="cinematic-quote" aria-label="Mensagem misteriosa" hidden></p>
+    <p class="cinematic-missing" id="cinematic-missing" role="status" hidden></p>
+    <div class="cinematic-controls">
+      <button type="button" id="cinematic-enable-audio" hidden>ATIVAR SOM</button>
+      <button type="button" id="cinematic-close">CONTINUAR</button>
+    </div>
+    <audio id="cinematic-audio" preload="metadata"></audio>
+  </section>
 </body>
 </html>
