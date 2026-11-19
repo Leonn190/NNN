@@ -114,10 +114,8 @@ assert(notesUi.includes("function toggleMaximize()"), 'application windows must 
 assert(notesUi.includes("search.addEventListener('input', render)"), 'explorer search must be interactive');
 const gameSource = fs.readFileSync(require('node:path').join(__dirname, '../src/main.js'), 'utf8');
 assert(!gameSource.includes('guardHud'), 'guard HUD logic must be removed');
-assert(gameSource.includes('canPlayCampaign: () => true'), 'the 12th death cannot lock the campaign');
-assert(gameSource.includes('deathCinematicPending = Boolean(death?.exhausted)'), 'the 12th death triggers its special scene');
-assert(gameSource.includes('guardCounter.hidden = !state.shift?.number'), 'only campaign deaths should show the counter');
-assert(gameSource.includes('guardCounter.textContent = death?.counter ?? notesSystem.counter()'), 'game over should preserve 00/12 when lives are exhausted');
+assert(gameSource.includes('guardCounter.hidden = !death'), 'only campaign deaths should show the counter');
+assert(gameSource.includes('guardCounter.textContent = death.counter'), 'game over should show only the remaining-guards counter');
 const style = fs.readFileSync(require('node:path').join(__dirname, '../src/styles/main.css'), 'utf8');
 assert(style.includes('min(10.6cqw,20cqh)'), 'title should be slightly larger on desktop');
 

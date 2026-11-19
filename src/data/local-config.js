@@ -1324,8 +1324,7 @@ window.NathGame.localConfig = {
       "freeMoves": 1
     },
     "difficulty": {
-      "maxIntervalReduction": 0.52,
-      "padraoMaxIntervalReduction": 0.58,
+      "maxIntervalReduction": 0.55,
       "maxReactionReduction": 0.2
     }
   },

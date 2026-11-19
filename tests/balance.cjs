@@ -31,13 +31,11 @@ function scenario(levels, input = {}, tune = () => {}, draws = []) {
 
 test('route bonuses interpolate independently and interval reductions accumulate at MAX', () => {
   const { actor } = scenario({ padrao: 11, gotica: 11, yandere: 11, gatinha: 11, maid: 11 });
-  near(base.movement.difficulty.maxIntervalReduction, .52);
-  near(base.movement.difficulty.padraoMaxIntervalReduction, .58);
-  near(actor('padrao').remaining, 23 * .42);
-  near(actor('gotica').remaining, 26 * .48);
-  near(actor('yandere').remaining, 21 * .48 * .4);
-  near(actor('gatinha').remaining, 19 * .48 * .95);
-  near(actor('maid').remaining, 30 * .48 * .9);
+  near(actor('padrao').remaining, 23 * .45);
+  near(actor('gotica').remaining, 26 * .45);
+  near(actor('yandere').remaining, 21 * .45 * .4);
+  near(actor('gatinha').remaining, 19 * .45 * .95);
+  near(actor('maid').remaining, 30 * .45 * .9);
   const routes = createAttackRoutes(base, createRoutes(base.map));
   for (const [key, low, mid, high] of [
     ['padrao', 40, 50, 60], ['gotica', 30, 39, 48], ['yandere', 30, 39, 48], ['gatinha', 30, 39, 48]
