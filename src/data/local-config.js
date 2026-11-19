@@ -268,7 +268,8 @@ window.NathGame.localConfig = {
     "radioTracks": [
       "caramelldansen.mp3",
       "shikairo-days.mp3",
-      "kawaikute-gomen.mp3"
+      "kawaikute-gomen.mp3",
+      "musica-nova.mp3"
     ],
     "menuMusic": {
       "startSeconds": 27,
@@ -1324,7 +1325,8 @@ window.NathGame.localConfig = {
       "freeMoves": 1
     },
     "difficulty": {
-      "maxIntervalReduction": 0.55,
+      "maxIntervalReduction": 0.52,
+    "padraoMaxIntervalReduction": 0.58,
       "maxReactionReduction": 0.2
     }
   },
