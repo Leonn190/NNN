@@ -937,7 +937,7 @@ function toggleRadio() {
     return;
   }
   sound.connectRadio(radioMusic);
-  const availableTracks = [...controls.radioTracks];
+  const availableTracks = [...controls.radioTracks, endingAssets.newRadioTrack];
   if (window.NathGame.createCampaignStore().stars() & 1) {
     availableTracks.push(endingAssets.creditsRadioTrack);
   }
