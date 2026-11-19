@@ -258,8 +258,8 @@ window.NathGame.localConfig = {
     },
     "jumpscare": {
       "blackoutMs": 110,
-      "cycleMs": 960,
-      "clownBottomCycleMs": 1280,
+      "cycleMs": 980,
+      "clownBottomCycleMs": 980,
       "finalHoldMs": 250,
       "flashMs": 230,
       "imageLoadWaitMs": 2000,
@@ -1595,10 +1595,10 @@ window.NathGame.localConfig = {
     "chancePerSanityPoint": 1,
     "manifestSeconds": 1.15,
     "foundSeconds": 0.65,
-    "jumpscareMs": 1200,
+    "jumpscareMs": 980,
     "officeArt": "./public/images/shadow/office.webp",
     "sprite": "./public/images/shadow/camera-sprite.webp",
-    "jumpscare": "./public/images/jumpscares/shadow.webp"
+    "jumpscare": "./public/images/jumpscares/shadow.gif"
   },
   "threats": {
     "yandereCameraScare": {

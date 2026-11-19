@@ -109,7 +109,7 @@ function createNightMenu(config, { prepareShift, startShift, onEnter,
     stopPreview({ resumeMusic: false });
     const token = previewToken;
     const timing = config.controls.jumpscare;
-    const isShadow = file === 'shadow.webp';
+    const isShadow = file === 'shadow.gif';
     const isBottomClown = file === 'palhaca-baixo.gif';
     const sound = isShadow ? 'shadow.ogg'
       : file.startsWith('palhaca-') ? 'palhaca.ogg' : 'scream.wav';
@@ -359,7 +359,7 @@ function createNightMenu(config, { prepareShift, startShift, onEnter,
     if (!button) return;
     const file = button.dataset.scare;
     const allowed = ['original.gif', 'gotica.gif', 'yandere.gif', 'maid.gif',
-      'platinada.gif', 'palhaca-direita.gif', 'palhaca-baixo.gif', 'shadow.webp'];
+      'platinada.gif', 'palhaca-direita.gif', 'palhaca-baixo.gif', 'shadow.gif'];
     if (!allowed.includes(file)) return;
     showScare(file);
   });

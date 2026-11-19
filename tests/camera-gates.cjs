@@ -1098,10 +1098,10 @@ for (let attempt = 0; attempt < 7; attempt++) {
   step(scareStart + 1070);
   assert.equal(phase(), 'scare');
   assert.equal(scare.src, chosen);
-  step(scareStart + 1320);
+  step(scareStart + 1340);
   assert.equal(phase(), 'flash');
   assert.equal(scare.getAttribute('src'), null);
-  step(scareStart + 1550);
+  step(scareStart + 1570);
   assert.equal(phase(), 'over');
   assert.equal(nodes['game-over'].hidden, false);
   step(scareStart + 30_000);
@@ -1153,11 +1153,11 @@ for (const closetState of ['door', 'lit', 'turning']) {
   if (closetState !== 'door') assert.notEqual(scare.src, bottomGif);
   step(scareStart + 110);
   assert.equal(phase(), 'scare');
-  step(scareStart + 1639);
+  step(scareStart + 1339);
   assert.equal(phase(), 'scare');
-  step(scareStart + 1640);
+  step(scareStart + 1340);
   assert.equal(phase(), 'flash');
-  step(scareStart + 1870);
+  step(scareStart + 1570);
   assert.equal(phase(), 'over');
   nodes['return-to-menu'].fire('click');
   assert.equal(nodes.game.dataset.scare, undefined);

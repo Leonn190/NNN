@@ -5,8 +5,8 @@
   },
   "jumpscare": {
     "blackoutMs": 110,
-    "cycleMs": 960,
-    "clownBottomCycleMs": 1280,
+    "cycleMs": 980,
+    "clownBottomCycleMs": 980,
     "finalHoldMs": 250,
     "flashMs": 230,
     "imageLoadWaitMs": 2000,

@@ -746,9 +746,7 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid #ffd3e8;outline-
   display:grid;
   place-items:center;
   overflow:hidden;
-  background:
-    linear-gradient(90deg,#000 0%,#030106e8 15%,transparent 42% 58%,#030106e8 85%,#000 100%),
-    radial-gradient(ellipse at 50% 48%,#14071226 12%,#060307b5 61%,#000 100%);
+  background:#000;
 }
 .game[data-defeat="scare"] :is(.office-view,.cameras-view){animation:scare-distortion .29s steps(3,end) infinite}
 .game[data-defeat="over"] .playfield{display:none}
@@ -762,14 +760,12 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid #ffd3e8;outline-
 .jumpscare-art{
   visibility:hidden;
   position:absolute;
-  width:min(112cqh,114cqw);
-  height:auto;
-  filter:brightness(.91) contrast(1.15) drop-shadow(0 0 28px #000d);
-  mask-image:linear-gradient(90deg,transparent,#000 7% 93%,transparent);
+  inset:0;width:100%;height:100%;object-fit:cover;object-position:center bottom;
+  filter:none;mask-image:none;
 }
-.game[data-defeat="scare"] .jumpscare-art{visibility:visible;animation:scare-impact .96s both}
+.game[data-defeat="scare"] .jumpscare-art{visibility:visible;animation:none}
 .game[data-scare="shadow"] .jumpscare{background:#030107}
-.game[data-scare="shadow"][data-defeat="scare"] .jumpscare-art{inset:0;width:100%;height:100%;object-fit:contain;object-position:center bottom;animation:none;mask-image:none}
+.game[data-scare="shadow"][data-defeat="scare"] .jumpscare-art{inset:0;width:100%;height:100%;object-fit:cover;object-position:center bottom;animation:none;mask-image:none}
 @keyframes scare-impact{
   0%{transform:scale(.91) translateY(3%)}
   24%{transform:scale(1)}
@@ -778,8 +774,7 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid #ffd3e8;outline-
   100%{transform:scale(1.06) translate(.5%,-.3%) rotate(.35deg)}
 }
 .jumpscare::after{
-  content:"";position:absolute;inset:0;
-  background:repeating-linear-gradient(180deg,transparent 0 3px,#0003 3px 4px);
+  content:none;
 }
 .game[data-defeat="flash"] .death-flash{
   display:block;

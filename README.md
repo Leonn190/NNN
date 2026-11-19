@@ -36,7 +36,7 @@ NNN/
 │   │   ├── shadow/                  # Confronto Neon e sprite das câmeras
 │   │   ├── menu/                    # Arte da tela de título e variações de glitch
 │   │   ├── intro/                   # Anúncio da abertura da campanha
-│   │   ├── jumpscares/              # GIFs por personagem e WebP animado da Shadow
+│   │   ├── jumpscares/              # GIFs por personagem, incluindo a Shadow
 │   │   ├── cameras/
 │   │   │   └── CAM01/ … CAM12/      # Uma pasta por câmera
 │   │   │       ├── base.webp        # Fundo usado pelo jogo
@@ -62,7 +62,7 @@ O arquivo `outros/documentacao/MAPEAMENTO_ORIGINAIS.json` registra a importaçã
 
 As três imagens de referência da planta ficam em `outros/planta/referencias/`, não em `public/`, pois não são carregadas pelo jogo. Alguns PNGs mestres continuam em `public/images/` para os exportadores e testes de composição; o empacotamento de Pages exclui esses mestres. Modelos 3D ainda não existem; veja `docs/modelos-3d.md`.
 
-As imagens do menu, do computador, da Shadow e da Palhaça usam WebP sem perdas. Os PNGs correspondentes ficam em `outros/arte/`, com a mesma estrutura e extensão `.png`. O arquivo `outros/arte/shadow/jumpscare-frames.zip` guarda os 48 quadros e a animação usada em `public/images/jumpscares/shadow.webp`. As faixas de `public/audio/radio/` são as versões usadas pelo jogo, com as gravações de origem em `outros/audio/radio/`.
+As imagens do menu, do computador, da Shadow e da Palhaça usam WebP sem perdas. Os PNGs correspondentes ficam em `outros/arte/`, com a mesma estrutura e extensão `.png`. O arquivo `outros/arte/shadow/jumpscare-frames.zip` guarda os 48 quadros da versão antiga da Shadow, preservada em `reserva/public/images/jumpscares/shadow.webp`. Os oito GIFs aprovados têm suas fontes em `outros/arte/jumpscares/` e rodam uma vez em 980 ms, aproximadamente 30% mais rápido, no jogo e nos Extras. As faixas de `public/audio/radio/` são as versões usadas pelo jogo, com as gravações de origem em `outros/audio/radio/`.
 
 ## Publicar no GitHub Pages (sem build)
 
