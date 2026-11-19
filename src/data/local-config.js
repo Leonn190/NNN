@@ -1325,7 +1325,7 @@ window.NathGame.localConfig = {
     },
     "difficulty": {
       "maxIntervalReduction": 0.52,
-    "padraoMaxIntervalReduction": 0.58,
+      "padraoMaxIntervalReduction": 0.58,
       "maxReactionReduction": 0.2
     }
   },
