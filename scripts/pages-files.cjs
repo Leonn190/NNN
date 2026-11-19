@@ -45,7 +45,8 @@ function publicationFiles() {
   const images = listFiles(root, 'public/images').filter(file => {
     if (artOnly.test(file)) return false;
     return /\.(?:webp|gif|svg)$/.test(file)
-      || /^public\/images\/(?:intro\/[^/]+|cameras\/CAM\d{2}\/technical|office\/closet\/smores-frestas)\.png$/.test(file);
+      || /^public\/images\/(?:intro\/[^/]+|cameras\/CAM\d{2}\/technical|office\/closet\/smores-frestas)\.png$/.test(file)
+      || /^public\/images\/ending\/(?:creditos|armarios)\.png$/.test(file);
   });
   const declared = configAssets(config);
   const publicFiles = new Set(listFiles(root, 'public'));

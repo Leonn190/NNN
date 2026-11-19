@@ -1,0 +1,96 @@
+/* Sequências de créditos e da décima segunda morte (camada acima do jogo e dos menus). */
+.cinematic[hidden]{display:none!important}
+.cinematic{
+  position:fixed;inset:0;z-index:1000;display:block;overflow:hidden;
+  background:#050307;color:#fff;font-family:var(--mono,monospace);
+  isolation:isolate;outline:none
+}
+.cinematic-viewport{position:absolute;inset:0;overflow:hidden;background:#08050c}
+.cinematic-image{position:absolute;width:100%;height:100%;inset:0;object-fit:cover;max-width:none;filter:brightness(.63) saturate(.78)}
+.cinematic[data-mode="credits"] .cinematic-image{
+  transform-origin:center center;
+  animation:cinematic-float 26s ease-in-out infinite alternate;
+  filter:brightness(.65) saturate(.84)
+}
+@keyframes cinematic-float{
+  0%{transform:scale(1.14) translate3d(-2.6%,-1.3%,0) rotate(-.22deg)}
+  50%{transform:scale(1.19) translate3d(1.1%,1.2%,0) rotate(.1deg)}
+  100%{transform:scale(1.14) translate3d(2.4%,-1%,0) rotate(.22deg)}
+}
+.cinematic[data-mode="death"] .cinematic-image{
+  inset:0 auto auto 0;object-fit:fill;max-width:none;
+  filter:brightness(.56) contrast(1.15) saturate(.64)
+}
+.cinematic[data-mode="death"] .cinematic-image.is-panning{
+  animation:cinematic-pan var(--pan-ms,28000ms) linear both
+}
+@keyframes cinematic-pan{
+  from{transform:translate3d(0,0,0)}
+  to{transform:translate3d(var(--pan-distance,-10%),0,0)}
+}
+.cinematic-shade{position:absolute;inset:0;pointer-events:none;background:
+  linear-gradient(90deg,rgba(0,0,0,.52),transparent 24%,transparent 76%,rgba(0,0,0,.55)),
+  linear-gradient(0deg,rgba(0,0,0,.7),transparent 26%,transparent 75%,rgba(0,0,0,.36))}
+.cinematic[data-mode="credits"] .cinematic-shade{
+  background:linear-gradient(0deg,rgba(0,0,0,.8),rgba(0,0,0,.06) 62%,rgba(0,0,0,.12))}
+.cinematic-credits{
+  position:absolute;inset:auto 5% 17%;
+  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:clamp(20px,6vw,110px);
+  max-width:960px;margin-inline:auto;
+  text-align:center;text-shadow:0 2px 16px #000
+}
+.cinematic-credits.is-visible{animation:cinematic-credit-appear 7.1s ease-in-out both}
+@keyframes cinematic-credit-appear{
+  0%{opacity:0;transform:translateY(12px)}
+  16%,79%{opacity:1;transform:translateY(0)}
+  100%{opacity:0;transform:translateY(-6px)}
+}
+.cinematic-credit-role{margin:0 0 11px;font:600 clamp(10px,1.4vw,17px) var(--mono,monospace);letter-spacing:.22em;text-transform:uppercase;color:#e5d9e1}
+.cinematic-credit-name{margin:0;font:600 clamp(26px,3.5vw,55px) Georgia,serif;letter-spacing:.025em;color:#fff}
+.cinematic-quote{
+  position:absolute;right:clamp(22px,6vw,110px);bottom:clamp(84px,14vh,160px);
+  max-width:min(700px,80vw);min-height:4em;
+  color:#fff;font:500 clamp(17px,2.1vw,30px)/1.5 Georgia,serif;
+  text-align:right;letter-spacing:.025em;text-shadow:0 2px 16px #000,0 0 6px #000;
+  white-space:pre-wrap
+}
+.cinematic-quote:not(:empty)::after{
+  content:"";display:inline-block;width:.06em;height:.85em;margin-left:.16em;
+  vertical-align:baseline;background:#fff;animation:cinematic-caret .75s steps(1) infinite
+}
+@keyframes cinematic-caret{50%{opacity:0}}
+.cinematic-controls{
+  position:absolute;top:clamp(16px,3vw,38px);right:clamp(16px,3vw,42px);
+  display:flex;align-items:center;gap:12px
+}
+.cinematic-controls button{
+  background:#060307a8;border:1px solid #fff9;color:#fff;
+  font:700 clamp(11px,1.2vw,15px) var(--mono,monospace);
+  padding:11px 16px;letter-spacing:.13em;cursor:pointer
+}
+.cinematic-controls button:hover,.cinematic-controls button:focus-visible{
+  background:#ffffff2e;border-color:white;outline:2px solid #ffffff90;outline-offset:2px
+}
+.cinematic-missing{
+  position:absolute;top:clamp(60px,10vh,110px);left:clamp(16px,4vw,50px);
+  display:flex;flex-direction:column;gap:6px;max-width:min(580px,85vw);
+  margin:0;color:#ffccd3;font:500 12px/1.6 var(--mono,monospace);
+  text-shadow:0 1px 8px #000
+}
+.cinematic-missing[hidden],.cinematic-credits[hidden],.cinematic-quote[hidden],.cinematic-controls button[hidden]{display:none!important}
+@media(max-width:600px){
+  .cinematic-credits{inset:auto 4% 20%;gap:12px}
+  .cinematic-credit-name{font-size:clamp(21px,5vw,31px)}
+  .cinematic-credit-role{font-size:10px;letter-spacing:.12em}
+  .cinematic-quote{right:6vw;max-width:88vw;font-size:18px}
+  .cinematic-controls{gap:5px;top:14px;right:14px}
+  .cinematic-controls button{padding:9px;font-size:10px}
+}
+@media(prefers-reduced-motion:reduce){
+  .cinematic[data-mode="credits"] .cinematic-image,
+  .cinematic[data-mode="death"] .cinematic-image.is-panning,
+  .cinematic-credits.is-visible{animation:none!important}
+  .cinematic-credits.is-visible{opacity:1}
+  .cinematic-quote:not(:empty)::after{animation:none}
+}

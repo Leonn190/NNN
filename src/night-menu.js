@@ -3,7 +3,8 @@
 
 function createNightMenu(config, { prepareShift, startShift, onEnter,
   canPlayCampaign = () => true, onSelectCampaign = () => {},
-  onDeleteCampaign = () => {}, remainingGuards = () => 12 }) {
+  onDeleteCampaign = () => {}, remainingGuards = () => 12,
+  onPlayCinematic = () => {} }) {
   const $ = selector => document.querySelector(selector);
   const entry = $('#entry-screen');
   const entryButton = $('#enter-game');
@@ -277,13 +278,14 @@ function createNightMenu(config, { prepareShift, startShift, onEnter,
   function recordWin(number, shift) {
     const id = shift?.campaignId ?? selectedId;
     const result = store.advance(id, number);
-    if (!result) return;
+    if (!result) return null;
     if (result.closed) {
       store.awardCampaign(remainingGuards());
       onDeleteCampaign(id);
       if (selectedId === id) selectedId = null;
       renderStars();
     }
+    return result;
   }
 
   function recordCustomWin(shift) {
@@ -291,13 +293,6 @@ function createNightMenu(config, { prepareShift, startShift, onEnter,
       store.awardMaxNight();
       renderStars();
     }
-  }
-
-  function endExhaustedCampaign(id) {
-    if (!id) return;
-    if (!store.remove(id)) return;
-    onDeleteCampaign(id);
-    if (selectedId === id) selectedId = null;
   }
 
   introTitle.addEventListener('animationend', event => {
@@ -355,6 +350,16 @@ function createNightMenu(config, { prepareShift, startShift, onEnter,
   });
 
   $('#extras-list').addEventListener('click', event => {
+    const cinematic = event.target.closest('button[data-cinematic]');
+    if (cinematic && ['credits', 'death'].includes(cinematic.dataset.cinematic)) {
+      stopPreview({ resumeMusic: false });
+      music.pause();
+      onPlayCinematic(cinematic.dataset.cinematic, () => {
+        if (!title.hidden && !title.inert) music.play().catch(() => {});
+        cinematic.focus({ preventScroll: true });
+      });
+      return;
+    }
     const button = event.target.closest('button[data-scare]');
     if (!button) return;
     const file = button.dataset.scare;
@@ -378,7 +383,7 @@ function createNightMenu(config, { prepareShift, startShift, onEnter,
   entryButton.addEventListener('click', enter, { once: true });
 
   return { show, play, playCampaign, recordWin, recordCustomWin, restartCampaign,
-    endExhaustedCampaign, hasCampaign: id => Boolean(store.get(id)) };
+    hasCampaign: id => Boolean(store.get(id)) };
 }
 
 window.NathGame.createNightMenu = createNightMenu;
