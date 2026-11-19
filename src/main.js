@@ -4,7 +4,7 @@ const {
   CAMERAS, OFFICE, makeCameraMap, SoundEngine, createMovement, createNightMenu,
   cameraActorFrame, hasCameraState, closetFrame, closetVentImage, officeCharacterImage, corridorSlots, loadConfig,
   createImageCache, clearImageSource, setImageSource, createCameraInterference, renderVolume, renderResources,
-  createNotesSystem, createNotesUI
+  createNotesSystem, createNotesUI, createCinematics, endingAssets
 } = window.NathGame;
 const shopCamera = CAMERAS.find(cam => cam.id === 'CAM01');
 const serviceCamera = CAMERAS.find(cam => cam.id === 'CAM09');
@@ -34,6 +34,7 @@ try {
 const { controls } = config;
 const notesSystem = createNotesSystem(window.NathGame.notesCatalog);
 const radioMusic = $('#radio-music');
+const cinematics = createCinematics();
 const dom = {
   game: $('#game'), office: $('#office-view'), cameras: $('#cameras-view'), desktop: $('#computer-desktop'),
   computerScreen: $('#computer-screen'),
@@ -134,6 +135,7 @@ let nextDebugUpdate = 0;
 let nextDesktopUpdate = 0;
 let clockLabel;
 let defeatDeadline = 0;
+let deathCinematicPending = false;
 let scareRequest;
 let scareObjectUrl;
 let radioPlayback = null;
@@ -915,6 +917,7 @@ function updateRadioMix() {
 
 function stopRadio() {
   radioPlayback = null;
+  delete radioMusic.dataset.fallback;
   radioMixPan = radioMixHiding = undefined;
   state.radioPlaying = false;
   radioMusic.pause();
@@ -934,8 +937,13 @@ function toggleRadio() {
     return;
   }
   sound.connectRadio(radioMusic);
-  const track = controls.radioTracks[Math.floor(Math.random() * controls.radioTracks.length)];
-  radioMusic.src = `./public/audio/radio/${track}`;
+  const availableTracks = [...controls.radioTracks];
+  if (window.NathGame.createCampaignStore().stars() & 1) {
+    availableTracks.push(endingAssets.creditsRadioTrack);
+  }
+  const track = availableTracks[Math.floor(Math.random() * availableTracks.length)];
+  radioMusic.src = track === endingAssets.creditsRadioTrack
+    ? endingAssets.credits.audio : `./public/audio/radio/${track}`;
   const playback = radioMusic.play();
   radioPlayback = playback;
   dom.officeRadio.setAttribute('aria-pressed', 'true');
@@ -1092,9 +1100,10 @@ function finishShift() {
   releaseShiftImages();
   const { number } = state.shift;
   const campaignComplete = number === config.night.campaign.length;
+  let campaignResult = null;
   if (number) {
     notesSystem.completeNight(number);
-    menu.recordWin(number, state.shift);
+    campaignResult = menu.recordWin(number, state.shift);
   } else if (!debugEnabled()) {
     menu.recordCustomWin(state.shift);
   }
@@ -1105,9 +1114,17 @@ function finishShift() {
   $('#shift-result').textContent = campaignComplete ? 'Campanha concluída.' : 'O turno terminou.';
   $('#shift-message').textContent = campaignComplete ? 'Você sobreviveu às nove noites.' : 'Noite concluída.';
   dom.nextShift.hidden = !number || campaignComplete;
-  dom.complete.hidden = false;
-  (dom.nextShift.hidden ? dom.restart : dom.nextShift).focus();
+  const showCompletion = () => {
+    dom.game.inert = false;
+    dom.complete.hidden = false;
+    (dom.nextShift.hidden ? dom.restart : dom.nextShift).focus({ preventScroll: true });
+  };
   sound.playSample('chimes');
+  if (campaignComplete && campaignResult?.closed) {
+    dom.complete.hidden = true;
+    dom.game.inert = true;
+    cinematics.play('credits', { onFinish: showCompletion });
+  } else showCompletion();
 }
 
 function stopShift() {
@@ -1221,10 +1238,11 @@ function beginJumpscare(source) {
   if (state.complete || dom.game.dataset.defeat) return;
   const death = state.shift?.number ? notesSystem.recordDeath(state.shift.number, deathCause(source)) : null;
   const guardCounter = $('#game-over-guards');
-  guardCounter.hidden = !death;
-  if (death) guardCounter.textContent = death.counter;
-  if (death?.exhausted) menu.endExhaustedCampaign(state.shift.campaignId);
-  $('#retry-night').textContent = death?.exhausted ? 'RECOMEÇAR CAMPANHA' : 'TENTAR NOVAMENTE';
+  guardCounter.hidden = !state.shift?.number;
+  if (state.shift?.number) guardCounter.textContent = death?.counter ?? notesSystem.counter();
+  // A última vida libera a cena secreta, mas NÃO apaga nem bloqueia a campanha.
+  deathCinematicPending = Boolean(death?.exhausted);
+  $('#retry-night').textContent = 'TENTAR NOVAMENTE';
   let audio = 'scream.wav';
   if (source === SHADOW_IMAGE) {
     dom.game.dataset.scare = 'shadow';
@@ -1273,13 +1291,22 @@ function advanceDefeat(now) {
     case 'flash':
       dom.game.dataset.defeat = 'over';
       releaseShiftImages();
-      dom.gameOver.hidden = false;
-      $('#retry-night').focus();
+      if (deathCinematicPending) {
+        deathCinematicPending = false;
+        cinematics.play('death', { onFinish: revealGameOver });
+      } else revealGameOver();
       break;
   }
 }
 
+function revealGameOver() {
+  dom.gameOver.hidden = false;
+  $('#retry-night').focus({ preventScroll: true });
+}
+
 function prepareShift(shift) {
+  cinematics.stop(false);
+  deathCinematicPending = false;
   state.shift = shift;
   dom.debug.hidden = !debugEnabled();
   dom.game.hidden = false;
@@ -1751,7 +1778,16 @@ function setRadioPlaying(on) {
 radioMusic.addEventListener('playing', () => setRadioPlaying(Boolean(radioPlayback)));
 radioMusic.addEventListener('waiting', () => setRadioPlaying(false));
 radioMusic.addEventListener('pause', () => { if (radioMusic.paused) setRadioPlaying(false); });
-radioMusic.addEventListener('error', stopRadio);
+radioMusic.addEventListener('error', () => {
+  // Os arquivos de faixas novas podem chegar depois deste PR. Nunca deixamos
+  // uma música ausente interromper o rádio das faixas já existentes.
+  if (!radioPlayback || radioMusic.dataset.fallback) return stopRadio();
+  radioMusic.dataset.fallback = '1';
+  radioMusic.src = './public/audio/radio/' + controls.radioTracks[0];
+  const fallback = radioMusic.play();
+  radioPlayback = fallback;
+  fallback?.catch?.(() => { if (radioPlayback === fallback) stopRadio(); });
+});
 dom.closetExit.addEventListener('click', () => beginClosetTransition('exit'));
 dom.officeGate.addEventListener('click', () => {
   if (state.complete || state.mode !== 'office' || state.closetTransition || !movement.gateControlsAvailable(OFFICE.gate)) return;
@@ -1959,6 +1995,7 @@ dom.restart.addEventListener('click', replayShift);
 $('#retry-night').addEventListener('click', replayShift);
 dom.nextShift.addEventListener('click', () => menu.playCampaign(state.shift.number + 1));
 function returnToMenu() {
+  cinematics.stop(false);
   stopShift();
   clearJumpscareSound();
   clearJumpscareArt();
@@ -2161,10 +2198,11 @@ const menu = createNightMenu(config, {
   prepareShift,
   startShift,
   onEnter: () => sound.preloadSamples(attackSamples),
-  canPlayCampaign: () => notesSystem.remaining() > 0,
+  canPlayCampaign: () => true, // 00/12 é narrativa, não um bloqueio para zerar as nove noites.
   onSelectCampaign: id => notesSystem.selectCampaign(id),
   onDeleteCampaign: id => notesSystem.deleteCampaign(id),
-  remainingGuards: () => notesSystem.remaining()
+  remainingGuards: () => notesSystem.remaining(),
+  onPlayCinematic: (mode, done) => cinematics.play(mode, { onFinish: done })
 });
 dom.game.style.setProperty('--shadow-manifest-duration', `${config.shadow.manifestSeconds}s`);
 dom.game.style.setProperty('--shadow-found-duration', `${config.shadow.foundSeconds}s`);
