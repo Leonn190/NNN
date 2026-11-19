@@ -268,8 +268,7 @@ window.NathGame.localConfig = {
     "radioTracks": [
       "caramelldansen.mp3",
       "shikairo-days.mp3",
-      "kawaikute-gomen.mp3",
-      "musica-nova.mp3"
+      "kawaikute-gomen.mp3"
     ],
     "menuMusic": {
       "startSeconds": 27,
