@@ -949,7 +949,7 @@ function toggleRadio() {
   dom.officeRadio.setAttribute('aria-pressed', 'true');
   updateRadioMix();
   playback.catch(() => {
-    if (radioPlayback === playback) stopRadio();
+    if (radioPlayback === playback) fallbackRadio();
   });
 }
 
@@ -1778,16 +1778,17 @@ function setRadioPlaying(on) {
 radioMusic.addEventListener('playing', () => setRadioPlaying(Boolean(radioPlayback)));
 radioMusic.addEventListener('waiting', () => setRadioPlaying(false));
 radioMusic.addEventListener('pause', () => { if (radioMusic.paused) setRadioPlaying(false); });
-radioMusic.addEventListener('error', () => {
-  // Os arquivos de faixas novas podem chegar depois deste PR. Nunca deixamos
-  // uma música ausente interromper o rádio das faixas já existentes.
+function fallbackRadio() {
+  // Os arquivos de faixas novas podem chegar depois deste PR. Se faltarem,
+  // usamos uma faixa já instalada e não deixamos o rádio silencioso.
   if (!radioPlayback || radioMusic.dataset.fallback) return stopRadio();
   radioMusic.dataset.fallback = '1';
   radioMusic.src = './public/audio/radio/' + controls.radioTracks[0];
   const fallback = radioMusic.play();
   radioPlayback = fallback;
   fallback?.catch?.(() => { if (radioPlayback === fallback) stopRadio(); });
-});
+}
+radioMusic.addEventListener('error', fallbackRadio);
 dom.closetExit.addEventListener('click', () => beginClosetTransition('exit'));
 dom.officeGate.addEventListener('click', () => {
   if (state.complete || state.mode !== 'office' || state.closetTransition || !movement.gateControlsAvailable(OFFICE.gate)) return;
