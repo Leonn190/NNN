@@ -126,6 +126,10 @@ function createCinematics() {
     } else {
       creditsShownAll = true;
       if (soundEnded || soundFailed) later(() => stop(), 4400);
+      else later(() => {
+        // Uma música longa nunca deixa os créditos sumirem: repetimos as duplas.
+        if (mode === 'credits' && !soundEnded && !soundFailed) showCreditsPage(0);
+      }, 7200);
     }
   }
 
