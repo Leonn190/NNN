@@ -7,7 +7,7 @@ global.window = { NathGame: {}, addEventListener() {} };
 require('../src/ending-sequences.js');
 
 const { createCinematics, endingAssets, CINEMATIC_DEATH_MESSAGE,
-  cinematicCreditPairs, panoramaWidth, deathPanDuration } = window.NathGame;
+  cinematicCreditPairs, cinematicCreditShots, cinematicCreditsDuration, panoramaWidth, deathPanDuration } = window.NathGame;
 
 function mockScene() {
   const entries = new Map();
@@ -30,7 +30,7 @@ function mockScene() {
     get offsetWidth() { return 1; }
   });
   for (const id of ['cinematic', 'cinematic-image', 'cinematic-audio', 'cinematic-missing',
-    'cinematic-quote', 'cinematic-credits', 'cinematic-close', 'cinematic-enable-audio']) {
+    'cinematic-quote', 'cinematic-credits', 'cinematic-close', 'cinematic-enable-audio', 'cinematic-image-next']) {
     entries.set('#' + id, create());
   }
   const credits = entries.get('#cinematic-credits');
@@ -110,21 +110,22 @@ test('media manifest, pair credits, quote and panoramic geometry', () => {
   assert.equal(deathPanDuration(50), 37000);
 });
 
-test('credits show only two credits at a time and finish on music end', () => {
+test('credits use all 11 scenes, honor 200s and keep the exit callback', () => {
   const mock = mockScene();
   try {
     const cinematic = createCinematics();
     let finished = 0;
     cinematic.play('credits', { onFinish: () => finished++ });
     assert(cinematic.active());
-    assert.equal(mock.cards[0].name.textContent, 'Leon Soto');
-    assert.equal(mock.cards[1].name.textContent, 'Leon Soto');
-    assert.equal(mock.cards[0].role.textContent, 'UM JOGO DE');
-    mock.advance(7200);
-    assert.equal(mock.cards[0].role.textContent, 'PROGRAMAÇÃO');
-    mock.advance(7200 * 4);
     assert.equal(mock.cards[0].role.textContent, 'NINE NIGHTS AT NATH\'S');
-    mock.entries.get('#cinematic-audio').onended();
+    mock.advance(8000);
+    assert.equal(mock.cards[0].role.textContent, 'CRIAÇÃO ORIGINAL');
+    assert.equal(mock.entries.get('#cinematic-image-next').src,
+      './public/images/ending/restaurante-vazio.png');
+    mock.advance(8000 * 23);
+    assert.equal(mock.cards[0].role.textContent, 'OBRIGADO POR JOGAR');
+    assert.equal(finished, 0);
+    mock.advance(8000);
     assert.equal(finished, 1);
     assert.equal(mock.entries.get('#cinematic').hidden, true);
     assert.equal(cinematic.active(), false);
@@ -144,14 +145,14 @@ test('death sequence reaches right edge before typing each character and returns
     assert.equal(image.style.properties['--pan-distance'], '-1000px');
     assert.equal(image.style.properties['--pan-ms'], '28000ms');
     assert.equal(mock.entries.get('#cinematic-quote').textContent, '');
-    mock.advance(27999);
+    mock.advance(22999);
     assert.equal(mock.entries.get('#cinematic-quote').textContent, '');
     mock.advance(1);
     assert.equal(mock.entries.get('#cinematic-quote').textContent, 'A');
     mock.advance(10000);
     assert.equal(mock.entries.get('#cinematic-quote').textContent, CINEMATIC_DEATH_MESSAGE);
     mock.entries.get('#cinematic-audio').onended();
-    mock.advance(6500);
+    mock.advance(6200);
     assert.equal(finished, 1);
     assert.equal(cinematic.active(), false);
   } finally { mock.cleanup(); }
@@ -168,7 +169,7 @@ test('finish/death hooks, Extras buttons and radio unlock persist', () => {
   assert(html.includes('src/ending-sequences.js'));
   assert(html.includes('id="cinematic-close"'));
   assert(css.includes('@keyframes cinematic-pan'));
-  assert(css.includes('@keyframes cinematic-float'));
+  assert(css.includes('@keyframes cinematic-float'));\n  assert(css.includes('@keyframes cinematic-creep-in'));\n  assert(html.includes('id="cinematic-image-next"'));
   assert(main.includes("cinematics.play('credits'"));
   assert(main.includes("cinematics.play('death'"));
   assert(main.includes('campaignResult?.closed'));
