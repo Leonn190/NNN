@@ -631,12 +631,10 @@ function createMovement(config, { random = Math.random, hallucinationRandom = Ma
     }
     for (const actor of actors) {
       if (actor.pending || !actor.approach) continue;
-      if (approach.expired(actor)) {
-        withdraw(actor, actor.approach.objective);
-        continue;
-      }
       if (approach.completed(actor)) {
         actor.pending = { to: approach.options(actor).to, startedAt: now, expires: now + movement.retryWindow };
+      } else if (approach.expired(actor)) {
+        withdraw(actor, actor.approach.objective);
       }
     }
     for (const actor of actors) {

@@ -1298,7 +1298,7 @@ window.NathGame.localConfig = {
           "towardPenalty": -0.2,
           "towardProgress": 4
         },
-        "maxEntrySeconds": 150,
+        "maxEntrySeconds": 40,
         "gatinhaMaxEntrySeconds": 30
       }
     },
