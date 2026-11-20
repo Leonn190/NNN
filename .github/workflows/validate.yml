@@ -23,6 +23,8 @@ jobs:
         run: |
           node scripts/package-pages.cjs
           node scripts/check-assets.cjs dist
+      - name: Inspecionar duração e transientes da trilha (diagnóstico)
+        run: node scripts/analyze-credits-track.cjs
       - name: Testar balanceamento, cache e áudio
         run: node --test tests/balance.cjs tests/image-cache.cjs tests/sound.cjs tests/notes.cjs tests/campaigns.cjs tests/endings.cjs
       # As suítes históricas de simulação ainda contêm expectativas antigas.

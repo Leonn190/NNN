@@ -7,7 +7,7 @@ global.window = { NathGame: {}, addEventListener() {} };
 require('../src/ending-sequences.js');
 
 const { createCinematics, endingAssets, CINEMATIC_DEATH_MESSAGE,
-  cinematicCreditPairs, cinematicCreditShots, cinematicCreditsDuration, panoramaWidth, deathPanDuration } = window.NathGame;
+  cinematicCreditPairs, cinematicCreditShots, cinematicCreditsDuration, cinematicCreditCueTime, cinematicCreditsOutroSeconds, panoramaWidth, deathPanDuration } = window.NathGame;
 
 function mockScene() {
   const entries = new Map();
@@ -25,7 +25,7 @@ function mockScene() {
     removeAttribute(key) { delete this[key]; },
     replaceChildren() { this.children = []; },
     append(element) { (this.children ??= []).push(element); },
-    load() {}, pause() {}, play() { return Promise.resolve(); },
+    load() {}, pause() { this.playing = false; }, play() { this.playing = true; return Promise.resolve(); },
     focus() { this.focused = true; },
     get offsetWidth() { return 1; }
   });
@@ -41,6 +41,9 @@ function mockScene() {
     } };
   });
   credits.querySelectorAll = () => cards;
+  const audio = entries.get('#cinematic-audio');
+  audio.currentTime = 0;
+  audio.playing = false;
   let focusCount = 0;
   let now = 0;
   let nextId = 1;
@@ -70,9 +73,11 @@ function mockScene() {
       if (++loops > 10000) throw new Error('loop de timers');
       pending.delete(next[0]);
       now = next[1].when;
+      if (audio.playing) audio.currentTime = now / 1000;
       next[1].callback();
     }
     now = until;
+    if (audio.playing) audio.currentTime = now / 1000;
   };
   return {
     entries, cards, advance,
@@ -100,12 +105,29 @@ test('media manifest, pair credits, quote and panoramic geometry', () => {
     assert(fs.existsSync(full), 'Mídia não encontrada: ' + media);
     assert(fs.statSync(full).size > 100_000, 'Mídia incompleta: ' + media);
   }
-  assert.equal(cinematicCreditPairs.length, 25);
-  assert.equal(cinematicCreditShots.length, 13);
+  assert.equal(cinematicCreditPairs.length, 24);
+  assert.equal(cinematicCreditShots.length, 12);
   assert.equal(cinematicCreditsDuration, 200000);
+  assert.equal(cinematicCreditsOutroSeconds, 7);
+  assert.equal(cinematicCreditCueTime(193, 210), 203);
+  assert.equal(cinematicCreditShots.at(-1).image, './public/images/ending/restaurante-vazio.png');
+  assert.equal(cinematicCreditShots[0].pages[0].pair[1][1], '');
+  assert(!cinematicCreditShots[0].pages.flatMap(p => p.pair)
+    .some(([, name]) => name.includes('Leon')));
+  const guards = ['Pedro Garcia', 'Pedro Babugia', 'Henrique Baatalha', 'Caio Pontes',
+    'Felipe Riva', 'Felipe Lima', 'Arthur Ramos', 'Rafael Ferraz', 'Paulo Ventura',
+    'Arthur Guedes', 'Alexandre Do Bim', 'João Gannoun'];
+  const guardPages = cinematicCreditShots.flatMap(s => s.pages)
+    .filter(p => p.pair.some(([role]) => role === 'INSPIRAÇÃO PARA OS SEGURANÇAS'));
+  assert.equal(guardPages.length, 6);
+  assert(guardPages.every(p => p.pair.some(([role, name]) =>
+    role === 'INSPIRAÇÃO PARA OS SEGURANÇAS' && name.split(' · ').length === 2)));
+  for (const guard of guards) {
+    assert.equal(guardPages.filter(p => p.pair.some(([, name]) => name.includes(guard))).length, 1);
+  }
   assert(cinematicCreditPairs.every(pair => pair.length === 2));
   const credits = cinematicCreditPairs.flat(2).join(' ');
-  for (const expected of ['Leon Soto', 'Nathali Tomazine', 'Scott Cawthon',
+  for (const expected of ['Leon Soto', 'Nathali Thomazine', 'Scott Cawthon',
     'Five Nights at Freddy', 'Shikairo Days', 'Kawaikute Gomen', 'Caramelldansen',
     'Static-P', 'Amree', 'JT Music', 'Gooseworx', 'Evan Alderete',
     'ChatGPT (GPT)', 'OpenAI Codex', 'João Gannoun', 'Pedro Garcia']) {
@@ -113,7 +135,7 @@ test('media manifest, pair credits, quote and panoramic geometry', () => {
   }
   for (const shot of cinematicCreditShots) {
     assert(fs.existsSync(path.join(__dirname, '..', shot.image)), shot.image);
-    assert(shot.pages.length === 1 || shot.pages.length === 2);
+    assert(shot.pages.length >= 1 && shot.pages.length <= 3);
   }
   assert(CINEMATIC_DEATH_MESSAGE.includes('Agora só falta um'));
   assert(CINEMATIC_DEATH_MESSAGE.includes(String.fromCharCode(10)));
@@ -123,25 +145,52 @@ test('media manifest, pair credits, quote and panoramic geometry', () => {
   assert.equal(deathPanDuration(50), 29600);
 });
 
-test('credits use all 11 scenes, honor 200s and keep the exit callback', () => {
+test('credits follow the audio clock, end with the stage and preserve 7 seconds without titles', () => {
   const mock = mockScene();
   try {
+    const audio = mock.entries.get('#cinematic-audio');
+    audio.duration = 200;
     const cinematic = createCinematics();
     let finished = 0;
     cinematic.play('credits', { onFinish: () => finished++ });
     assert(cinematic.active());
     assert.equal(mock.cards[0].role.textContent, 'NINE NIGHTS AT NATH\'S');
-    mock.advance(8000);
-    assert.equal(mock.cards[0].role.textContent, 'CRIAÇÃO ORIGINAL');
+    assert.equal(mock.cards[1].name.textContent, '');
+    mock.advance(9000);
+    assert.equal(mock.cards[0].role.textContent, 'CRIAÇÃO E DIREÇÃO');
+    assert.equal(mock.entries.get('#cinematic-image-next').src,
+      './public/images/ending/recepcao.png');
+    mock.advance(168000);
+    assert.equal(mock.cards[0].role.textContent, 'OBRIGADO POR JOGAR');
     assert.equal(mock.entries.get('#cinematic-image-next').src,
       './public/images/ending/restaurante-vazio.png');
-    mock.advance(8000 * 23);
-    assert.equal(mock.cards[0].role.textContent, 'OBRIGADO POR JOGAR');
+    mock.advance(16000);
+    assert.equal(mock.cards[0].role.textContent, 'NINE NIGHTS AT NATH\'S');
     assert.equal(finished, 0);
-    mock.advance(8000);
+    audio.onended();
     assert.equal(finished, 1);
     assert.equal(mock.entries.get('#cinematic').hidden, true);
     assert.equal(cinematic.active(), false);
+  } finally { mock.cleanup(); }
+});
+
+test('credit timestamps scale to the true MP3 length and do not end before the audio', () => {
+  const mock = mockScene();
+  try {
+    const audio = mock.entries.get('#cinematic-audio');
+    audio.duration = 212;
+    const cinematic = createCinematics();
+    cinematic.play('credits');
+    const firstCue = cinematicCreditCueTime(9, 212);
+    mock.advance(Math.round((firstCue - .3) * 1000));
+    assert.equal(mock.cards[0].role.textContent, 'NINE NIGHTS AT NATH\'S');
+    mock.advance(500);
+    assert.equal(mock.cards[0].role.textContent, 'CRIAÇÃO E DIREÇÃO');
+    mock.advance(198000);
+    assert(cinematic.active());
+    assert.equal(mock.entries.get('#cinematic').hidden, false);
+    audio.onended();
+    assert(!cinematic.active());
   } finally { mock.cleanup(); }
 });
 
@@ -185,6 +234,9 @@ test('finish/death hooks, Extras buttons and radio unlock persist', () => {
   assert(css.includes('@keyframes cinematic-pan'));
   assert(css.includes('@keyframes cinematic-float'));
   assert(css.includes('@keyframes cinematic-creep-in'));
+  assert(css.includes('max-width:177.777778dvh'));
+  assert(css.includes('@keyframes cinematic-stage-finale'));
+  assert(css.includes('.is-epilogue'));
   assert(html.includes('id="cinematic-image-next"'));
   assert(main.includes("cinematics.play('credits'"));
   assert(main.includes("cinematics.play('death'"));

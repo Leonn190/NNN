@@ -17,108 +17,71 @@ const ASSETS = Object.freeze({
 });
 
 const DEATH_MESSAGE = 'Agora só falta um para termos certeza de que ele foi morto.\nOs outros poderão aproveitar a festa para sempre.';
-const CREDIT_PAGE_MS = 8000;
-const CREDIT_TOTAL_MS = 200000;
+// A duração e a última despedida vêm do MP3; 200s é apenas a escala de referência.
+const CREDIT_REFERENCE_SECONDS = 200;
+const CREDIT_SILENT_OUTRO_SECONDS = 7;
 const CREDIT_DIR = './public/images/ending/';
 const CREDIT_SHOTS = Object.freeze([
-  {
-    image: CREDIT_DIR + 'creditos.png', motion: 'float', layout: 'title',
-    pages: [
-      [['NINE NIGHTS AT NATH\'S', ''], ['UM JOGO DE', 'Leon Soto']]
-    ]
-  },
-  {
-    image: CREDIT_DIR + 'restaurante-vazio.png', motion: 'creep-in',
-    pages: [
-      [['CRIAÇÃO ORIGINAL', 'Leon Soto'], ['DIREÇÃO CRIATIVA', 'Leon Soto']],
-      [['DESENVOLVIMENTO INDEPENDENTE', 'Leon Soto'], ['DIREÇÃO DE TERROR', 'Leon Soto']]
-    ]
-  },
-  {
-    image: CREDIT_DIR + 'recepcao.png', motion: 'drift-left',
-    pages: [
-      [['PROGRAMAÇÃO PRINCIPAL', 'Leon Soto'], ['ARQUITETURA DE SISTEMAS', 'Leon Soto']],
-      [['GAME DESIGN', 'Leon Soto'], ['DESIGN DE MECÂNICAS', 'Leon Soto']]
-    ]
-  },
-  {
-    image: CREDIT_DIR + 'vip-bonecas.png', motion: 'drift-right',
-    pages: [
-      [['INTELIGÊNCIA ARTIFICIAL', 'Leon Soto'], ['ROTAS E CAÇADA', 'Leon Soto']],
-      [['BALANCEAMENTO DAS NOITES', 'Leon Soto'], ['SANIDADE E ENERGIA', 'Leon Soto']]
-    ]
-  },
-  {
-    image: CREDIT_DIR + 'gotica-vip-roxo.png', motion: 'pull-back',
-    pages: [
-      [['DIREÇÃO DE ARTE', 'Leon Soto'], ['DESIGN DE PERSONAGENS', 'Leon Soto']],
-      [['ARTE E AMBIENTAÇÃO', 'Leon Soto'], ['CENOGRAFIA DO RESTAURANTE', 'Leon Soto']]
-    ]
-  },
-  {
-    image: CREDIT_DIR + 'maid-gatinha-cozinha.png', motion: 'drift-up',
-    pages: [
-      [['LEVEL DESIGN', 'Leon Soto'], ['POSICIONAMENTO DE CÂMERAS', 'Leon Soto']],
-      [['INTERFACE E UX', 'Leon Soto'], ['EFEITOS VISUAIS', 'Leon Soto']]
-    ]
-  },
-  {
-    image: CREDIT_DIR + 'maid-oficina.png', motion: 'creep-in',
-    pages: [
-      [['JUMPSCARES', 'Leon Soto'], ['ANIMAÇÕES', 'Leon Soto']],
-      [['HISTÓRIA ORIGINAL', 'Leon Soto'], ['ROTEIRO E LORE', 'Leon Soto']]
-    ]
-  },
-  {
-    image: CREDIT_DIR + 'fliperama.png', motion: 'drift-right',
-    pages: [
-      [['DIREÇÃO DE SOM', 'Leon Soto'], ['CURADORIA MUSICAL', 'Leon Soto']],
-      [['CINEMÁTICAS E CRÉDITOS', 'Leon Soto'], ['TESTES E PRODUÇÃO', 'Leon Soto']]
-    ]
-  },
-  {
-    image: CREDIT_DIR + 'yandere-corredor-leste.png', motion: 'drift-left',
-    pages: [
-      [['INSPIRADO EM', 'Five Nights at Freddy\'s\nScott Cawthon'], ['INSPIRAÇÃO SONORA', 'Five Nights at Freddy\'s\nScott Cawthon']],
-      [['MÚSICA · SHIKAIRO DAYS', 'Shika-bu · Yūki Waga\nKana Yaginuma'], ['MÚSICA · KAWAIKUTE GOMEN', 'HoneyWorks · shito']]
-    ]
-  },
-  {
-    image: CREDIT_DIR + 'palhaca-escritorio.png', motion: 'creep-in',
-    pages: [
-      [['MÚSICA · CARAMELLDANSEN', 'Caramell\nJorge Vasconcelo · Juha Myllylä'], ['MÚSICA · IT\'S NOT LIKE I LIKE YOU!!', 'Static-P · Amree']],
-      [['MÚSICA · JOIN US FOR A BITE', 'JT Music\nVoz: Andrea Storm Kaden'], ['MÚSICA · THE AMAZING DIGITAL CIRCUS', 'Gooseworx (tema)\nEvan Alderete (trilha)']]
-    ]
-  },
-  {
-    image: CREDIT_DIR + 'corredor-bonecas.png', motion: 'drift-up',
-    pages: [
-      [['ASSISTÊNCIA CRIATIVA', 'ChatGPT (GPT) · OpenAI'], ['ASSISTÊNCIA DE PROGRAMAÇÃO', 'OpenAI Codex']],
-      [['TECNOLOGIAS', 'HTML · CSS · JavaScript'], ['VERSIONAMENTO E PUBLICAÇÃO', 'GitHub · GitHub Pages']]
-    ]
-  },
-  {
-    image: CREDIT_DIR + 'lounge-rosa-roxo.png', motion: 'pull-back', layout: 'roster',
-    pages: [
-      [['INSPIRAÇÃO PARA OS GUARDAS · I', 'Pedro Garcia · Pedro Babugia\nHenrique Baatalha · Caio Pontes\nFelipe Riva · Felipe Lima'], ['INSPIRAÇÃO PARA OS GUARDAS · II', 'Arthur Ramos · Rafael Ferraz\nPaulo Ventura · Arthur Guedes\nAlexandre Do Bim · João Gannoun']],
-      [['INSPIRAÇÃO PARA NATHZINHA', 'Nathali Tomazine'], ['AGRADECIMENTO ESPECIAL', 'Nathali Tomazine']]
-    ]
-  },
-  {
-    image: CREDIT_DIR + 'creditos.png', motion: 'float', layout: 'finale',
-    pages: [
-      [['PARA QUEM CHEGOU ATÉ AQUI', 'Obrigado por cada noite.'], ['UMA CRIAÇÃO DE', 'Leon Soto']],
-      [['OBRIGADO POR JOGAR', ''], ['NINE NIGHTS AT NATH\'S', 'Leon Soto']]
-    ]
-  }
+  { image: CREDIT_DIR + 'creditos.png', motion: 'float', layout: 'title', pages: [
+    { at: 0, pair: [['NINE NIGHTS AT NATH\'S', ''], ['', '']] }
+  ] },
+  { image: CREDIT_DIR + 'recepcao.png', motion: 'drift-left', pages: [
+    { at: 9, pair: [['CRIAÇÃO E DIREÇÃO', 'Leon Soto'], ['PROGRAMAÇÃO', 'Leon Soto']] },
+    { at: 17, pair: [['GAME DESIGN', 'Leon Soto'], ['INTELIGÊNCIA ARTIFICIAL', 'Leon Soto']] }
+  ] },
+  { image: CREDIT_DIR + 'vip-bonecas.png', motion: 'drift-right', pages: [
+    { at: 25, pair: [['HISTÓRIA E ROTEIRO', 'Leon Soto'], ['DESIGN DE MECÂNICAS', 'Leon Soto']] },
+    { at: 33, pair: [['INSPIRAÇÃO PARA OS SEGURANÇAS', 'Pedro Garcia · Pedro Babugia'], ['BALANCEAMENTO DAS NOITES', 'Leon Soto']] }
+  ] },
+  { image: CREDIT_DIR + 'gotica-vip-roxo.png', motion: 'pull-back', pages: [
+    { at: 41, pair: [['ARTE E AMBIENTAÇÃO', 'Leon Soto'], ['DESIGN DAS ANIMATRÔNICAS', 'Leon Soto']] },
+    { at: 49, pair: [['INSPIRAÇÃO PARA OS SEGURANÇAS', 'Henrique Baatalha · Caio Pontes'], ['ARQUITETURA DO RESTAURANTE', 'Leon Soto']] }
+  ] },
+  { image: CREDIT_DIR + 'maid-gatinha-cozinha.png', motion: 'drift-up', pages: [
+    { at: 57, pair: [['ANIMAÇÕES E CINEMÁTICAS', 'Leon Soto'], ['INTERFACE E UX', 'Leon Soto']] },
+    { at: 65, pair: [['INSPIRAÇÃO PARA NATHZINHA', 'Nathali Thomazine'], ['INSPIRAÇÃO ARTÍSTICA', 'Nathali Thomazine']] }
+  ] },
+  { image: CREDIT_DIR + 'maid-oficina.png', motion: 'creep-in', pages: [
+    { at: 73, pair: [['DESIGN DE SOM', 'Leon Soto'], ['CURADORIA MUSICAL', 'Leon Soto']] },
+    { at: 81, pair: [['INSPIRAÇÃO PARA OS SEGURANÇAS', 'Felipe Riva · Felipe Lima'], ['DIREÇÃO DE ARTE', 'Leon Soto']] }
+  ] },
+  { image: CREDIT_DIR + 'fliperama.png', motion: 'drift-right', pages: [
+    { at: 89, pair: [['MÚSICA · SHIKAIRO DAYS', 'Shika-bu · Yūki Waga\nKana Yaginuma'], ['MÚSICA · KAWAIKUTE GOMEN', 'HoneyWorks · shito']] },
+    { at: 97, pair: [['MÚSICA · CARAMELLDANSEN', 'Caramell\nJorge Vasconcelo · Juha Myllylä'], ['MÚSICA · IT\'S NOT LIKE I LIKE YOU!!', 'Static-P · Amree']] }
+  ] },
+  { image: CREDIT_DIR + 'yandere-corredor-leste.png', motion: 'drift-left', pages: [
+    { at: 105, pair: [['INSPIRADO EM', 'Five Nights at Freddy\'s\nScott Cawthon'], ['SONS E REFERÊNCIAS', 'Five Nights at Freddy\'s']] },
+    { at: 113, pair: [['INSPIRAÇÃO PARA OS SEGURANÇAS', 'Arthur Ramos · Rafael Ferraz'], ['MÚSICA · JOIN US FOR A BITE', 'JT Music\nAndrea Storm Kaden']] }
+  ] },
+  { image: CREDIT_DIR + 'palhaca-escritorio.png', motion: 'creep-in', pages: [
+    { at: 121, pair: [['MÚSICA · THE AMAZING DIGITAL CIRCUS', 'Gooseworx (tema)\nEvan Alderete (trilha)'], ['ASSISTÊNCIA CRIATIVA', 'ChatGPT (GPT) · OpenAI']] },
+    { at: 129, pair: [['ASSISTÊNCIA À PROGRAMAÇÃO', 'OpenAI Codex'], ['TECNOLOGIAS DE DESENVOLVIMENTO', 'HTML · CSS · JavaScript']] }
+  ] },
+  { image: CREDIT_DIR + 'corredor-bonecas.png', motion: 'drift-up', pages: [
+    { at: 137, pair: [['INSPIRAÇÃO PARA OS SEGURANÇAS', 'Paulo Ventura · Arthur Guedes'], ['VERSIONAMENTO E PUBLICAÇÃO', 'GitHub · GitHub Pages']] },
+    { at: 145, pair: [['INSPIRAÇÃO PARA NATHZINHA', 'Nathali Thomazine'], ['PERSONAGENS E AMBIENTES', 'Concepção do universo NNN']] }
+  ] },
+  { image: CREDIT_DIR + 'lounge-rosa-roxo.png', motion: 'pull-back', pages: [
+    { at: 153, pair: [['INSPIRAÇÃO PARA OS SEGURANÇAS', 'Alexandre Do Bim · João Gannoun'], ['', '']] },
+    { at: 161, pair: [['AGRADECIMENTO ESPECIAL', 'Nathali Thomazine'], ['', '']] },
+    { at: 169, pair: [['A TODOS QUE INSPIRARAM ESSA HISTÓRIA', 'Obrigado por fazerem parte dela.'], ['', '']] }
+  ] },
+  // Era a segunda cena dos créditos; agora fecha a história com o palco vazio.
+  { image: CREDIT_DIR + 'restaurante-vazio.png', motion: 'stage-finale', layout: 'finale', pages: [
+    { at: 177, pair: [['OBRIGADO POR JOGAR', ''], ['', '']] },
+    { at: 185, pair: [['NINE NIGHTS AT NATH\'S', 'Até a próxima noite.'], ['', '']] }
+  ] }
 ]);
 const CREDIT_PAGES = Object.freeze(CREDIT_SHOTS.flatMap((shot, shotIndex) =>
-  shot.pages.map(pair => Object.freeze({ shotIndex, pair }))));
+  shot.pages.map(page => Object.freeze({ ...page, shotIndex, pair: page.pair }))));
 const CREDIT_PAIRS = Object.freeze(CREDIT_PAGES.map(page => page.pair));
-if (CREDIT_PAGES.length * CREDIT_PAGE_MS !== CREDIT_TOTAL_MS) {
-  throw new Error('Os créditos devem durar exatamente 3min20s.');
+const CREDIT_MOTIONS = ['float', 'creep-in', 'drift-left', 'drift-right', 'pull-back', 'drift-up', 'stage-finale'];
+function creditCueTime(at, duration = CREDIT_REFERENCE_SECONDS) {
+  const safeDuration = Number.isFinite(duration) && duration > CREDIT_SILENT_OUTRO_SECONDS + 15
+    ? duration : CREDIT_REFERENCE_SECONDS;
+  return at * (safeDuration - CREDIT_SILENT_OUTRO_SECONDS)
+    / (CREDIT_REFERENCE_SECONDS - CREDIT_SILENT_OUTRO_SECONDS);
 }
-const CREDIT_MOTIONS = ['float', 'creep-in', 'drift-left', 'drift-right', 'pull-back', 'drift-up'];
 
 function panoramaWidth(naturalWidth, naturalHeight, viewportWidth, viewportHeight) {
   if (!(naturalWidth > 0 && naturalHeight > 0 && viewportWidth > 0 && viewportHeight > 0)) {
@@ -151,6 +114,11 @@ function createCinematics() {
   let timers = [];
   let token = 0;
   let creditsShot = -1;
+  let creditsPage = -1;
+  let creditsFrame = null;
+  let creditFallbackTimer = null;
+  let creditFallbackStart = 0;
+  let creditsEpilogue = false;
   let activeImage = image;
   let preload = null;
   let soundEnded = false;
@@ -191,6 +159,10 @@ function createCinematics() {
     mode = null;
     for (const id of timers) clearTimeout(id);
     timers = [];
+    if (creditsFrame != null && typeof cancelAnimationFrame === 'function') cancelAnimationFrame(creditsFrame);
+    creditsFrame = null;
+    if (creditFallbackTimer != null) clearTimeout(creditFallbackTimer);
+    creditFallbackTimer = null;
     audio.pause();
     audio.onended = audio.onerror = audio.onloadedmetadata = null;
     audio.removeAttribute('src');
@@ -198,7 +170,8 @@ function createCinematics() {
     clearImageState(image);
     clearImageState(nextImage);
     root.hidden = true;
-    root.classList.remove('is-finale');
+    root.classList.remove('is-finale', 'is-epilogue');
+    root.style.removeProperty('--outro-ms');
     delete root.dataset.mode;
     delete credits.dataset.layout;
     quote.textContent = '';
@@ -206,6 +179,8 @@ function createCinematics() {
     missing.hidden = true;
     enableAudio.hidden = true;
     creditsShot = -1;
+    creditsPage = -1;
+    creditsEpilogue = false;
     activeImage = image;
     preload = null;
     const callback = onClose;
@@ -217,43 +192,84 @@ function createCinematics() {
     previousFocus = null;
   }
 
+  function creditsDuration() {
+    return Number.isFinite(audio.duration) && audio.duration > 22
+      ? audio.duration : CREDIT_REFERENCE_SECONDS;
+  }
+
   function showCreditsShot(index) {
     const shot = CREDIT_SHOTS[index];
     const incoming = creditsShot === -1 ? image : (activeImage === image ? nextImage : image);
     incoming.classList.remove('is-current', ...CREDIT_MOTIONS.map(motion => 'is-' + motion));
     incoming.src = shot.image;
+    const nextShot = CREDIT_SHOTS[index + 1];
+    const begin = creditCueTime(shot.pages[0].at, creditsDuration());
+    const end = nextShot ? creditCueTime(nextShot.pages[0].at, creditsDuration()) : creditsDuration();
+    incoming.style.setProperty('--shot-ms', Math.round(Math.max(1500, (end - begin) * 1000)) + 'ms');
     void incoming.offsetWidth;
     incoming.classList.add('is-current', 'is-' + shot.motion);
     if (creditsShot !== -1) activeImage.classList.remove('is-current');
     activeImage = incoming;
     creditsShot = index;
-    // Somente a próxima cena é aquecida, evitando manter 11 PNGs em memória.
-    preload = index + 1 < CREDIT_SHOTS.length ? document.createElement('img') : null;
-    if (preload) preload.src = CREDIT_SHOTS[index + 1].image;
+    // Apenas a próxima imagem é preparada; evita carregar todos os PNGs juntos.
+    preload = nextShot ? document.createElement('img') : null;
+    if (preload) preload.src = nextShot.image;
   }
 
   function showCreditsPage(index) {
-    if (mode !== 'credits') return;
-    if (index >= CREDIT_PAGES.length) {
-      stop();
-      return;
-    }
+    if (mode !== 'credits' || creditsEpilogue || index === creditsPage) return;
     const page = CREDIT_PAGES[index];
+    if (!page) return;
     if (page.shotIndex !== creditsShot) showCreditsShot(page.shotIndex);
     const shot = CREDIT_SHOTS[page.shotIndex];
     credits.dataset.layout = shot.layout || 'standard';
-    root.classList.toggle('is-finale', index === CREDIT_PAGES.length - 1);
+    creditsPage = index;
+    const endAt = index + 1 < CREDIT_PAGES.length
+      ? creditCueTime(CREDIT_PAGES[index + 1].at, creditsDuration())
+      : creditsDuration() - CREDIT_SILENT_OUTRO_SECONDS;
+    const pageAt = creditCueTime(page.at, creditsDuration());
+    credits.style.setProperty('--credit-page-ms', Math.max(900, (endAt - pageAt) * 1000) + 'ms');
     cards.forEach((card, i) => {
       const [role, name] = page.pair[i];
       card.querySelector('.cinematic-credit-role').textContent = role;
       card.querySelector('.cinematic-credit-name').textContent = name;
-      card.classList.toggle('is-compact', name.length > 30 || role.length > 34);
+      card.classList.toggle('is-empty', !role && !name);
+      card.classList.toggle('is-compact', name.length > 32 || role.length > 34);
       card.classList.toggle('is-roster', name.split('\n').length > 2);
     });
     credits.classList.remove('is-visible');
     void credits.offsetWidth;
     credits.classList.add('is-visible');
-    later(() => showCreditsPage(index + 1), CREDIT_PAGE_MS);
+  }
+
+  function enterCreditsEpilogue() {
+    if (creditsEpilogue) return;
+    creditsEpilogue = true;
+    credits.classList.remove('is-visible');
+    root.classList.add('is-epilogue');
+    root.style.setProperty('--outro-ms', (CREDIT_SILENT_OUTRO_SECONDS * 1000) + 'ms');
+  }
+
+  function creditsTick() {
+    if (mode !== 'credits') return;
+    const duration = creditsDuration();
+    // O áudio, e não um contador de setTimeout, é o relógio principal.
+    const position = soundFailed
+      ? (Date.now() - creditFallbackStart) / 1000
+      : Math.max(0, Number.isFinite(audio.currentTime) ? audio.currentTime : 0);
+    if (position >= duration - CREDIT_SILENT_OUTRO_SECONDS) enterCreditsEpilogue();
+    else {
+      let page = 0;
+      while (page + 1 < CREDIT_PAGES.length
+        && position >= creditCueTime(CREDIT_PAGES[page + 1].at, duration)) page++;
+      showCreditsPage(page);
+    }
+    if (soundFailed && position >= duration) { stop(); return; }
+    if (typeof requestAnimationFrame === 'function') {
+      creditsFrame = requestAnimationFrame(creditsTick);
+    } else {
+      creditFallbackTimer = setTimeout(creditsTick, 100);
+    }
   }
 
   function resizeDeathImage() {
@@ -302,12 +318,15 @@ function createCinematics() {
     onClose = onFinish || null;
     previousFocus = document.activeElement;
     creditsShot = -1;
+    creditsPage = -1;
+    creditsEpilogue = false;
     activeImage = image;
     preload = null;
+    creditFallbackStart = Date.now();
     soundEnded = soundFailed = deathTyped = deathPanStarted = false;
     root.dataset.mode = kind;
     root.hidden = false;
-    root.classList.remove('is-finale');
+    root.classList.remove('is-finale', 'is-epilogue');
     quote.textContent = '';
     credits.hidden = kind !== 'credits';
     quote.hidden = kind !== 'death';
@@ -331,18 +350,20 @@ function createCinematics() {
 
     audio.onloadedmetadata = () => {
       if (sceneToken !== token) return;
-      // Se o áudio da morte carregar depois, o panorama ainda tem um tempo seguro.
+      // Duração real do áudio ajusta automaticamente os tempos das cartelas.
     };
     audio.onerror = () => {
       if (sceneToken !== token) return;
       soundFailed = true;
       missingAsset(ASSETS[kind].audio);
-      // Créditos têm relógio próprio e nunca terminam antes de 3min20s.
+      // Sem a trilha, encerra rapidamente em vez de reproduzir créditos longos em silêncio.
+      if (kind === 'credits') later(() => stop(), 5000);
       if (kind === 'death' && deathTyped) later(() => stop(), 6200);
     };
     audio.onended = () => {
       if (sceneToken !== token) return;
       soundEnded = true;
+      if (kind === 'credits') { stop(); return; }
       if (kind === 'death' && deathTyped) later(() => stop(), 6200);
     };
     audio.src = ASSETS[kind].audio;
@@ -352,8 +373,10 @@ function createCinematics() {
     if (playback?.catch) playback.catch(() => {
       if (sceneToken === token && !soundFailed) enableAudio.hidden = false;
     });
-    if (kind === 'credits') showCreditsPage(0);
-    else later(startDeathPan, 2000);
+    if (kind === 'credits') {
+      showCreditsPage(0);
+      creditsTick();
+    } else later(startDeathPan, 2000);
   }
 
   enableAudio.addEventListener('click', () => {
@@ -374,7 +397,9 @@ window.NathGame.endingAssets = ASSETS;
 window.NathGame.CINEMATIC_DEATH_MESSAGE = DEATH_MESSAGE;
 window.NathGame.cinematicCreditPairs = CREDIT_PAIRS;
 window.NathGame.cinematicCreditShots = CREDIT_SHOTS;
-window.NathGame.cinematicCreditsDuration = CREDIT_TOTAL_MS;
+window.NathGame.cinematicCreditsDuration = CREDIT_REFERENCE_SECONDS * 1000;
+window.NathGame.cinematicCreditCueTime = creditCueTime;
+window.NathGame.cinematicCreditsOutroSeconds = CREDIT_SILENT_OUTRO_SECONDS;
 window.NathGame.panoramaWidth = panoramaWidth;
 window.NathGame.deathPanDuration = deathPanDuration;
 window.NathGame.createCinematics = createCinematics;
