@@ -199,11 +199,11 @@ function createEffects(config, routes, actors) {
       }));
       return { camera: stimulus.camera, modifiers };
     },
-    // HUD gains map continuous rates and brief events onto the same 0–100 scale.
-    noiseIntensity: now => clamp(Math.max(globalNoise, transientVolume(now)), 0, noise.max),
+    // HUD shows sound being made now, not gameplay noise that lingers for many seconds.
+    noiseIntensity: (now, input) => clamp(noiseRate(input) * 4 + transientVolume(now), 0, noise.max),
     addNoiseEvent(event, now = volumePeakAt) {
       const amount = noise.events[event] ?? 0;
-      volumePeak = transientVolume(now) + amount * 7;
+      volumePeak = Math.max(transientVolume(now), amount * 7);
       volumePeakAt = now;
       globalNoise = clamp(globalNoise + amount, 0, noise.max);
       for (const actor of actors) if (actor.approach) actor.noise = perceivedNoise(actor);

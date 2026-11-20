@@ -14,52 +14,44 @@ function lossColor(rate, stops) {
   return `rgb(${channels.join(', ')})`;
 }
 
-const volumeSamples = Array(40).fill(0);
-const volumeStepSeconds = .2;
-let volumeBars;
+// The waveform scrolls for eight seconds; quiet periods are exactly flat.
+const volumeSamples = new Float32Array(81);
+const volumeStepSeconds = .1;
 let lastVolumeBucket = 0;
-
-function paintVolumeBar(bar, level) {
-  bar.style.height = `${Math.max(1, Math.round(level))}%`;
-  bar.dataset.level = level >= 65 ? 'high' : level >= 30 ? 'mid' : level > 2 ? 'low' : 'idle';
-}
-
-function resetVolumeHistory(dom) {
-  if (!volumeBars) {
-    const fragment = document.createDocumentFragment();
-    volumeBars = volumeSamples.map(() => {
-      const bar = document.createElement('span');
-      bar.className = 'volume-bar';
-      fragment.append(bar);
-      return bar;
-    });
-    dom.volumeTimeline.replaceChildren(fragment);
-  }
-  volumeSamples.fill(0);
-  lastVolumeBucket = 0;
-  for (const bar of volumeBars) paintVolumeBar(bar, 0);
-}
+let bucketPeak = 0;
 
 function renderVolume(dom, intensity, elapsedSeconds = 0, reset = false) {
-  if (!volumeBars || reset || elapsedSeconds < lastVolumeBucket * volumeStepSeconds) resetVolumeHistory(dom);
-  const level = Math.min(100, Math.max(0, Number(intensity) || 0));
-  const bucket = Math.floor(Math.max(0, elapsedSeconds) / volumeStepSeconds);
+  const time = Math.max(0, elapsedSeconds);
+  const bucket = Math.floor(time / volumeStepSeconds + .000001);
+  if (reset || bucket < lastVolumeBucket) {
+    volumeSamples.fill(0);
+    lastVolumeBucket = 0;
+    bucketPeak = 0;
+  }
+
   if (bucket > lastVolumeBucket) {
     const passed = Math.min(volumeSamples.length, bucket - lastVolumeBucket);
     volumeSamples.copyWithin(0, passed);
     volumeSamples.fill(0, volumeSamples.length - passed);
     lastVolumeBucket = bucket;
-    for (let i = 0; i < volumeBars.length; i++) paintVolumeBar(volumeBars[i], volumeSamples[i]);
+    bucketPeak = 0;
   }
-  const newest = volumeSamples.length - 1;
-  if (level > volumeSamples[newest]) {
-    volumeSamples[newest] = level;
-    paintVolumeBar(volumeBars[newest], level);
+
+  const level = Math.min(100, Math.max(0, Number(intensity) || 0));
+  bucketPeak = Math.max(bucketPeak, level);
+  // Irregular oscillations around the central line, not bars or a cumulative meter.
+  const pulse = Math.sin(bucket * 2.4) * .78 + Math.sin(bucket * 1.23) * .22;
+  const amplitude = bucketPeak < 4 ? 0 : 14 * Math.pow(bucketPeak / 100, .8);
+  volumeSamples[volumeSamples.length - 1] = amplitude * pulse;
+
+  let trace = 'M0 16';
+  for (let i = 1; i < volumeSamples.length; i++) {
+    trace += `L${i * 2} ${(16 - volumeSamples[i]).toFixed(1)}`;
   }
+  dom.volumeTrace.setAttribute('d', trace);
   const value = String(Math.round(level));
   if (dom.volumeDetector.getAttribute('aria-valuenow') !== value) {
     dom.volumeDetector.setAttribute('aria-valuenow', value);
-    dom.volumeValue.textContent = value;
   }
 }
 

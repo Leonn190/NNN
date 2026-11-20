@@ -349,14 +349,11 @@
 
 
       <div class="resource-hud" id="resource-hud" hidden>
-        <div class="volume-detector" id="volume-detector" role="meter" aria-labelledby="volume-label"
+        <div class="volume-detector" id="volume-detector" role="meter" aria-label="Ruído ao longo dos últimos 8 segundos"
           aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
-          <div class="volume-head">
-            <span id="volume-label">VOLUME <span class="volume-history-tag">· HISTÓRICO</span></span>
-            <strong class="volume-reading" id="volume-value" aria-hidden="true">0</strong>
-          </div>
-          <div class="volume-timeline" id="volume-timeline" aria-hidden="true"></div>
-          <div class="volume-axis" aria-hidden="true"><span>−8s</span><span>AGORA</span></div>
+          <svg class="volume-wave" viewBox="0 0 160 32" preserveAspectRatio="none" aria-hidden="true">
+            <path id="volume-trace" d="M0 16H160"></path>
+          </svg>
         </div>
         <label id="sanity-label" for="sanity-meter">Sanidade <span id="sanity-value" aria-hidden="true">100%</span></label>
         <meter id="sanity-meter" min="0" max="100" value="100"></meter>
