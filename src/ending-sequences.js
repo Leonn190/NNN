@@ -1,7 +1,7 @@
 (() => {
 'use strict';
 
-// Créditos cinematográficos: 25 cartelas de 8s = 3min20s, com 11 cenas distintas.
+// Créditos cinematográficos: 12 cenas com cortes em segundos exatos da trilha (3min20s).
 // Nomes musicais identificam os respectivos criadores, sem implicar licenciamento.
 const ASSETS = Object.freeze({
   credits: Object.freeze({
@@ -22,65 +22,66 @@ const CREDIT_REFERENCE_SECONDS = 200;
 const CREDIT_SILENT_OUTRO_SECONDS = 7;
 const CREDIT_DIR = './public/images/ending/';
 const CREDIT_SHOTS = Object.freeze([
-  { image: CREDIT_DIR + 'creditos.png', motion: 'float', layout: 'title', pages: [
-    { at: 0, pair: [['NINE NIGHTS AT NATH\'S', ''], ['', '']] }
+  { image: CREDIT_DIR + "creditos.png", motion: "float", layout: "title", pages: [
+    { at: 0, pair: [["NINE NIGHTS AT NATH'S", ""], ["", ""]] }
   ] },
-  { image: CREDIT_DIR + 'recepcao.png', motion: 'drift-left', pages: [
-    { at: 9, pair: [['CRIAÇÃO E DIREÇÃO', 'Leon Soto'], ['PROGRAMAÇÃO', 'Leon Soto']] },
-    { at: 17, pair: [['GAME DESIGN', 'Leon Soto'], ['INTELIGÊNCIA ARTIFICIAL', 'Leon Soto']] }
+  { image: CREDIT_DIR + "recepcao.png", motion: "drift-left", pages: [
+    { at: 9, pair: [["CRIAÇÃO E DIREÇÃO", "Leon Soto"], ["PROGRAMAÇÃO", "Leon Soto"]] },
+    { at: 14, pair: [["GAME DESIGN", "Leon Soto"], ["PRODUÇÃO", "Leon Soto"]] }
   ] },
-  { image: CREDIT_DIR + 'vip-bonecas.png', motion: 'drift-right', pages: [
-    { at: 25, pair: [['HISTÓRIA E ROTEIRO', 'Leon Soto'], ['DESIGN DE MECÂNICAS', 'Leon Soto']] },
-    { at: 33, pair: [['INSPIRAÇÃO PARA NATHZINHA', 'Nathali Thomazine'], ['BALANCEAMENTO DAS NOITES', 'Leon Soto']] }
+  { image: CREDIT_DIR + "maid-gatinha-cozinha.png", motion: "drift-up", pages: [
+    { at: 18, pair: [["HISTÓRIA E ROTEIRO", "Leon Soto"], ["DESIGN DE MECÂNICAS", "Leon Soto"]] },
+    { at: 24, pair: [["BALANCEAMENTO DAS NOITES", "Leon Soto"], ["INTELIGÊNCIA ARTIFICIAL", "Leon Soto"]] },
+    { at: 30, pair: [["ARQUITETURA DO RESTAURANTE", "Leon Soto"], ["AMBIENTAÇÃO DAS CÂMERAS", "Leon Soto"]] }
   ] },
-  { image: CREDIT_DIR + 'gotica-vip-roxo.png', motion: 'pull-back', pages: [
-    { at: 41, pair: [['ARTE E AMBIENTAÇÃO', 'Leon Soto'], ['DESIGN DAS ANIMATRÔNICAS', 'Leon Soto']] },
-    { at: 49, pair: [['ASSISTÊNCIA À PROGRAMAÇÃO', 'OpenAI Codex'], ['ARQUITETURA DO RESTAURANTE', 'Leon Soto']] }
+  { image: CREDIT_DIR + "gotica-vip-roxo.png", motion: "pull-back", pages: [
+    { at: 36, pair: [["ARTE E AMBIENTAÇÃO", "Leon Soto"], ["DESIGN DAS ANIMATRÔNICAS", "Leon Soto"]] },
+    { at: 44, pair: [["ANIMAÇÕES E CINEMÁTICAS", "Leon Soto"], ["DIREÇÃO DE ARTE", "Leon Soto"]] }
   ] },
-  { image: CREDIT_DIR + 'maid-gatinha-cozinha.png', motion: 'drift-up', pages: [
-    { at: 57, pair: [['ANIMAÇÕES E CINEMÁTICAS', 'Leon Soto'], ['INTERFACE E UX', 'Leon Soto']] },
-    { at: 65, pair: [['INSPIRAÇÃO PARA NATHZINHA', 'Nathali Thomazine'], ['INSPIRAÇÃO ARTÍSTICA', 'Nathali Thomazine']] }
+  { image: CREDIT_DIR + "palhaca-escritorio.png", motion: "creep-in", pages: [
+    { at: 53, pair: [["ASSISTÊNCIA À PROGRAMAÇÃO", "OpenAI Codex"], ["ASSISTÊNCIA CRIATIVA", "ChatGPT (GPT) · OpenAI"]] },
+    { at: 62, pair: [["INTERFACE E UX", "Leon Soto"], ["TECNOLOGIAS DE DESENVOLVIMENTO", "HTML · CSS · JavaScript"]] }
   ] },
-  { image: CREDIT_DIR + 'maid-oficina.png', motion: 'creep-in', pages: [
-    { at: 73, pair: [['DESIGN DE SOM', 'Leon Soto'], ['CURADORIA MUSICAL', 'Leon Soto']] },
-    { at: 81, pair: [['MÚSICA · THE AMAZING DIGITAL CIRCUS', 'Gooseworx (tema)\nEvan Alderete (trilha)'], ['DIREÇÃO DE ARTE', 'Leon Soto']] }
+  { image: CREDIT_DIR + "vip-bonecas.png", motion: "drift-right", pages: [
+    { at: 71, pair: [["INSPIRAÇÃO PARA NATHZINHA", "Nathali Thomazine"], ["INSPIRAÇÃO ARTÍSTICA", "Nathali Thomazine"]] },
+    { at: 80, pair: [["DIREÇÃO CRIATIVA", "Leon Soto"], ["CONCEPÇÃO DO UNIVERSO NNN", "Leon Soto"]] }
   ] },
-  { image: CREDIT_DIR + 'fliperama.png', motion: 'drift-right', pages: [
-    { at: 89, pair: [['MÚSICA · SHIKAIRO DAYS', 'Shika-bu · Yūki Waga\nKana Yaginuma'], ['MÚSICA · KAWAIKUTE GOMEN', 'HoneyWorks · shito']] },
-    { at: 97, pair: [['MÚSICA · CARAMELLDANSEN', 'Caramell\nJorge Vasconcelo · Juha Myllylä'], ['MÚSICA · IT\'S NOT LIKE I LIKE YOU!!', 'Static-P · Amree']] }
+  { image: CREDIT_DIR + "corredor-bonecas.png", motion: "drift-up", pages: [
+    { at: 89, pair: [["INSPIRADO EM", "Five Nights at Freddy's\nScott Cawthon"], ["MÚSICA · JOIN US FOR A BITE", "JT Music\nAndrea Storm Kaden"]] },
+    { at: 96, pair: [["MÚSICA · SHIKAIRO DAYS", "Shika-bu · Yūki Waga\nKana Yaginuma"], ["MÚSICA · KAWAIKUTE GOMEN", "HoneyWorks · shito"]] },
+    { at: 103, pair: [["MÚSICA · THE AMAZING DIGITAL CIRCUS", "Gooseworx (tema)\nEvan Alderete (trilha)"], ["SONS E REFERÊNCIAS", "Five Nights at Freddy's"]] }
   ] },
-  { image: CREDIT_DIR + 'yandere-corredor-leste.png', motion: 'drift-left', pages: [
-    { at: 105, pair: [['INSPIRADO EM', 'Five Nights at Freddy\'s\nScott Cawthon'], ['SONS E REFERÊNCIAS', 'Five Nights at Freddy\'s']] },
-    { at: 113, pair: [['INSPIRAÇÃO PARA OS SEGURANÇAS', 'Pedro Garcia · Pedro Babugia'], ['MÚSICA · JOIN US FOR A BITE', 'JT Music\nAndrea Storm Kaden']] }
+  { image: CREDIT_DIR + "yandere-corredor-leste.png", motion: "drift-left", layout: "guards", pages: [
+    { at: 109, pair: [["", "Pedro Garcia"], ["", "Pedro Babugia"]] },
+    { at: 115, pair: [["", "Henrique Baatalha"], ["", "Caio Pontes"]] },
+    { at: 121, pair: [["", "Felipe Riva"], ["", "Felipe Lima"]] }
   ] },
-  { image: CREDIT_DIR + 'palhaca-escritorio.png', motion: 'creep-in', pages: [
-    { at: 121, pair: [['INSPIRAÇÃO PARA OS SEGURANÇAS', 'Henrique Baatalha · Caio Pontes'], ['ASSISTÊNCIA CRIATIVA', 'ChatGPT (GPT) · OpenAI']] },
-    { at: 129, pair: [['INSPIRAÇÃO PARA OS SEGURANÇAS', 'Felipe Riva · Felipe Lima'], ['TECNOLOGIAS DE DESENVOLVIMENTO', 'HTML · CSS · JavaScript']] }
+  { image: CREDIT_DIR + "fliperama.png", motion: "drift-right", layout: "guards", pages: [
+    { at: 127, pair: [["", "Arthur Ramos"], ["", "Rafael Ferraz"]] },
+    { at: 133, pair: [["", "Paulo Ventura"], ["", "Arthur Guedes"]] },
+    { at: 139, pair: [["", "Alexandre Do Bim"], ["", "João Gannoun"]] }
   ] },
-  { image: CREDIT_DIR + 'corredor-bonecas.png', motion: 'drift-up', pages: [
-    { at: 137, pair: [['INSPIRAÇÃO PARA OS SEGURANÇAS', 'Arthur Ramos · Rafael Ferraz'], ['VERSIONAMENTO E PUBLICAÇÃO', 'GitHub · GitHub Pages']] },
-    { at: 145, pair: [['INSPIRAÇÃO PARA OS SEGURANÇAS', 'Paulo Ventura · Arthur Guedes'], ['PERSONAGENS E AMBIENTES', 'Concepção do universo NNN']] }
+  { image: CREDIT_DIR + "maid-oficina.png", motion: "creep-in", pages: [
+    { at: 144, pair: [["MÚSICA · CARAMELLDANSEN", "Caramell\nJorge Vasconcelo · Juha Myllylä"], ["MÚSICA · IT'S NOT LIKE I LIKE YOU!!", "Static-P · Amree"]] },
+    { at: 151, pair: [["DESIGN DE SOM", "Leon Soto"], ["CURADORIA MUSICAL", "Leon Soto"]] }
   ] },
-  { image: CREDIT_DIR + 'lounge-rosa-roxo.png', motion: 'pull-back', pages: [
-    { at: 153, pair: [['INSPIRAÇÃO PARA OS SEGURANÇAS', 'Alexandre Do Bim · João Gannoun'], ['', '']] },
-    { at: 161, pair: [['AGRADECIMENTO ESPECIAL', 'Nathali Thomazine'], ['', '']] },
-    { at: 169, pair: [['A TODOS QUE INSPIRARAM ESSA HISTÓRIA', 'Obrigado por fazerem parte dela.'], ['', '']] }
+  { image: CREDIT_DIR + "lounge-rosa-roxo.png", motion: "pull-back", pages: [
+    { at: 159, pair: [["PERSONAGENS E AMBIENTES", "Concepção do universo NNN"], ["VERSIONAMENTO E PUBLICAÇÃO", "GitHub · GitHub Pages"]] },
+    { at: 167, pair: [["AGRADECIMENTO ESPECIAL", "Nathali Thomazine"], ["A QUEM INSPIROU OS SEGURANÇAS", "Obrigado por participar desta história."]] },
+    { at: 175, pair: [["A TODOS QUE INSPIRARAM ESSA HISTÓRIA", "Obrigado por fazerem parte dela."], ["", ""]] }
   ] },
-  // Era a segunda cena dos créditos; agora fecha a história com o palco vazio.
-  { image: CREDIT_DIR + 'restaurante-vazio.png', motion: 'stage-finale', layout: 'finale', pages: [
-    { at: 177, pair: [['OBRIGADO POR JOGAR', ''], ['', '']] },
-    { at: 185, pair: [['NINE NIGHTS AT NATH\'S', 'Até a próxima noite.'], ['', '']] }
+  { image: CREDIT_DIR + "restaurante-vazio.png", motion: "stage-finale", layout: "finale", pages: [
+    { at: 181, pair: [["OBRIGADO POR JOGAR", ""], ["", ""]] },
+    { at: 187, pair: [["NINE NIGHTS AT NATH'S", "Até a próxima noite."], ["", ""]] }
   ] }
 ]);
 const CREDIT_PAGES = Object.freeze(CREDIT_SHOTS.flatMap((shot, shotIndex) =>
   shot.pages.map(page => Object.freeze({ ...page, shotIndex, pair: page.pair }))));
 const CREDIT_PAIRS = Object.freeze(CREDIT_PAGES.map(page => page.pair));
 const CREDIT_MOTIONS = ['float', 'creep-in', 'drift-left', 'drift-right', 'pull-back', 'drift-up', 'stage-finale'];
-function creditCueTime(at, duration = CREDIT_REFERENCE_SECONDS) {
-  const safeDuration = Number.isFinite(duration) && duration > CREDIT_SILENT_OUTRO_SECONDS + 15
-    ? duration : CREDIT_REFERENCE_SECONDS;
-  return at * (safeDuration - CREDIT_SILENT_OUTRO_SECONDS)
-    / (CREDIT_REFERENCE_SECONDS - CREDIT_SILENT_OUTRO_SECONDS);
+// As imagens mudam no segundo indicado, sem reescalonar pelo metadata do MP3.
+function creditCueTime(at) {
+  return at;
 }
 
 function panoramaWidth(naturalWidth, naturalHeight, viewportWidth, viewportHeight) {
@@ -319,10 +320,11 @@ function createCinematics() {
       let page = 0;
       while (page + 1 < CREDIT_PAGES.length
         && position >= creditCueTime(CREDIT_PAGES[page + 1].at, duration)) page++;
-      // Uma cartela aguarda até 0,48s um ataque do áudio próximo à marca
-      // para que o corte coincida com o pulso, sem atrasar o roteiro se faltar sinal.
+      // Somente cartelas de texto esperam até 0,48s pela batida.
+      // Trocas de imagem jamais aguardam: devem ocorrer nos segundos exatos.
       const cue = creditCueTime(CREDIT_PAGES[page].at, duration);
       if (page > creditsPage && creditsPage >= 0 && rhythm
+        && CREDIT_PAGES[page].shotIndex === CREDIT_PAGES[creditsPage].shotIndex
         && position < cue + .48 && !hasRhythmPulse(position)) page = creditsPage;
       else if (rhythm) hasRhythmPulse(position);
       showCreditsPage(page);
