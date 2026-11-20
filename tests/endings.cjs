@@ -19,7 +19,7 @@ function mockScene() {
       setProperty(key, value) { this.properties[key] = value; },
       removeProperty(key) { delete this.properties[key]; }
     },
-    classList: { add() {}, remove() {} },
+    classList: { add() {}, remove() {}, toggle() {} },
     handlers: {},
     addEventListener(event, callback) { this.handlers[event] = callback; },
     removeAttribute(key) { delete this[key]; },
@@ -36,7 +36,7 @@ function mockScene() {
   const credits = entries.get('#cinematic-credits');
   const cards = Array.from({ length: 2 }, () => {
     const role = create(), name = create();
-    return { role, name, querySelector(selector) {
+    return { role, name, classList: { add() {}, remove() {}, toggle() {} }, querySelector(selector) {
       return selector === '.cinematic-credit-role' ? role : name;
     } };
   });
@@ -100,14 +100,27 @@ test('media manifest, pair credits, quote and panoramic geometry', () => {
     assert(fs.existsSync(full), 'Mídia não encontrada: ' + media);
     assert(fs.statSync(full).size > 100_000, 'Mídia incompleta: ' + media);
   }
-  assert.equal(cinematicCreditPairs.length, 6);
-  assert(cinematicCreditPairs.every(pair => pair.length === 2
-    && pair.every(([, credited]) => credited === 'Leon Soto')));
-  assert(CINEMATIC_DEATH_MESSAGE.includes('Agora só falta 1'));
+  assert.equal(cinematicCreditPairs.length, 25);
+  assert.equal(cinematicCreditShots.length, 13);
+  assert.equal(cinematicCreditsDuration, 200000);
+  assert(cinematicCreditPairs.every(pair => pair.length === 2));
+  const credits = cinematicCreditPairs.flat(2).join(' ');
+  for (const expected of ['Leon Soto', 'Nathali Tomazine', 'Scott Cawthon',
+    'Five Nights at Freddy', 'Shikairo Days', 'Kawaikute Gomen', 'Caramelldansen',
+    'Static-P', 'Amree', 'JT Music', 'Gooseworx', 'Evan Alderete',
+    'ChatGPT (GPT)', 'OpenAI Codex', 'João Gannoun', 'Pedro Garcia']) {
+    assert(credits.toLowerCase().includes(expected.toLowerCase()), expected);
+  }
+  for (const shot of cinematicCreditShots) {
+    assert(fs.existsSync(path.join(__dirname, '..', shot.image)), shot.image);
+    assert(shot.pages.length === 1 || shot.pages.length === 2);
+  }
+  assert(CINEMATIC_DEATH_MESSAGE.includes('Agora só falta um'));
+  assert(CINEMATIC_DEATH_MESSAGE.includes(String.fromCharCode(10)));
   assert.equal(panoramaWidth(4000, 1000, 1000, 500), 2000);
   assert.equal(panoramaWidth(1000, 2000, 1000, 500), 1120);
-  assert.equal(deathPanDuration(NaN), 28000);
-  assert.equal(deathPanDuration(50), 37000);
+  assert.equal(deathPanDuration(NaN), 23000);
+  assert.equal(deathPanDuration(50), 29600);
 });
 
 test('credits use all 11 scenes, honor 200s and keep the exit callback', () => {
@@ -142,8 +155,9 @@ test('death sequence reaches right edge before typing each character and returns
     image.naturalWidth = 4000;
     image.naturalHeight = 1000;
     image.onload();
-    assert.equal(image.style.properties['--pan-distance'], '-1000px');
-    assert.equal(image.style.properties['--pan-ms'], '28000ms');
+    assert.equal(image.style.properties['--pan-distance'], '-1200px');
+    assert.equal(image.style.top, '-25px');
+    assert.equal(image.style.properties['--pan-ms'], '23000ms');
     assert.equal(mock.entries.get('#cinematic-quote').textContent, '');
     mock.advance(22999);
     assert.equal(mock.entries.get('#cinematic-quote').textContent, '');
@@ -169,7 +183,9 @@ test('finish/death hooks, Extras buttons and radio unlock persist', () => {
   assert(html.includes('src/ending-sequences.js'));
   assert(html.includes('id="cinematic-close"'));
   assert(css.includes('@keyframes cinematic-pan'));
-  assert(css.includes('@keyframes cinematic-float'));\n  assert(css.includes('@keyframes cinematic-creep-in'));\n  assert(html.includes('id="cinematic-image-next"'));
+  assert(css.includes('@keyframes cinematic-float'));
+  assert(css.includes('@keyframes cinematic-creep-in'));
+  assert(html.includes('id="cinematic-image-next"'));
   assert(main.includes("cinematics.play('credits'"));
   assert(main.includes("cinematics.play('death'"));
   assert(main.includes('campaignResult?.closed'));
