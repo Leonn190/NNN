@@ -58,7 +58,7 @@ const dom = {
   taskTime: $('#task-time'), taskDate: $('#task-date'),
   clock: $('#clock-label'),
   resourceHud: $('#resource-hud'), sanityMeter: $('#sanity-meter'), sanityValue: $('#sanity-value'),
-  volumeDetector: $('#volume-detector'), volumeTrace: $('#volume-trace'),
+  volumeDetector: $('#volume-detector'), volumeTimeline: $('#volume-timeline'), volumeValue: $('#volume-value'),
   energyMeter: $('#energy-meter'), energyValue: $('#energy-value'),
   shadowManifest: $('#shadow-manifest'), shadowOfficeArt: $('#shadow-office-art'),
   shadowFeed: $('#shadow-feed'), shadowSprite: $('#shadow-sprite'),
@@ -1158,7 +1158,7 @@ function stopShift() {
   goticaStaticAt = undefined;
   cancelGameFrame();
   dom.resourceHud.hidden = dom.shadowManifest.hidden = dom.shadowOfficeArt.hidden = dom.shadowFeed.hidden = true;
-  renderVolume(dom, 0);
+  renderVolume(dom, 0, 0, true);
   dom.sanityMeter.style.removeProperty('--meter-color');
   dom.energyMeter.style.removeProperty('--meter-color');
   dom.energyMeter.classList.remove('low');
@@ -1360,7 +1360,7 @@ function prepareShift(shift) {
   const frame = movement.snapshot({ hud: true });
   renderResourceState(frame);
   renderResources(dom, frame);
-  renderVolume(dom, frame.noiseIntensity);
+  renderVolume(dom, frame.noiseIntensity, 0, true);
   movementChanged = officeChanged = true;
   changedGates.clear();
   changedCameras.clear();
@@ -1577,7 +1577,7 @@ function renderGameFrame(frame, now) {
   if (now >= nextHudUpdate) {
     nextHudUpdate = now + 100;
     renderResources(dom, frame);
-    renderVolume(dom, frame.noiseIntensity);
+    renderVolume(dom, frame.noiseIntensity, (now - state.startedAt) / 1000);
     updateAudioControl(frame.audio);
   }
   if (debugEnabled() && now >= nextDebugUpdate) {

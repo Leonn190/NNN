@@ -200,7 +200,7 @@ function createEffects(config, routes, actors) {
       return { camera: stimulus.camera, modifiers };
     },
     // HUD gains map continuous rates and brief events onto the same 0–100 scale.
-    noiseIntensity: () => globalNoise,
+    noiseIntensity: now => clamp(Math.max(globalNoise, transientVolume(now)), 0, noise.max),
     addNoiseEvent(event, now = volumePeakAt) {
       const amount = noise.events[event] ?? 0;
       volumePeak = transientVolume(now) + amount * 7;
