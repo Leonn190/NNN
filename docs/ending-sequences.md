@@ -2,10 +2,10 @@
 
 ## Créditos finais com relógio da música
 
-- **Duração:** a sequência encerra em \`audio.onended\`, exatamente quando termina \`public/audio/ending/creditos.mp3\`. O roteiro-base é de 200 s, com interpolação dos tempos caso o arquivo tenha duração diferente.
+- **Duração:** a sequência encerra em \`audio.onended\`, exatamente quando termina \`public/audio/ending/creditos.mp3\`. O arquivo atual tem **199,920 segundos**, confirmados pela inspeção dos frames MPEG em CI. O roteiro-base é de 200 s, com interpolação dos tempos caso o arquivo tenha duração diferente.
 - **Últimos sete segundos:** sem créditos; permanece apenas \`restaurante-vazio.png\`, com afastamento progressivo e escurecimento da imagem. O palco vazio, antes segunda cena, agora é a **última**.
 - **Campo de visão:** as duas cinemáticas (créditos e morte dos guardas) usam a mesma largura máxima de 16:9 de \`.game\` (\`max-width:177.777778dvh\`), centralizadas, sem expor bordas adicionais em ultrawide.
-- **Sincronização:** as 24 cartelas usam marcas de tempo de frases musicais. Em vez de temporizadores independentes, o tempo é lido diretamente de \`audio.currentTime\`, permitindo retomar a sincronia depois de pausas e mudanças de aba. Cada imagem tem duração individual e dissolve para a próxima em 0,85 s.
+- **Sincronização:** as 24 cartelas usam marcas de tempo de frases musicais. Em vez de temporizadores independentes, o tempo é lido diretamente de \`audio.currentTime\`, permitindo retomar a sincronia depois de pausas e mudanças de aba. Cada imagem tem duração individual e dissolve para a próxima em 0,85 s. Quando o navegador permite \`captureStream\` e Web Audio, os cortes aguardam no máximo 0,48 s para coincidir com um pulso forte próximo à marca; se indisponível, seguem as marcas de tempo da faixa, sem atrasos.
 - **Texto:** apenas o título na abertura, sem atribuição a Leon Soto; funções principais condensadas nas próximas cenas.
 - **Guardas:** 12 nomes em **seis aparições**, distribuídos em imagens diferentes, sempre com o título **INSPIRAÇÃO PARA OS SEGURANÇAS**, sem numeração.
 - **Nathali Thomazine:** inspiração para Nathzinha, inspiração artística e agradecimento especial.
@@ -29,7 +29,7 @@
 | 2:17 | corredor-bonecas.png | Subida |
 | 2:33 | lounge-rosa-roxo.png | Afastamento |
 | 2:57 | restaurante-vazio.png | Afastamento até o fim |
-| 3:13–3:20 | Apenas palco vazio | Textos somem e a cena escurece |
+| 3:12,92–3:19,92 | Apenas palco vazio | Textos somem e a cena escurece |
 
 A última cena permanece **até o fim real do MP3**, mesmo que o final mude de duração. Os tempos listados são âncoras de edição, não uma transcrição de letras.
 
