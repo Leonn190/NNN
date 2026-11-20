@@ -306,9 +306,10 @@ function createApproach(map, effects, random, observingLeft = () => false, curre
   }
 
   function expired(actor) {
-    return actor.approach && actor.approach.phase !== 'invasion'
-      && (actor.approach.elapsed >= (actor.approach.phase === 'entry' ? rules.maxEntrySeconds ?? limit : limit)
-        || actor.approach.stalled >= stallLimit);
+    if (!actor.approach || actor.approach.phase === 'invasion') return false;
+    const entryLimit = actor.key === 'gatinha' ? rules.gatinhaMaxEntrySeconds : rules.maxEntrySeconds;
+    const maxSeconds = actor.approach.phase === 'entry' ? entryLimit ?? limit : limit;
+    return actor.approach.elapsed >= maxSeconds || actor.approach.stalled >= stallLimit;
   }
 
   function arrive(actor) {
