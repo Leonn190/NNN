@@ -278,6 +278,7 @@ function createApproach(map, effects, random, observingLeft = () => false, curre
   function begin(actor, objective) {
     if (actor.position !== stages[objective][0]) return false;
     actor.light = 0;
+    actor.goticaExposure = 0;
     actor.approach = { objective, phase: 'approach', progress: 0, elapsed: 0, stalled: 0 };
     actor.due = Infinity;
     return true;

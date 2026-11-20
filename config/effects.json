@@ -103,11 +103,17 @@
   },
   "flashlight": {
     "corridorFlickerMs": 160,
-    "corridorIntervalFactor": 1.25,
+    "corridorIntervalSlowdown": 0.20,
     "modifiers": {
       "gotica": {
         "secondsToMax": 5,
-        "advanceDelta": -0.7
+        "advanceDelta": -0.7,
+        "retreatAfterMaxSeconds": 7
+      },
+      "yandere": {
+        "secondsToMax": 5,
+        "advanceDelta": -0.12,
+        "barPenalty": 0.12
       },
       "gatinha": {
         "secondsToMax": 5,

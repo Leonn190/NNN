@@ -43,6 +43,7 @@
       ]
     },
     "blockedProgressRetention": 0.75,
+    "hourlyBonus": { "default": 2, "padrao": 3 },
     "definitions": {
       "CV": {
         "objective": "corridor",
@@ -328,9 +329,10 @@
     "intervalFactor": 1.2,
     "freeMoves": 1
   },
+  "cameraIntervalSlowdown": { "default": 0.30, "padrao": 0.40 },
   "difficulty": {
-    "maxIntervalReduction": 0.52,
-    "padraoMaxIntervalReduction": 0.58,
+    "maxIntervalReduction": 0.50,
+    "padraoMaxIntervalReduction": 0.55,
     "maxReactionReduction": 0.2
   }
 }

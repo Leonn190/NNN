@@ -27,12 +27,19 @@ function createMovement(config, { random = Math.random, hallucinationRandom = Ma
     && canControlGate(id, undefined, resources.snapshot(now).blackout);
   const officeLightAvailable = () => !gates.closed.has(officeGate) && !actors.some(actor => actor.position === office);
   const corridorLit = () => input.corridorLight && resources.flashlightAvailable(now) && officeLightAvailable();
-  const lightIntervalFactor = actor => actor.key !== 'gotica' && (actor.position === back || actor.position === front)
-    && corridorLit() ? config.effects.flashlight.corridorIntervalFactor : 1;
+  const intervalSlowdown = actor => {
+    if (watchingCamera() && !input.cameraObservationBlocked && cameraObserves(actor.position)) {
+      return actor.key === 'padrao'
+        ? movement.cameraIntervalSlowdown.padrao : movement.cameraIntervalSlowdown.default;
+    }
+    return actor.key !== 'gotica' && actor.key !== 'gatinha'
+      && (actor.position === back || actor.position === front) && corridorLit()
+      ? config.effects.flashlight.corridorIntervalSlowdown : 0;
+  };
   const moveDue = actor => {
     const reduction = smores.intervalReduction();
     const due = reduction < actor.scheduledSeconds ? actor.due - reduction : actor.due;
-    return now + (due - now) * lightIntervalFactor(actor);
+    return now + (due - now) / (1 - intervalSlowdown(actor));
   };
   const camerasAvailable = () => resources.computerOn() && !electrical.failed();
   const canUse = (actor, edge) => edge && (!edge.actors || edge.actors.includes(actor.key))
@@ -264,6 +271,7 @@ function createMovement(config, { random = Math.random, hallucinationRandom = Ma
     actor.approach = null;
     actor.noise = 0;
     actor.light = 0;
+    actor.goticaExposure = 0;
     actor.freeMoves = actor.rule.routes && intervalFactor === recovery.intervalFactor ? recovery.freeMoves : 0;
     schedule(actor, intervalFactor);
   }
@@ -311,8 +319,13 @@ function createMovement(config, { random = Math.random, hallucinationRandom = Ma
   }
 
   const navigationTarget = actor => actor.rule.routes ? attackRoutes.checkpoint(actor) : back;
-  const navigationBonus = actor => actor.rule.routes
-    ? attackRoutes.bonus(actor.level, actor.route?.moves ?? actor.retainedRouteMoves, actor.key) : actor.targetBonus;
+  const navigationBonus = actor => {
+    const base = actor.rule.routes
+      ? attackRoutes.bonus(actor.level, actor.route?.moves ?? actor.retainedRouteMoves, actor.key) : actor.targetBonus;
+    const hour = Math.min(5, Math.floor(resources.snapshot(now).hours + 1e-9));
+    const hourly = actor.key === 'padrao' ? movement.routes.hourlyBonus.padrao : movement.routes.hourlyBonus.default;
+    return base + hour * hourly;
+  };
   function effectiveNavigationBonus(actor) {
     const bonus = navigationBonus(actor) * smores.targetBonusMultiplier();
     if (actor.key === favored) return bonus + movement.routes.huntBonus;
@@ -611,6 +624,12 @@ function createMovement(config, { random = Math.random, hallucinationRandom = Ma
     resolveThreats();
     if (outcome) return;
     for (const actor of actors) {
+      if (actor.key === 'gotica' && actor.approach?.objective === 'corridor'
+          && actor.goticaExposure >= config.effects.flashlight.modifiers.gotica.retreatAfterMaxSeconds) {
+        withdraw(actor, 'corridor');
+      }
+    }
+    for (const actor of actors) {
       if (actor.pending || !actor.approach) continue;
       if (approach.expired(actor)) {
         withdraw(actor, actor.approach.objective);
@@ -733,12 +752,11 @@ function createMovement(config, { random = Math.random, hallucinationRandom = Ma
     const previousSanity = resources.snapshot(now).sanity;
     const { end, radio, won } = resources.segment(now, until, input, observation, gates.closed);
     updateSurpriseSanity(previousSanity, resources.snapshot(end).sanity, now, end);
-    if (effectiveCorridorLight && !movementPaused()) {
-      // Advance the lit actors' timers by dt / factor, in their original time units.
-      const extension = (end - now) * (1 - 1 / config.effects.flashlight.corridorIntervalFactor);
+    if (!movementPaused()) {
+      const elapsed = end - now;
       for (const actor of actors) {
-        if (!actor.pending && actor.key !== 'gotica' && (actor.position === front || actor.position === back)) {
-          actor.due += extension;
+        if (!actor.pending && !actor.approach && Number.isFinite(actor.due)) {
+          actor.due += elapsed * intervalSlowdown(actor);
         }
       }
     }

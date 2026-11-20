@@ -70,7 +70,12 @@ function createEffects(config, routes, actors) {
       if (!light) continue;
       const lit = actor.approach.objective === 'corridor' && input.corridorLight && corridor.includes(actor.position);
       const lightRate = lit ? 1 / light.secondsToMax : -flashlight.decayPerSecond;
-      actor.light = clamp(actor.light + lightRate * dt, 0, 1);
+      const previousLight = actor.light;
+      actor.light = clamp(previousLight + lightRate * dt, 0, 1);
+      if (actor.key === 'gotica') {
+        const secondsAtMax = lit ? Math.max(0, dt - (1 - previousLight) * light.secondsToMax) : 0;
+        actor.goticaExposure = lit ? (actor.goticaExposure ?? 0) + secondsAtMax : 0;
+      }
     }
   }
 
@@ -86,6 +91,8 @@ function createEffects(config, routes, actors) {
     if (objective === 'corridor') {
       if (actor.key === 'gotica') intensity = Math.max(phase === 'entry' ? rules.gotica.minimumEntry : 0,
         intensity - rules.gotica.lightPenalty * actor.light);
+      if (actor.key === 'yandere') intensity = Math.max(phase === 'entry' ? rules.minimumEntry : 0,
+        intensity - flashlight.modifiers.yandere.barPenalty * actor.light);
       if (actor.key === 'gatinha') intensity = clamp(intensity + stage.lightBonus * actor.light, 0, 1);
     } else if (leftLook) {
       intensity = Math.max(phase === 'entry' ? rules.minimumEntry : 0, intensity - rules.lookPenalty);
