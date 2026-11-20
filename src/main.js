@@ -58,7 +58,7 @@ const dom = {
   taskTime: $('#task-time'), taskDate: $('#task-date'),
   clock: $('#clock-label'),
   resourceHud: $('#resource-hud'), sanityMeter: $('#sanity-meter'), sanityValue: $('#sanity-value'),
-  volumeDetector: $('#volume-detector'), volumeTrace: $('#volume-trace'),
+  volumeDetector: $('#volume-detector'), volumeCanvas: $('#volume-canvas'),
   energyMeter: $('#energy-meter'), energyValue: $('#energy-value'),
   shadowManifest: $('#shadow-manifest'), shadowOfficeArt: $('#shadow-office-art'),
   shadowFeed: $('#shadow-feed'), shadowSprite: $('#shadow-sprite'),

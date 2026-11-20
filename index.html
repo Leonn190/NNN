@@ -351,9 +351,7 @@
       <div class="resource-hud" id="resource-hud" hidden>
         <div class="volume-detector" id="volume-detector" role="meter" aria-label="Ruído ao longo dos últimos 8 segundos"
           aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
-          <svg class="volume-wave" viewBox="0 0 160 32" preserveAspectRatio="none" aria-hidden="true">
-            <path id="volume-trace" d="M0 16H160"></path>
-          </svg>
+          <canvas class="volume-wave" id="volume-canvas" width="160" height="32" aria-hidden="true"></canvas>
         </div>
         <label id="sanity-label" for="sanity-meter">Sanidade <span id="sanity-value" aria-hidden="true">100%</span></label>
         <meter id="sanity-meter" min="0" max="100" value="100"></meter>
