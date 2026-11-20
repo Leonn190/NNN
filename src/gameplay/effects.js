@@ -200,7 +200,7 @@ function createEffects(config, routes, actors) {
       return { camera: stimulus.camera, modifiers };
     },
     // HUD shows sound being made now, not gameplay noise that lingers for many seconds.
-    noiseIntensity: (now, input) => clamp(noiseRate(input) * 4 + (input.viewMoving ? 4 : 0) + transientVolume(now), 0, noise.max),
+    noiseIntensity: (now, input) => clamp(noiseRate(input) * 4 + transientVolume(now), 0, noise.max),
     addNoiseEvent(event, now = volumePeakAt) {
       const amount = noise.events[event] ?? 0;
       volumePeak = Math.max(transientVolume(now), amount * 7);

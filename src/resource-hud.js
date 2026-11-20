@@ -14,71 +14,45 @@ function lossColor(rate, stops) {
   return `rgb(${channels.join(', ')})`;
 }
 
-// Keep the eight-second waveform in a tiny canvas. No per-frame SVG parsing or allocations.
+// The waveform scrolls for eight seconds; quiet periods are exactly flat.
 const volumeSamples = new Float32Array(81);
 const volumeStepSeconds = .1;
-let volumeContext;
 let lastVolumeBucket = 0;
 let bucketPeak = 0;
-let lastSoundBucket = -Infinity;
-let hadVisibleWave = false;
-let lastReading = -1;
 
 function renderVolume(dom, intensity, elapsedSeconds = 0, reset = false) {
-  const bucket = Math.floor(Math.max(0, elapsedSeconds) / volumeStepSeconds + .000001);
-  let redraw = reset;
+  const time = Math.max(0, elapsedSeconds);
+  const bucket = Math.floor(time / volumeStepSeconds + .000001);
   if (reset || bucket < lastVolumeBucket) {
     volumeSamples.fill(0);
-    lastVolumeBucket = bucket;
+    lastVolumeBucket = 0;
     bucketPeak = 0;
-    lastSoundBucket = -Infinity;
-    hadVisibleWave = false;
   }
+
   if (bucket > lastVolumeBucket) {
     const passed = Math.min(volumeSamples.length, bucket - lastVolumeBucket);
     volumeSamples.copyWithin(0, passed);
     volumeSamples.fill(0, volumeSamples.length - passed);
     lastVolumeBucket = bucket;
     bucketPeak = 0;
-    redraw = true;
   }
 
   const level = Math.min(100, Math.max(0, Number(intensity) || 0));
-  if (level > bucketPeak) {
-    bucketPeak = level;
-    const pulse = Math.sin(bucket * 2.4) * .78 + Math.sin(bucket * 1.23) * .22;
-    const amplitude = level < 4 ? 0 : 14 * Math.pow(level / 100, .8);
-    volumeSamples[volumeSamples.length - 1] = amplitude * pulse;
-    if (amplitude > 0) lastSoundBucket = bucket;
-    redraw = true;
-  }
+  bucketPeak = Math.max(bucketPeak, level);
+  // Irregular oscillations around the central line, not bars or a cumulative meter.
+  const pulse = Math.sin(bucket * 2.4) * .78 + Math.sin(bucket * 1.23) * .22;
+  const amplitude = bucketPeak < 4 ? 0 : 14 * Math.pow(bucketPeak / 100, .8);
+  volumeSamples[volumeSamples.length - 1] = amplitude * pulse;
 
-  const reading = Math.round(level);
-  if (reading !== lastReading) {
-    dom.volumeDetector.setAttribute('aria-valuenow', String(reading));
-    lastReading = reading;
-  }
-
-  // Once the history is flat, leave the canvas alone until another sound occurs.
-  const visible = bucket - lastSoundBucket < volumeSamples.length;
-  if (!redraw || (!visible && !hadVisibleWave && !reset)) return;
-  hadVisibleWave = visible;
-
-  if (!volumeContext) {
-    volumeContext = dom.volumeCanvas.getContext('2d', { alpha: false });
-    volumeContext.lineWidth = 1.5;
-    volumeContext.lineJoin = 'round';
-    volumeContext.lineCap = 'round';
-    volumeContext.strokeStyle = '#a9f6c9';
-    volumeContext.fillStyle = '#07140f';
-  }
-  volumeContext.fillRect(0, 0, 160, 32);
-  volumeContext.beginPath();
-  volumeContext.moveTo(0, 16);
+  let trace = 'M0 16';
   for (let i = 1; i < volumeSamples.length; i++) {
-    volumeContext.lineTo(i * 2, 16 - volumeSamples[i]);
+    trace += `L${i * 2} ${(16 - volumeSamples[i]).toFixed(1)}`;
   }
-  volumeContext.stroke();
+  dom.volumeTrace.setAttribute('d', trace);
+  const value = String(Math.round(level));
+  if (dom.volumeDetector.getAttribute('aria-valuenow') !== value) {
+    dom.volumeDetector.setAttribute('aria-valuenow', value);
+  }
 }
 
 function renderResources(dom, { sanity, energy, sanityLossPerSecond, energyLossPerSecond }) {

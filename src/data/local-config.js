@@ -388,11 +388,17 @@ window.NathGame.localConfig = {
     },
     "flashlight": {
       "corridorFlickerMs": 160,
-      "corridorIntervalFactor": 1.25,
+      "corridorIntervalSlowdown": 0.2,
       "modifiers": {
         "gotica": {
           "secondsToMax": 5,
-          "advanceDelta": -0.7
+          "advanceDelta": -0.7,
+          "retreatAfterMaxSeconds": 7
+        },
+        "yandere": {
+          "secondsToMax": 5,
+          "advanceDelta": -0.12,
+          "barPenalty": 0.12
         },
         "gatinha": {
           "secondsToMax": 5,
@@ -1038,6 +1044,10 @@ window.NathGame.localConfig = {
         ]
       },
       "blockedProgressRetention": 0.75,
+      "hourlyBonus": {
+        "default": 2,
+        "padrao": 3
+      },
       "definitions": {
         "CV": {
           "objective": "corridor",
@@ -1324,9 +1334,13 @@ window.NathGame.localConfig = {
       "intervalFactor": 1.2,
       "freeMoves": 1
     },
+    "cameraIntervalSlowdown": {
+      "default": 0.3,
+      "padrao": 0.4
+    },
     "difficulty": {
-      "maxIntervalReduction": 0.52,
-      "padraoMaxIntervalReduction": 0.58,
+      "maxIntervalReduction": 0.5,
+      "padraoMaxIntervalReduction": 0.55,
       "maxReactionReduction": 0.2
     }
   },
