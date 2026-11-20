@@ -119,6 +119,7 @@ function createCinematics() {
   let creditFallbackTimer = null;
   let creditFallbackStart = 0;
   let creditsEpilogue = false;
+  let rhythm = null;
   let activeImage = image;
   let preload = null;
   let soundEnded = false;
@@ -163,6 +164,12 @@ function createCinematics() {
     creditsFrame = null;
     if (creditFallbackTimer != null) clearTimeout(creditFallbackTimer);
     creditFallbackTimer = null;
+    if (rhythm) {
+      const source = rhythm;
+      rhythm = null;
+      source.stream.getTracks().forEach(track => track.stop());
+      source.context.close().catch(() => {});
+    }
     audio.pause();
     audio.onended = audio.onerror = audio.onloadedmetadata = null;
     audio.removeAttribute('src');
@@ -250,6 +257,56 @@ function createCinematics() {
     root.style.setProperty('--outro-ms', (CREDIT_SILENT_OUTRO_SECONDS * 1000) + 'ms');
   }
 
+  // Captura o som da música sem redirecionar nem silenciar o áudio original.
+  // Onde captureStream / Web Audio não estão disponíveis, as marcas de frase
+  // continuam exatas porque usam audio.currentTime.
+  function startCreditsRhythm(sceneToken) {
+    if (mode !== 'credits' || token !== sceneToken || rhythm) return;
+    const Context = window.AudioContext || window.webkitAudioContext;
+    if (!Context || typeof audio.captureStream !== 'function') return;
+    let context;
+    let stream;
+    try {
+      stream = audio.captureStream();
+      if (!stream.getAudioTracks().length) return;
+      context = new Context();
+      const source = context.createMediaStreamSource(stream);
+      const analyser = context.createAnalyser();
+      analyser.fftSize = 1024;
+      analyser.smoothingTimeConstant = .58;
+      source.connect(analyser);
+      // Nó de ganho mudo: mantém o analisador ativo sem duplicar a trilha.
+      const mute = context.createGain();
+      mute.gain.value = 0;
+      analyser.connect(mute);
+      mute.connect(context.destination);
+      rhythm = {
+        context, stream, analyser, data: new Uint8Array(analyser.frequencyBinCount),
+        baseline: 0, lastPulse: -10
+      };
+      context.resume().catch(() => {});
+    } catch {
+      if (context) context.close().catch(() => {});
+      if (stream) stream.getTracks().forEach(track => track.stop());
+    }
+  }
+
+  function hasRhythmPulse(position) {
+    if (!rhythm || rhythm.context.state !== 'running') return true;
+    const { analyser, data } = rhythm;
+    analyser.getByteFrequencyData(data);
+    let sum = 0;
+    // Banda entre graves e médios, onde batidas e ataques vocais aparecem.
+    for (let i = 2; i < 31; i++) sum += data[i];
+    const energy = sum / 29;
+    const average = rhythm.baseline || energy;
+    const onset = energy > 32 && energy > average * 1.16
+      && position - rhythm.lastPulse > .29;
+    rhythm.baseline = average * .92 + energy * .08;
+    if (onset) rhythm.lastPulse = position;
+    return onset || position - rhythm.lastPulse <= .10;
+  }
+
   function creditsTick() {
     if (mode !== 'credits') return;
     const duration = creditsDuration();
@@ -262,6 +319,12 @@ function createCinematics() {
       let page = 0;
       while (page + 1 < CREDIT_PAGES.length
         && position >= creditCueTime(CREDIT_PAGES[page + 1].at, duration)) page++;
+      // Uma cartela aguarda até 0,48s um ataque do áudio próximo à marca
+      // para que o corte coincida com o pulso, sem atrasar o roteiro se faltar sinal.
+      const cue = creditCueTime(CREDIT_PAGES[page].at, duration);
+      if (page > creditsPage && creditsPage >= 0 && rhythm
+        && position < cue + .48 && !hasRhythmPulse(position)) page = creditsPage;
+      else if (rhythm) hasRhythmPulse(position);
       showCreditsPage(page);
     }
     if (soundFailed && position >= duration) { stop(); return; }
@@ -370,6 +433,9 @@ function createCinematics() {
     audio.volume = kind === 'death' ? .72 : .65;
     audio.currentTime = 0;
     const playback = audio.play();
+    if (playback?.then && kind === 'credits') {
+      playback.then(() => startCreditsRhythm(sceneToken), () => {});
+    }
     if (playback?.catch) playback.catch(() => {
       if (sceneToken === token && !soundFailed) enableAudio.hidden = false;
     });
@@ -380,7 +446,10 @@ function createCinematics() {
   }
 
   enableAudio.addEventListener('click', () => {
-    audio.play().then(() => { enableAudio.hidden = true; }).catch(() => {});
+    audio.play().then(() => {
+      enableAudio.hidden = true;
+      if (mode === 'credits') startCreditsRhythm(token);
+    }).catch(() => {});
   });
   closeButton.addEventListener('click', () => stop());
   document.addEventListener('keydown', event => {
