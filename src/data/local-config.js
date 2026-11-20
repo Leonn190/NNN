@@ -265,6 +265,7 @@ window.NathGame.localConfig = {
       "imageLoadWaitMs": 2000,
       "volume": 0.55
     },
+    "radioAutoStartSeconds": 12,
     "radioTracks": [
       "caramelldansen.mp3",
       "shikairo-days.mp3",
@@ -868,8 +869,8 @@ window.NathGame.localConfig = {
       {
         "from": 15,
         "to": 16,
-        "type": "gate",
-        "gateId": "P04"
+        "type": "free",
+        "openingId": "P04"
       },
       {
         "from": 15,
@@ -984,7 +985,6 @@ window.NathGame.localConfig = {
     "back": 15,
     "leftApproach": 10,
     "closetVent": 26,
-    "workshopGate": "P04",
     "capacities": {
       "12": 1,
       "14": 2,
@@ -1516,8 +1516,9 @@ window.NathGame.localConfig = {
     "initial": 100,
     "computerDrain": 0.025,
     "computerIdleFactor": 0.5,
-    "gateDrain": 0.3,
-    "radioDrain": 0.06,
+    "gateDrain": 0.24,
+    "officeGateDrain": 0.34,
+    "radioDrain": 0.055,
     "flashlightDrain": 0.12,
     "eventDrain": {
       "electricalFault": 10

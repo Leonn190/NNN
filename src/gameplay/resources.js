@@ -1,6 +1,8 @@
 (() => {
 'use strict';
 
+const { OFFICE } = window.NathGame;
+
 const clampPercent = value => Math.min(100, Math.max(0, value));
 
 function sanityRate(rules, { cameraLoss = 0, direct, invasion, centralGate, closet, radio, blackout }) {
@@ -82,6 +84,7 @@ function createResources({ night: defaults, sanity: sanityRules, power }, night 
     ? power.computerDrain * (input.computer || input.camera ? 1 : power.computerIdleFactor) : 0;
   const energyDrain = (input, gates, radio) => powerEnabled && energy > 0
     ? computerDrain(input) + gates.size * power.gateDrain
+      + (gates.has(OFFICE.gate) ? power.officeGateDrain - power.gateDrain : 0)
       + (radio ? power.radioDrain : 0) + (input.flashlight ? power.flashlightDrain : 0) : 0;
   const sanityChange = (observation, radio) => sanityEnabled
     ? sanityRate(sanityRules, { ...observation, radio, blackout: energy === 0 }) : 0;

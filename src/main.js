@@ -126,7 +126,7 @@ const state = {
   complete: true, flashlight: false, flashlightKey: false, flashlightPointer: null, pan: 0, targetPan: 0,
   dragging: false, pointerX: null, lastFrame: performance.now(),
   closetTransition: null, closetMouseAtEdge: true, closetGesture: null, closetPan: 0, closetTarget: 0,
-  clownPhase: -1, radioPlaying: false,
+  clownPhase: -1, radioPlaying: false, radioAutoPending: false,
   shift: null
 };
 let toastTimeout;
@@ -936,6 +936,12 @@ function toggleRadio() {
     stopRadio();
     return;
   }
+  startRadio();
+}
+
+function startRadio() {
+  if (state.complete || radioPlayback || !movement.snapshot().radioAvailable) return;
+  state.radioAutoPending = false;
   sound.connectRadio(radioMusic);
   const availableTracks = [...controls.radioTracks, endingAssets.newRadioTrack];
   if (window.NathGame.createCampaignStore().stars() & 1) {
@@ -951,6 +957,13 @@ function toggleRadio() {
   playback.catch(() => {
     if (radioPlayback === playback) fallbackRadio();
   });
+}
+
+function autoStartRadio(now) {
+  if (!state.radioAutoPending || state.complete
+      || now - state.startedAt < controls.radioAutoStartSeconds * 1000) return;
+  state.radioAutoPending = false;
+  startRadio();
 }
 
 function setClownPhase(index) {
@@ -1375,6 +1388,7 @@ function prepareShift(shift) {
 function startShift() {
   state.startedAt = state.lastFrame = performance.now();
   state.complete = false;
+  state.radioAutoPending = true;
   sound.startShift();
   dom.game.inert = false;
   dom.hint.hidden = false;
@@ -1557,6 +1571,7 @@ function renderGameFrame(frame, now) {
   updateClockUI(frame.hours);
   renderResourceState(frame);
   if (!frame.radioAvailable && radioPlayback) stopRadio();
+  autoStartRadio(now);
   renderShadow(frame.shadow);
   setClownPhase(frame.clownStage);
   if (now >= nextHudUpdate) {
@@ -1790,10 +1805,11 @@ function fallbackRadio() {
 }
 radioMusic.addEventListener('error', fallbackRadio);
 dom.closetExit.addEventListener('click', () => beginClosetTransition('exit'));
-dom.officeGate.addEventListener('click', () => {
+function toggleOfficeGate() {
   if (state.complete || state.mode !== 'office' || state.closetTransition || !movement.gateControlsAvailable(OFFICE.gate)) return;
   advanceGame(performance.now(), { type: 'gate', id: OFFICE.gate, source: 'office' });
-});
+}
+dom.officeGate.addEventListener('click', toggleOfficeGate);
 for (const button of [dom.officeLight, dom.closetLight]) {
   button.addEventListener('pointerdown', event => {
     if (event.button !== 0 || state.flashlightPointer !== null || flashlightTarget() !== button) return;
@@ -2087,7 +2103,7 @@ let lastCameraKeyAt = -Infinity;
 document.addEventListener('keydown', event => {
   if (dom.game.hidden || state.complete || event.altKey || event.ctrlKey || event.metaKey) return;
   const key = event.key.toLowerCase();
-  if (key === 'escape' && !dom.desktop.hidden) {
+  if ((key === 'escape' || key === 'q') && !dom.desktop.hidden) {
     event.preventDefault();
     if (!event.repeat) closeComputer();
     return;
@@ -2113,6 +2129,18 @@ document.addEventListener('keydown', event => {
     return;
   }
   if (state.closetTransition || event.repeat) return;
+  if (key === 'q' || key === 'e') {
+    if (event.target?.isContentEditable || event.target?.closest?.('input, textarea, select, [role="textbox"]')) return;
+    if (state.mode === 'office') {
+      event.preventDefault();
+      if (key === 'q') toggleOfficeGate();
+      else toggleRadio();
+    } else if (key === 'e' && watchingCameras() && !dom.computerScreen.inert && !cameraApp.panel.inert) {
+      event.preventDefault();
+      playCameraAudio();
+    }
+    return;
+  }
   if (key === 'w' && flashlightTarget()) {
     state.flashlightKey = true;
     updateFlashlight();

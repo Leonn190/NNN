@@ -444,7 +444,7 @@ test('the final campaign night cannot end at 6 AM', () => {
   near(game.snapshot().hours, 7);
 });
 
-test('closet protection and camera effects remain inactive during the opening', () => {
+test('closet protection remains inactive but camera audio is available during the opening', () => {
   const config = structuredClone(base);
   const game = createMovement(config, { random: () => .99 });
   const rule = { ...config.night, movementDelay: 45 };
@@ -456,7 +456,7 @@ test('closet protection and camera effects remain inactive during the opening', 
   assert.equal(game.snapshot().floor, 1);
   assert.equal(game.snapshot().sanity, 100);
   assert.equal(game.snapshot().hours, 0);
-  assert.equal(game.advance(44.9, input, { type: 'cameraAudio' }), false);
+  assert.equal(game.advance(44.9, input, { type: 'cameraAudio' }), true);
 });
 
 
@@ -534,4 +534,15 @@ test('blocking clock, route bonuses and counterattack probabilities use the appr
     yandere: .20, gatinha: .23, gotica: .30, cooldownSeconds: 25
   });
   near(base.threats.attack.closetProtectionDelaySeconds, .35);
+});
+
+test('camera audio is available immediately in every campaign night and retains its cooldown', () => {
+  for (const campaign of base.night.campaign) {
+    const config = structuredClone(base);
+    const game = createMovement(config, { random: () => .99 });
+    const input = { view: 'cameras', camera: 'CAM03', computerInterface: true };
+    game.reset({}, input, { ...config.night, ...campaign });
+    assert.equal(game.advance(0, input, { type: 'cameraAudio' }), true);
+    assert.equal(game.advance(.1, input, { type: 'cameraAudio' }), false);
+  }
 });

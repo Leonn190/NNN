@@ -818,7 +818,7 @@ function createMovement(config, { random = Math.random, hallucinationRandom = Ma
         effects.addNoiseEvent('closetExit', now);
         break;
       case 'cameraAudio':
-        accepted = !movementPaused() && camerasAvailable() && effects.startAudio(now, input.camera);
+        accepted = camerasAvailable() && effects.startAudio(now, input.camera);
         break;
       case 'gate': {
         const source = input.view === 'cameras' || input.camera ? 'cameras' : action.source;
