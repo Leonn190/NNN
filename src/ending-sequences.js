@@ -31,11 +31,11 @@ const CREDIT_SHOTS = Object.freeze([
   ] },
   { image: CREDIT_DIR + 'vip-bonecas.png', motion: 'drift-right', pages: [
     { at: 25, pair: [['HISTÓRIA E ROTEIRO', 'Leon Soto'], ['DESIGN DE MECÂNICAS', 'Leon Soto']] },
-    { at: 33, pair: [['INSPIRAÇÃO PARA OS SEGURANÇAS', 'Pedro Garcia · Pedro Babugia'], ['BALANCEAMENTO DAS NOITES', 'Leon Soto']] }
+    { at: 33, pair: [['INSPIRAÇÃO PARA NATHZINHA', 'Nathali Thomazine'], ['BALANCEAMENTO DAS NOITES', 'Leon Soto']] }
   ] },
   { image: CREDIT_DIR + 'gotica-vip-roxo.png', motion: 'pull-back', pages: [
     { at: 41, pair: [['ARTE E AMBIENTAÇÃO', 'Leon Soto'], ['DESIGN DAS ANIMATRÔNICAS', 'Leon Soto']] },
-    { at: 49, pair: [['INSPIRAÇÃO PARA OS SEGURANÇAS', 'Henrique Baatalha · Caio Pontes'], ['ARQUITETURA DO RESTAURANTE', 'Leon Soto']] }
+    { at: 49, pair: [['ASSISTÊNCIA À PROGRAMAÇÃO', 'OpenAI Codex'], ['ARQUITETURA DO RESTAURANTE', 'Leon Soto']] }
   ] },
   { image: CREDIT_DIR + 'maid-gatinha-cozinha.png', motion: 'drift-up', pages: [
     { at: 57, pair: [['ANIMAÇÕES E CINEMÁTICAS', 'Leon Soto'], ['INTERFACE E UX', 'Leon Soto']] },
@@ -43,7 +43,7 @@ const CREDIT_SHOTS = Object.freeze([
   ] },
   { image: CREDIT_DIR + 'maid-oficina.png', motion: 'creep-in', pages: [
     { at: 73, pair: [['DESIGN DE SOM', 'Leon Soto'], ['CURADORIA MUSICAL', 'Leon Soto']] },
-    { at: 81, pair: [['INSPIRAÇÃO PARA OS SEGURANÇAS', 'Felipe Riva · Felipe Lima'], ['DIREÇÃO DE ARTE', 'Leon Soto']] }
+    { at: 81, pair: [['MÚSICA · THE AMAZING DIGITAL CIRCUS', 'Gooseworx (tema)\nEvan Alderete (trilha)'], ['DIREÇÃO DE ARTE', 'Leon Soto']] }
   ] },
   { image: CREDIT_DIR + 'fliperama.png', motion: 'drift-right', pages: [
     { at: 89, pair: [['MÚSICA · SHIKAIRO DAYS', 'Shika-bu · Yūki Waga\nKana Yaginuma'], ['MÚSICA · KAWAIKUTE GOMEN', 'HoneyWorks · shito']] },
@@ -51,15 +51,15 @@ const CREDIT_SHOTS = Object.freeze([
   ] },
   { image: CREDIT_DIR + 'yandere-corredor-leste.png', motion: 'drift-left', pages: [
     { at: 105, pair: [['INSPIRADO EM', 'Five Nights at Freddy\'s\nScott Cawthon'], ['SONS E REFERÊNCIAS', 'Five Nights at Freddy\'s']] },
-    { at: 113, pair: [['INSPIRAÇÃO PARA OS SEGURANÇAS', 'Arthur Ramos · Rafael Ferraz'], ['MÚSICA · JOIN US FOR A BITE', 'JT Music\nAndrea Storm Kaden']] }
+    { at: 113, pair: [['INSPIRAÇÃO PARA OS SEGURANÇAS', 'Pedro Garcia · Pedro Babugia'], ['MÚSICA · JOIN US FOR A BITE', 'JT Music\nAndrea Storm Kaden']] }
   ] },
   { image: CREDIT_DIR + 'palhaca-escritorio.png', motion: 'creep-in', pages: [
-    { at: 121, pair: [['MÚSICA · THE AMAZING DIGITAL CIRCUS', 'Gooseworx (tema)\nEvan Alderete (trilha)'], ['ASSISTÊNCIA CRIATIVA', 'ChatGPT (GPT) · OpenAI']] },
-    { at: 129, pair: [['ASSISTÊNCIA À PROGRAMAÇÃO', 'OpenAI Codex'], ['TECNOLOGIAS DE DESENVOLVIMENTO', 'HTML · CSS · JavaScript']] }
+    { at: 121, pair: [['INSPIRAÇÃO PARA OS SEGURANÇAS', 'Henrique Baatalha · Caio Pontes'], ['ASSISTÊNCIA CRIATIVA', 'ChatGPT (GPT) · OpenAI']] },
+    { at: 129, pair: [['INSPIRAÇÃO PARA OS SEGURANÇAS', 'Felipe Riva · Felipe Lima'], ['TECNOLOGIAS DE DESENVOLVIMENTO', 'HTML · CSS · JavaScript']] }
   ] },
   { image: CREDIT_DIR + 'corredor-bonecas.png', motion: 'drift-up', pages: [
-    { at: 137, pair: [['INSPIRAÇÃO PARA OS SEGURANÇAS', 'Paulo Ventura · Arthur Guedes'], ['VERSIONAMENTO E PUBLICAÇÃO', 'GitHub · GitHub Pages']] },
-    { at: 145, pair: [['INSPIRAÇÃO PARA NATHZINHA', 'Nathali Thomazine'], ['PERSONAGENS E AMBIENTES', 'Concepção do universo NNN']] }
+    { at: 137, pair: [['INSPIRAÇÃO PARA OS SEGURANÇAS', 'Arthur Ramos · Rafael Ferraz'], ['VERSIONAMENTO E PUBLICAÇÃO', 'GitHub · GitHub Pages']] },
+    { at: 145, pair: [['INSPIRAÇÃO PARA OS SEGURANÇAS', 'Paulo Ventura · Arthur Guedes'], ['PERSONAGENS E AMBIENTES', 'Concepção do universo NNN']] }
   ] },
   { image: CREDIT_DIR + 'lounge-rosa-roxo.png', motion: 'pull-back', pages: [
     { at: 153, pair: [['INSPIRAÇÃO PARA OS SEGURANÇAS', 'Alexandre Do Bim · João Gannoun'], ['', '']] },
