@@ -13,7 +13,7 @@
     "padrao": { "CAM10": 0.40 },
     "gotica": { "CAM11": 0.40, "CAM04": 0.40 }
   },
-  "eventLoss": { "closetEnter": 2, "electricalFault": 5, "yandereCameraScare": 15 },
+  "eventLoss": { "cameraInterference": 1.5, "closetEnter": 2, "electricalFault": 5, "yandereCameraScare": 15 },
   "recovery": {
     "music": 0.10,
     "passive": 0.04

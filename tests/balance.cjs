@@ -31,13 +31,13 @@ function scenario(levels, input = {}, tune = () => {}, draws = []) {
 
 test('route bonuses interpolate independently and interval reductions accumulate at MAX', () => {
   const { actor } = scenario({ padrao: 11, gotica: 11, yandere: 11, gatinha: 11, maid: 11 });
-  near(base.movement.difficulty.maxIntervalReduction, .52);
-  near(base.movement.difficulty.padraoMaxIntervalReduction, .58);
-  near(actor('padrao').remaining, 23 * .42);
-  near(actor('gotica').remaining, 26 * .48);
-  near(actor('yandere').remaining, 21 * .48 * .4);
-  near(actor('gatinha').remaining, 19 * .48 * .95);
-  near(actor('maid').remaining, 30 * .48 * .9);
+  near(base.movement.difficulty.maxIntervalReduction, .50);
+  near(base.movement.difficulty.padraoMaxIntervalReduction, .55);
+  near(actor('padrao').remaining, 23 * .45);
+  near(actor('gotica').remaining, 26 * .50);
+  near(actor('yandere').remaining, 21 * .50 * .4);
+  near(actor('gatinha').remaining, 19 * .50 * .95);
+  near(actor('maid').remaining, 30 * .50 * .9);
   const routes = createAttackRoutes(base, createRoutes(base.map));
   for (const [key, low, mid, high] of [
     ['padrao', 40, 50, 60], ['gotica', 30, 39, 48], ['yandere', 30, 39, 48], ['gatinha', 30, 39, 48]
@@ -460,19 +460,24 @@ test('closet protection remains inactive but camera audio is available during th
 });
 
 
-test('a final-stage bar remains possible under low noise instead of timing out', () => {
+test('low-noise entry retreats at its duration limit without slowing the bar', () => {
   const rules = base.movement.attack.bar;
   const effects = { attackBar: () => ({ intensity: .07, progressPerSecond: 0 }) };
   const { createApproach } = window.NathGame;
   const approach = createApproach(base.map, effects, () => 0, () => false, () => 0, rules);
   const actor = { key: 'gotica', position: base.map.back, light: 0, due: 0 };
   assert.equal(approach.begin(actor, 'corridor'), true);
+  approach.integrate(actor, 20);
   actor.position = base.map.front;
   approach.arrive(actor);
-  approach.integrate(actor, 100);
-  near(actor.approach.progress, 100);
+  near(actor.approach.elapsed, 0);
+  approach.integrate(actor, 29.9);
+  near(actor.approach.progress, 29.9);
   assert.equal(approach.expired(actor), false);
-  assert.equal(approach.completed(actor), true);
+  approach.integrate(actor, .1);
+  near(actor.approach.progress, 30);
+  assert.equal(approach.expired(actor), true);
+  assert.equal(approach.completed(actor), false);
 });
 
 
@@ -544,5 +549,78 @@ test('camera audio is available immediately in every campaign night and retains 
     game.reset({}, input, { ...config.night, ...campaign });
     assert.equal(game.advance(0, input, { type: 'cameraAudio' }), true);
     assert.equal(game.advance(.1, input, { type: 'cameraAudio' }), false);
+  }
+});
+
+
+test('blackout blocks recovery and clock progress while retaining radio grace and sanity loss', () => {
+  const { createResources, sanityRate, hourDuration, clockProgress } = window.NathGame;
+  const config = structuredClone(base);
+  config.power.initial = 0;
+  config.sanity.initial = 50;
+  const resources = createResources(config);
+  const input = { radio: true, gates: new Set() };
+  near(sanityRate(config.sanity, { radio: true, blackout: true }), 0);
+  near(sanityRate(config.sanity, { radio: false, blackout: true }), 0);
+  assert(sanityRate(config.sanity, { radio: true, closet: true, blackout: true }) < 0);
+  resources.segment(0, 10, input, {});
+  near(resources.snapshot(10).sanity, 50);
+  near(resources.snapshot(10).hours, 0);
+  assert.equal(resources.radioAvailable(10), true);
+  resources.segment(10, 11, input, { closet: true });
+  near(resources.snapshot(11).sanity, 50 - 2 * config.sanity.loss.closet);
+  const clock = config.night.clock;
+  near(hourDuration(clock, 90), 60);
+  near(hourDuration(clock, 4), 150);
+  near(clockProgress(clock, 4, 0, 150), 1);
+  near(clockProgress(clock, 3.999, 0, 150), 0);
+  assert(clockProgress(clock, 3, 1, 2) > 0);
+  near(clockProgress(clock, 5, -1, 2), clockProgress(clock, 5, -1, 1));
+});
+
+test('empty-office clown entry honors other occupants and all three seconds after a departure', () => {
+  const actor = { key: 'gotica', reaction: 4 };
+  const threats = createThreats(base, { palhaca: 0 }, () => 0, () => {});
+  threats.enterCloset(0);
+  assert.equal(threats.entryAttacker(actor, true, 0), 'palhaca');
+  assert.equal(threats.entryAttacker(actor, false, 10), null);
+  threats.officeExited(10);
+  for (const delay of [0, 1, 2.9]) assert.equal(threats.entryAttacker(actor, true, 10 + delay), null);
+  assert.equal(threats.entryAttacker(actor, true, 13), 'palhaca');
+  // Resolve an actual invasion exit, rather than only testing the timestamp setter.
+  threats.exitCloset();
+  threats.invade(actor, 20);
+  threats.enterCloset(21);
+  threats.resolve(30, () => {}, assert.fail);
+  assert.equal(threats.entryAttacker({ key: 'maid' }, true, 32.9), null);
+  assert.equal(threats.entryAttacker({ key: 'maid' }, true, 33), 'palhaca');
+});
+
+test('both attack routes use independent 45/30/25-second phases and ten seconds fully stalled', () => {
+  const { createApproach } = window.NathGame;
+  for (const objective of ['corridor', 'stock']) for (const key of ['gotica', 'gatinha']) {
+    let intensity = .07;
+    const approach = createApproach(base.map, { attackBar: () => ({ intensity, progressPerSecond: 0 }) },
+      () => 0, () => false, () => 0, base.movement.attack.bar);
+    const actor = { key, position: objective === 'corridor' ? base.map.back : base.map.leftApproach };
+    approach.begin(actor, objective);
+    approach.integrate(actor, 44.9);
+    assert.equal(approach.expired(actor), false);
+    approach.integrate(actor, .1);
+    assert.equal(approach.expired(actor), true);
+    actor.position = objective === 'corridor' ? base.map.front : base.map.left;
+    approach.arrive(actor);
+    near(actor.approach.elapsed, 0);
+    const limit = key === 'gatinha' ? 25 : 30;
+    approach.integrate(actor, limit - .1);
+    assert.equal(approach.expired(actor), false);
+    approach.integrate(actor, .1);
+    assert.equal(approach.expired(actor), true);
+    approach.arrive(actor);
+    intensity = 0;
+    approach.integrate(actor, 9.9);
+    assert.equal(approach.expired(actor), false);
+    approach.integrate(actor, .1);
+    assert.equal(approach.expired(actor), true);
   }
 });

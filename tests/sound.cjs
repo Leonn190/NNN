@@ -62,6 +62,12 @@ test('one context, finite voices, radio reuse, and no connected shift nodes afte
   sound.disconnectRadio();
   sound.connectRadio(media);
   assert.equal(sound.stats().radio, true);
+  assert.equal(sound.radio.lowpass.channelCount, 1);
+  assert.equal(sound.radio.lowpass.channelCountMode, 'explicit');
+  sound.mixRadio(media, .5, false, 1.38);
+  assert.equal(sound.radio.normalization, 1.38);
+  sound.mixRadio(media, .5, false);
+  assert.equal(sound.radio.normalization, 1);
   sound.stopShift();
   staleEnded();
   assert.equal(sound.stats().tones, 0);

@@ -147,11 +147,13 @@ function createThreats(config, levels, random, emit, reactionReduction = () => 0
   let floor = clownEnabled ? clown.min : 0;
   let entries = 0;
   let clownDeath = false;
+  let lastOfficeExit = -Infinity;
 
   const invasionCount = actor => invasionCounts.get(actor.key) ?? 0;
   const instantInvasion = (actor, previous = invasionCount(actor)) => actor.key !== 'padrao' && previous >= 2;
-  const entryAttacker = (actor, roomWasEmpty) => instantInvasion(actor) ? actor.key
-    : hidden && roomWasEmpty ? 'palhaca' : null;
+  const entryAttacker = (actor, roomWasEmpty, now = 0) => instantInvasion(actor) ? actor.key
+    : hidden && roomWasEmpty && now - lastOfficeExit >= 3 ? 'palhaca' : null;
+  const officeExited = now => { lastOfficeExit = now; };
 
   function reactionTime(actor, previous = invasionCount(actor)) {
     if (instantInvasion(actor, previous)) return 0;
@@ -187,7 +189,7 @@ function createThreats(config, levels, random, emit, reactionReduction = () => 0
   function invade(actor, now, visibleAt = now, roomWasEmpty = invasions.size === 0) {
     if (invasions.has(actor)) return;
     const previous = invasionCount(actor);
-    const attacker = entryAttacker(actor, roomWasEmpty);
+    const attacker = entryAttacker(actor, roomWasEmpty, now);
     invasionCounts.set(actor.key, previous + 1);
     if (attacker === 'palhaca') clownDeath = true;
     if (attacker) return attacker;
@@ -240,6 +242,7 @@ function createThreats(config, levels, random, emit, reactionReduction = () => 0
       if (!hidden && now >= reactionDeadline(actor, invasion)) return lose(actor.key);
       if (hidden && now >= invasion.leaveAt) {
         invasions.delete(actor);
+        officeExited(now);
         retreat(actor);
       }
     }
@@ -251,7 +254,7 @@ function createThreats(config, levels, random, emit, reactionReduction = () => 0
     delayReactions(seconds) {
       for (const invasion of invasions.values()) invasion.arrived += seconds;
     },
-    invade, integrate, nextDeadline, resolve, clownStage, reactionTime, invasionCount, instantInvasion, entryAttacker,
+    invade, officeExited, integrate, nextDeadline, resolve, clownStage, reactionTime, invasionCount, instantInvasion, entryAttacker,
     snapshot: () => ({ hidden, counter, floor, clownStage: clownStage() }),
     invasionStatus(actor, now) {
       const invasion = invasions.get(actor);
@@ -272,8 +275,8 @@ function createApproach(map, effects, random, observingLeft = () => false, curre
     stock: [map.leftApproach, map.left, map.office]
   };
   const fullSeconds = rules.secondsAtFull ?? 7;
-  const limit = rules.maxPhaseSeconds ?? 55;
-  const stallLimit = rules.stallSeconds ?? 15;
+  const limit = rules.maxPhaseSeconds ?? 45;
+  const stallLimit = rules.stallSeconds ?? 10;
 
   function begin(actor, objective) {
     if (actor.position !== stages[objective][0]) return false;

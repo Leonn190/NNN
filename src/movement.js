@@ -21,6 +21,7 @@ function createMovement(config, { random = Math.random, hallucinationRandom = Ma
   let closetAttack, flashUntil, smoresVisibleAt, pendingClosetAt;
   let hunters, favored, penalized;
   let yandere, surpriseLimit, surprisesUsed, inactivityEnds, surprise;
+  let interferenceObserved, smoresInRoom;
 
   const movementPaused = () => now < movementDelay;
   const gateControlsAvailable = id => maxClosedGates > 0 && !electrical.failed()
@@ -126,6 +127,8 @@ function createMovement(config, { random = Math.random, hallucinationRandom = Ma
     surpriseLimit = yandereLevel < surpriseRules.firstLevel ? 0 : yandereLevel === effectiveMax ? surpriseRules.uses.max
       : yandereLevel >= surpriseRules.secondLevel ? surpriseRules.uses.second : surpriseRules.uses.first;
     surprisesUsed = 0;
+    interferenceObserved = false;
+    smoresInRoom = false;
     surprise = null;
     inactivityEnds = Infinity;
     cameraScareSeconds = interpolate(cameraScare.observationSeconds, difficultyProgress(levelFor('yandere'), maxLevel));
@@ -136,7 +139,11 @@ function createMovement(config, { random = Math.random, hallucinationRandom = Ma
       actor.due += movementDelay;
     }
     smores = createSmores(config.threats.smores, levelFor('smores'), maxLevel, random, (event, phase) => {
-      if (phase === 'room') smoresVisibleAt = invasionRevealTime();
+      if (event === 'smores') {
+        if (smoresInRoom && phase !== 'room') threats.officeExited(now);
+        smoresInRoom = phase === 'room';
+        if (phase === 'room') smoresVisibleAt = invasionRevealTime();
+      }
       emit(event, phase);
     });
     threats = createThreats(config, { palhaca: levelFor('palhaca') }, random, emit, smores.reactionReduction, effectiveMax);
@@ -186,6 +193,7 @@ function createMovement(config, { random = Math.random, hallucinationRandom = Ma
 
   function triggerInterference(actor, surpriseAttack = false) {
     effects.triggerStatic(now);
+    interferenceObserved = false;
     emit('cameraInterference', now);
     if (actor.key === 'yandere') emit('yandereSabotage', surpriseAttack);
   }
@@ -426,7 +434,7 @@ function createMovement(config, { random = Math.random, hallucinationRandom = Ma
     if (to !== office && !recovered && !actor.approach) schedule(actor);
     emit('move', { actor, from, to });
     if (to === office) {
-      const fatal = threats.entryAttacker(actor, roomWasEmpty);
+      const fatal = threats.entryAttacker(actor, roomWasEmpty, now);
       actor.visibleAt = fatal ? now : invasionRevealTime();
       const attacker = threats.invade(actor, now, actor.visibleAt, roomWasEmpty);
       if (attacker) finish('loss', attacker);
@@ -918,7 +926,7 @@ function createMovement(config, { random = Math.random, hallucinationRandom = Ma
   function addAttempt(odds, actor, choice, probability) {
     const { pass, reasons } = attemptOdds(actor, choice);
     const destination = routes.positions.get(choice.to)?.name;
-    const attacker = choice.to === office && threats.entryAttacker(actor, officeVacant());
+    const attacker = choice.to === office && threats.entryAttacker(actor, officeVacant(), now);
     const label = attacker === 'palhaca' ? 'Jumpscare da Palhaça'
       : attacker ? `${destination} (invasão letal)` : destination;
     addOdds(odds, choice.stationary ? 'Ficar' : label, probability * pass);
@@ -1092,6 +1100,11 @@ function createMovement(config, { random = Math.random, hallucinationRandom = Ma
   reset();
   return {
     reset, advance, cameraActors, diagnostics, debugSnapshot,
+    observeInterference() {
+      if (interferenceObserved || !effects.staticActive(now) || !camerasAvailable()) return;
+      interferenceObserved = true;
+      resources.applyEvent('cameraInterference', now);
+    },
     interruptCameraObservation() {
       watchedCamera = undefined;
       input.cameraObservationBlocked = true;

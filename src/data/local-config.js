@@ -265,7 +265,17 @@ window.NathGame.localConfig = {
       "imageLoadWaitMs": 2000,
       "volume": 0.55
     },
-    "radioAutoStartSeconds": 12,
+    "customPortraits": {
+      "padrao": "images/Retrato Kawaii de Boneca Rosa.png",
+      "gotica": "images/Retrato Gótico Kawaii em Roxo Neon.png",
+      "yandere": "images/Retrato de Idol Animatrônica Kawaii em Rosa.png",
+      "gatinha": "images/Gatinha Idol Kawaii em Rosa Neon.png",
+      "maid": "images/Retrato de Maid Gótica em Tons Pastel.png",
+      "palhaca": "images/Avatar Anime de Arlequim com Corações.png",
+      "smores": "images/Smores, Cachorrinha Robótica Kawaii.png",
+      "shadow": "images/Retrato Gótico de Nathzinha Shadow.png"
+    },
+    "radioAutoStartSeconds": 15,
     "radioTracks": [
       "caramelldansen.mp3",
       "shikairo-days.mp3",
@@ -393,7 +403,7 @@ window.NathGame.localConfig = {
         "gotica": {
           "secondsToMax": 5,
           "advanceDelta": -0.7,
-          "retreatAfterMaxSeconds": 7
+          "retreatAfterMaxSeconds": 5
         },
         "yandere": {
           "secondsToMax": 5,
@@ -1233,8 +1243,8 @@ window.NathGame.localConfig = {
       "bar": {
         "secondsAtFull": 7,
         "stepSeconds": 0.2,
-        "stallSeconds": 15,
-        "maxPhaseSeconds": 55,
+        "stallSeconds": 10,
+        "maxPhaseSeconds": 45,
         "padraoMultiplier": 1.35,
         "stock": {
           "approach": {
@@ -1308,8 +1318,8 @@ window.NathGame.localConfig = {
           "towardPenalty": -0.2,
           "towardProgress": 4
         },
-        "maxEntrySeconds": 40,
-        "gatinhaMaxEntrySeconds": 30
+        "maxEntrySeconds": 30,
+        "gatinhaMaxEntrySeconds": 25
       }
     },
     "retreat": {
@@ -1348,9 +1358,9 @@ window.NathGame.localConfig = {
     "rulesVersion": "1.1.3",
     "clock": {
       "fastSanity": 90,
-      "slowSanity": 5,
+      "slowSanity": 4,
       "fastSecondsPerHour": 60,
-      "slowSecondsPerHour": 180
+      "slowSecondsPerHour": 150
     },
     "startHour": 12,
     "hoursToWin": 6,
@@ -1534,7 +1544,7 @@ window.NathGame.localConfig = {
     "gateDrain": 0.24,
     "officeGateDrain": 0.34,
     "radioDrain": 0.055,
-    "flashlightDrain": 0.12,
+    "flashlightDrain": 0.11,
     "eventDrain": {
       "electricalFault": 10
     },
@@ -1567,6 +1577,7 @@ window.NathGame.localConfig = {
       }
     },
     "eventLoss": {
+      "cameraInterference": 1.5,
       "closetEnter": 2,
       "electricalFault": 5,
       "yandereCameraScare": 15
@@ -1639,7 +1650,7 @@ window.NathGame.localConfig = {
       "uses": {
         "first": 1,
         "second": 2,
-        "max": 3
+        "max": 2
       }
     },
     "smores": {

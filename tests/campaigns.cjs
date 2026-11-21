@@ -104,7 +104,6 @@ test('custom-night/extras UI and achievements remain in static site', () => {
   }
   assert(menu.includes("store.awardMaxNight()"));
   assert(menu.includes("select.value = String(target)"));
-  assert(style.includes('grid-template-rows:repeat(4'), 'four cards per column');
   assert(style.includes('title-screen[data-submenu] .title-actions{visibility:hidden;pointer-events:none}'));
 });
 

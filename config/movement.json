@@ -229,8 +229,8 @@
     "bar": {
       "secondsAtFull": 7,
       "stepSeconds": 0.2,
-      "stallSeconds": 15,
-      "maxPhaseSeconds": 55,
+      "stallSeconds": 10,
+      "maxPhaseSeconds": 45,
       "padraoMultiplier": 1.35,
       "stock": {
         "approach": {
@@ -304,8 +304,8 @@
         "towardPenalty": -0.2,
         "towardProgress": 4
       },
-      "maxEntrySeconds": 40,
-      "gatinhaMaxEntrySeconds": 30
+      "maxEntrySeconds": 30,
+      "gatinhaMaxEntrySeconds": 25
     }
   },
   "retreat": {

@@ -10,7 +10,7 @@ function sanityRate(rules, { cameraLoss = 0, direct, invasion, centralGate, clos
   const totalLoss = cameraLoss
     + (invasion ? loss.invasion : 0) + (direct ? loss.direct : 0)
     + (centralGate ? loss.centralGate : 0) + (closet ? loss.closet : 0);
-  return (radio ? recovery.music : 0) + (totalLoss === 0 ? recovery.passive : 0)
+  return (blackout ? 0 : (radio ? recovery.music : 0) + (totalLoss === 0 ? recovery.passive : 0))
     - totalLoss * (blackout ? blackoutLossMultiplier : 1);
 }
 
@@ -96,7 +96,7 @@ function createResources({ night: defaults, sanity: sanityRules, power }, night 
     const radio = input.radio && radioAvailable(now);
     const drain = energyDrain(input, gates, radio);
     const rate = sanityChange(observation, radio);
-    const progress = seconds => sanityEnabled ? clockProgress(clock, sanity, rate, seconds)
+    const progress = seconds => energy === 0 ? 0 : sanityEnabled ? clockProgress(clock, sanity, rate, seconds)
       : seconds / fastestHour;
     const drainPerSecond = drain * consumptionMultiplier();
     // A paused clock still uses the slowest hourly duration for energy.

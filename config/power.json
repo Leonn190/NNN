@@ -5,7 +5,7 @@
   "gateDrain": 0.24,
   "officeGateDrain": 0.34,
   "radioDrain": 0.055,
-  "flashlightDrain": 0.12,
+  "flashlightDrain": 0.11,
   "eventDrain": { "electricalFault": 10 },
   "radioGraceSeconds": 30,
   "flashlightGraceSeconds": 60,

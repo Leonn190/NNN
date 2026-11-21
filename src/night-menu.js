@@ -46,35 +46,58 @@ function createNightMenu(config, { prepareShift, startShift, onEnter,
   let debug = false;
   const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)');
 
-  for (const [id, { name }] of Object.entries({
-    ...config.characters, palhaca: config.threats.clown, shadow: config.shadow, smores: config.threats.smores
-  })) {
-    const label = document.createElement('label');
+  const levelDisplays = new Map();
+  const characters = { ...config.characters, palhaca: config.threats.clown,
+    smores: config.threats.smores, shadow: config.shadow };
+  for (const [id, image] of Object.entries(config.controls.customPortraits)) {
+    const { name } = characters[id];
+    const card = document.createElement('div');
+    const portrait = document.createElement('img');
     const nameElement = document.createElement('span');
-    const select = document.createElement('select');
-    label.className = 'custom-character';
+    const input = document.createElement('input');
+    const arrows = document.createElement('div');
+    const levelDisplay = document.createElement('output');
+    card.className = 'custom-character';
+    card.setAttribute('role', 'group');
+    card.setAttribute('aria-label', name);
+    portrait.src = './public/' + image;
+    portrait.alt = name;
+    portrait.draggable = false;
     nameElement.className = 'custom-character-name';
     nameElement.textContent = name;
-    select.name = id;
-    select.setAttribute('aria-label', 'Dificuldade: ' + name);
-    for (let level = min; level <= max; level++) {
-      const option = document.createElement('option');
-      option.value = String(level);
-      option.textContent = level === max ? 'MAX' : option.value;
-      select.append(option);
+    input.type = 'hidden';
+    input.name = id;
+    input.value = String(defaultLevel);
+    arrows.className = 'custom-level-controls';
+    levelDisplay.setAttribute('aria-live', 'polite');
+    levelDisplay.setAttribute('aria-label', 'Nível: ' + name);
+    for (const [delta, symbol, action] of [[1, '▲', 'Aumentar'], [-1, '▼', 'Diminuir']]) {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.textContent = symbol;
+      button.setAttribute('aria-label', action + ' nível: ' + name);
+      button.addEventListener('click', () => {
+        input.value = String(min + (Number(input.value) - min + delta + max - min + 1) % (max - min + 1));
+        updateMaxButton();
+      });
+      arrows.append(button);
+      if (delta === 1) arrows.append(levelDisplay);
     }
-    select.value = String(defaultLevel);
-    select.addEventListener('change', updateMaxButton);
-    label.append(nameElement, select);
-    fields.append(label);
-    inputs.set(id, select);
+    card.append(portrait, nameElement, input, arrows);
+    fields.append(card);
+    inputs.set(id, input);
+    levelDisplays.set(id, levelDisplay);
   }
 
   function updateMaxButton() {
-    const allMax = [...inputs.values()].every(select => Number(select.value) === max);
+    inputs.forEach((input, id) => {
+      levelDisplays.get(id).value = Number(input.value) === max ? 'MAX' : input.value;
+    });
+    const allMax = [...inputs.values()].every(input => Number(input.value) === max);
     maxButton.setAttribute('aria-pressed', String(allMax));
     maxButton.textContent = allMax ? 'ZERAR TODAS' : 'MAX NIGHT';
   }
+  updateMaxButton();
 
   function renderStars() {
     const bits = store.stars();
@@ -327,7 +350,7 @@ function createNightMenu(config, { prepareShift, startShift, onEnter,
   }));
   customButton.addEventListener('click', () => {
     updateMaxButton();
-    showSubmenu('custom', inputs.values().next().value);
+    showSubmenu('custom', fields.querySelector('button'));
   });
   extrasButton.addEventListener('click', () => showSubmenu('extras', $('#extras-list button')));
   $('#close-custom').addEventListener('click', () => showSubmenu(null, customButton));

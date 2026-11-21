@@ -244,6 +244,9 @@ class SoundEngine {
     this.radioSource ??= context.createMediaElementSource(media);
     const lowpass = context.createBiquadFilter();
     lowpass.type = 'lowpass';
+    // The desk radio is a point source, including stereo tracks and unlocked credits.
+    lowpass.channelCount = 1;
+    lowpass.channelCountMode = 'explicit';
     const panner = context.createStereoPanner();
     const gain = context.createGain();
     gain.gain.value = 0;
@@ -263,16 +266,19 @@ class SoundEngine {
     this.radio = null;
   }
 
-  mixRadio(media, pan, behindDoor) {
-    const volume = behindDoor ? .045 : .15 * (1 - .35 * Math.abs(pan));
+  mixRadio(media, pan, behindDoor, normalization = 1) {
+    const volume = (behindDoor ? .045 : .15 * (1 - .35 * Math.abs(pan)))
+      * (this.radio ? normalization : 1);
     if (!this.radio) {
       if (media.volume !== volume) media.volume = volume;
       return;
     }
     const { lowpass, panner, gain } = this.radio;
-    if (this.radio.pan === pan && this.radio.behindDoor === behindDoor) return;
+    if (this.radio.pan === pan && this.radio.behindDoor === behindDoor
+        && this.radio.normalization === normalization) return;
     this.radio.pan = pan;
     this.radio.behindDoor = behindDoor;
+    this.radio.normalization = normalization;
     const now = this.context.currentTime;
     lowpass.frequency.setTargetAtTime(behindDoor ? 1250 : 14_000, now, .045);
     panner.pan.setTargetAtTime(pan * .85, now, .045);

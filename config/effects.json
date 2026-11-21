@@ -108,7 +108,7 @@
       "gotica": {
         "secondsToMax": 5,
         "advanceDelta": -0.7,
-        "retreatAfterMaxSeconds": 7
+        "retreatAfterMaxSeconds": 5
       },
       "yandere": {
         "secondsToMax": 5,

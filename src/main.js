@@ -141,6 +141,7 @@ let scareObjectUrl;
 let radioPlayback = null;
 let radioMixPan;
 let radioMixHiding;
+let radioMixNormalization;
 const playedScares = new Map();
 const imageCache = createImageCache(config.effects.imageCache);
 const interference = createCameraInterference(dom.static, $('#camera-static-band'), dom.feedScene,
@@ -274,6 +275,8 @@ const movement = createMovement(config, {
           || !state.flashlight || !corridorInView()) return;
       dom.office.toggleAttribute('data-flashlight-flicker', true);
       corridorFlickerTimer = setTimeout(clearCorridorFlicker, flashlight.corridorFlickerMs);
+    } else if ((event === 'corridorAttack' || event === 'stockAttack') && value === 'yandere') {
+      sound.playSample(yandereSurpriseSound.file, yandereSurpriseSound.volume, corridorSoundVoices);
     } else if (event === 'corridorAttack') {
       const { files, volume } = corridorAttackSound;
       sound.playSample(files[Math.floor(Math.random() * files.length)], volume, corridorSoundVoices);
@@ -289,7 +292,6 @@ const movement = createMovement(config, {
       sound.playPannedSample('doorCreak', clownWarningSound.volume, clownWarningSound.pan);
     } else if (event === 'yandereSabotage') {
       sound.playSample(yandereSabotageSound.file, yandereSabotageSound.volume, corridorSoundVoices);
-      if (value) sound.playSample(yandereSurpriseSound.file, yandereSurpriseSound.volume);
     } else if (event === 'invasion' && value.key === 'padrao') {
       const { files, volume } = padraoInvasionSound;
       sound.playSample(files[Math.floor(Math.random() * files.length)], volume);
@@ -909,16 +911,19 @@ function updateRadioMix() {
   const relative = Math.max(-1, Math.min(1, 2 * offset / (viewport.width || 1)));
   const closetPan = -.55 * Math.cos(state.closetPan * Math.PI);
   const pan = Math.round((hiding ? closetPan : relative) * 100) / 100;
-  if (pan === radioMixPan && hiding === radioMixHiding) return;
+  // Mono downmix measures -19.7 dB RMS; +2.8 dB matches the older tracks (~-17 dB).
+  const normalization = radioMusic.src.endsWith('/' + endingAssets.newRadioTrack) ? 1.38 : 1;
+  if (pan === radioMixPan && hiding === radioMixHiding && normalization === radioMixNormalization) return;
   radioMixPan = pan;
   radioMixHiding = hiding;
-  sound.mixRadio(radioMusic, pan, hiding);
+  radioMixNormalization = normalization;
+  sound.mixRadio(radioMusic, pan, hiding, normalization);
 }
 
 function stopRadio() {
   radioPlayback = null;
   delete radioMusic.dataset.fallback;
-  radioMixPan = radioMixHiding = undefined;
+  radioMixPan = radioMixHiding = radioMixNormalization = undefined;
   state.radioPlaying = false;
   radioMusic.pause();
   if (radioMusic.getAttribute('src') !== null) {
@@ -975,7 +980,7 @@ function setClownPhase(index) {
   const source = CLOWN_ART + art;
   if (dom.closetBeam.getAttribute('src') !== source) dom.closetBeam.src = source;
   dom.closetBeam.alt = alt;
-  dom.closetBeam.toggleAttribute('data-standing', art === 'standing.webp');
+  dom.closetBeam.toggleAttribute('data-blocks-vent', index >= 2);
 }
 
 function setClosetLight(on) {
@@ -1554,8 +1559,9 @@ function renderGameFrame(frame, now) {
   interference.update(now);
   if (goticaStaticAt !== undefined) {
     if (now >= goticaStaticAt + signal.gotica.durationMs) goticaStaticAt = undefined;
-    else if (goticaStaticAt !== renderedGoticaStaticAt && watchingCameras()) {
+    else if (goticaStaticAt !== renderedGoticaStaticAt && watchingCameras() && dom.cameraScare.hidden) {
       interference.play('gotica', goticaStaticAt, now, signal.gotica);
+      movement.observeInterference();
       renderedGoticaStaticAt = goticaStaticAt;
     }
   }
@@ -1801,6 +1807,7 @@ function fallbackRadio() {
   radioMusic.src = './public/audio/radio/' + controls.radioTracks[0];
   const fallback = radioMusic.play();
   radioPlayback = fallback;
+  updateRadioMix();
   fallback?.catch?.(() => { if (radioPlayback === fallback) stopRadio(); });
 }
 radioMusic.addEventListener('error', fallbackRadio);

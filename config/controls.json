@@ -12,7 +12,17 @@
     "imageLoadWaitMs": 2000,
     "volume": 0.55
   },
-  "radioAutoStartSeconds": 12,
+  "customPortraits": {
+    "padrao": "images/Retrato Kawaii de Boneca Rosa.png",
+    "gotica": "images/Retrato Gótico Kawaii em Roxo Neon.png",
+    "yandere": "images/Retrato de Idol Animatrônica Kawaii em Rosa.png",
+    "gatinha": "images/Gatinha Idol Kawaii em Rosa Neon.png",
+    "maid": "images/Retrato de Maid Gótica em Tons Pastel.png",
+    "palhaca": "images/Avatar Anime de Arlequim com Corações.png",
+    "smores": "images/Smores, Cachorrinha Robótica Kawaii.png",
+    "shadow": "images/Retrato Gótico de Nathzinha Shadow.png"
+  },
+  "radioAutoStartSeconds": 15,
   "radioTracks": ["caramelldansen.mp3", "shikairo-days.mp3", "kawaikute-gomen.mp3"],
   "menuMusic": { "startSeconds": 27, "fadeSeconds": 2, "initialVolume": 0.08, "volume": 0.58 },
   "observation": {
