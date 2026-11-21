@@ -613,8 +613,12 @@ function updateMovementDebug() {
       + ` · barulho recebido ${actor.noise.toFixed(1)} / ${config.effects.noise.max}`
       + ` · lanterna ${debugPercent.format(actor.light)}`
       + (actor.attackProgress === null ? '' : ` · barra ${actor.attackProgress.toFixed(1)}%`));
-    setText(attackOdds, actor.attackIntensity === null ? ''
-      : `Intensidade ${(actor.attackIntensity * 100).toFixed(1)}% · áudio ${actor.attackProgressPerSecond.toFixed(1)} pts/s`);
+    const activeModifiers = Object.entries(actor.attackModifiers ?? {}).filter(([, value]) => value !== 0)
+      .map(([key, value]) => `${key} ${value.toFixed(2)} pts/s`).join(', ');
+    setText(attackOdds, actor.attackSpeed === null ? ''
+      : `${actor.attackElapsed.toFixed(1)} s decorridos / ${actor.attackRemaining.toFixed(1)} s restantes`
+        + ` / velocidade ${actor.attackSpeed.toFixed(2)} pts/s / ${activeModifiers || 'sem modificadores'}`
+        + ` / previsao aproximada: ${actor.attackPrediction}`);
   }
   setText(debugClown, `Palhaça · ${clown.counter.toFixed(1)} / ${clown.max} · ${clown.status}`);
   debugProgress.max = clown.max;

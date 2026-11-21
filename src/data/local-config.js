@@ -402,28 +402,22 @@ window.NathGame.localConfig = {
       "modifiers": {
         "gotica": {
           "secondsToMax": 5,
-          "advanceDelta": -0.7,
           "retreatAfterMaxSeconds": 5
         },
         "yandere": {
-          "secondsToMax": 5,
-          "advanceDelta": -0.12,
-          "barPenalty": 0.12
+          "secondsToMax": 5
         },
         "gatinha": {
-          "secondsToMax": 5,
-          "advanceDelta": 0.55
+          "secondsToMax": 5
         }
       },
-      "decayPerSecond": 0.2,
-      "minimumAdvance": 0.05,
-      "maximumAdvance": 0.995
+      "decayPerSecond": 0.2
     },
     "noise": {
       "rates": {
-        "radio": 7,
-        "computer": 0.5,
-        "viewMoving": 0.3
+        "radio": 70,
+        "computer": 1.2,
+        "viewMoving": 0.8
       },
       "events": {
         "closetEnter": 9,
@@ -434,9 +428,8 @@ window.NathGame.localConfig = {
         "gateClose": 12,
         "gateOpen": 7
       },
-      "corridorMultiplier": 0.8,
-      "decay": 3,
-      "max": 100
+      "max": 100,
+      "responseSeconds": 0.33
     }
   },
   "map": {
@@ -1175,151 +1168,69 @@ window.NathGame.localConfig = {
       }
     },
     "attack": {
-      "corridor": {
-        "gotica": {
-          "approach": [
-            0.6,
-            0.85
-          ],
-          "entry": [
-            0.8,
-            0.99
-          ]
-        },
-        "yandere": {
-          "approach": [
-            0.6,
-            0.85
-          ],
-          "entry": [
-            0.8,
-            0.99
-          ]
-        },
-        "gatinha": {
-          "approach": [
-            0.15,
-            0.45
-          ],
-          "entry": [
-            0.25,
-            0.65
-          ]
-        },
-        "maid": {
-          "approach": [
-            0.65,
-            0.76
-          ],
-          "entry": [
-            0.85,
-            0.96
-          ]
-        },
-        "padrao": {
-          "approach": [
-            0.45,
-            0.8
-          ],
-          "entry": [
-            0.6,
-            0.98
-          ]
-        }
-      },
-      "stock": {
-        "approach": [
-          0.25,
-          0.94
-        ],
-        "entry": [
-          0.5,
-          0.99
-        ],
-        "observationPenalty": 0.12,
-        "minimumObservedAdvance": 0.05
-      },
-      "stayShare": 0.3,
       "bar": {
-        "secondsAtFull": 7,
-        "stepSeconds": 0.2,
-        "stallSeconds": 10,
-        "maxPhaseSeconds": 45,
-        "padraoMultiplier": 1.35,
-        "stock": {
-          "approach": {
-            "base": 0,
-            "perNoise": 0.018,
-            "cap": 0.95
+        "durationSeconds": 24,
+        "stepSeconds": 0.1,
+        "speeds": {
+          "padrao": {
+            "corridor": [
+              3.12,
+              0.068
+            ],
+            "stock": [
+              3.27,
+              0.07
+            ]
           },
-          "entry": {
-            "base": 0.07,
-            "perNoise": 0.009,
-            "cap": 0.97
+          "gotica": {
+            "corridor": [
+              3.25,
+              0.074
+            ],
+            "stock": [
+              3.25,
+              0.071
+            ]
+          },
+          "yandere": {
+            "corridor": [
+              3.25,
+              0.074
+            ],
+            "stock": [
+              3.25,
+              0.076
+            ]
+          },
+          "maid": {
+            "corridor": [
+              3.26,
+              0.074
+            ]
+          },
+          "gatinha": {
+            "corridor": [
+              6.5,
+              -0.042
+            ],
+            "stock": [
+              6.58,
+              -0.042
+            ]
           }
         },
-        "corridor": {
-          "approach": {
-            "base": 0,
-            "perNoise": 0.018,
-            "cap": 0.94
-          },
-          "entry": {
-            "base": 0.08,
-            "perNoise": 0.01,
-            "cap": 0.88
-          }
+        "light": {
+          "gotica": -3,
+          "yandere": -0.65,
+          "gatinha": 4
         },
-        "gotica": {
-          "approach": {
-            "base": 0,
-            "perNoise": 0.0084,
-            "cap": 0.84
-          },
-          "entry": {
-            "base": 0.12,
-            "perNoise": 0.0068,
-            "cap": 0.8
-          },
-          "lightPenalty": 0.7,
-          "minimumEntry": 0.05
-        },
-        "gatinhaCorridor": {
-          "approach": {
-            "base": 0.25,
-            "perNoise": -0.001,
-            "lightBonus": 0.55
-          },
-          "entry": {
-            "base": 0.3,
-            "perNoise": -0.0016,
-            "lightBonus": 0.5
-          }
-        },
-        "gatinhaStock": {
-          "approach": {
-            "base": 0.55,
-            "perNoise": -0.0036
-          },
-          "entry": {
-            "base": 0.5,
-            "perNoise": -0.004
-          }
-        },
-        "lookPenalty": 0.12,
-        "minimumEntry": 0.05,
+        "lookPenalty": 0.65,
         "audio": {
-          "padraoPenalty": 0.5,
-          "padraoProgress": -8,
-          "nearPenalty": 0.3,
-          "farPenalty": 0.12,
-          "nearProgress": -4,
-          "farProgress": -2,
-          "towardPenalty": -0.2,
-          "towardProgress": 4
-        },
-        "maxEntrySeconds": 30,
-        "gatinhaMaxEntrySeconds": 25
+          "padraoStock": -5,
+          "near": -3,
+          "far": -1.2,
+          "toward": 3
+        }
       }
     },
     "retreat": {

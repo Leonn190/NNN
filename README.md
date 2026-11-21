@@ -110,7 +110,7 @@ A área do jogo tem largura máxima de 16:9, centralizada sobre fundo preto. Mon
 ## Como jogar
 
 - Pressione **S** ou clique no monitor para vê-lo, mesmo com a tela apagada. Em **Câmeras**, selecione uma das doze câmeras na planta. Pressione **Q** ou **Esc**, ou clique fora da tela, para voltar ao escritório. Nas câmeras, **E** reproduz o áudio. O botão ⏻ liga o computador em 6,5 s e o desliga em 2 s. O menu Iniciar também permite desligá-lo. O aplicativo Câmeras leva 1,5 s para abrir quando está fechado.
-- No escritório, pressione **A** ou **D** para ir até a extremidade esquerda ou direita. Também é possível usar as bordas do panorama ou arrastar no touch. A porta esquerda fica sempre aberta. Olhar para ela impede travessias na aproximação.
+- No escritório, pressione **A** ou **D** para ir até a extremidade esquerda ou direita. Também é possível usar as bordas do panorama ou arrastar no touch. A porta esquerda fica sempre aberta. Olhar para ela reduz a velocidade dos ataques pelo estoque em 0,65 ponto percentual por segundo.
 - Pressione **Q** ou clique no botão rosa à direita do portão principal para fechar ou abrir o G01. Segure **W** ou pressione e segure no breu do portão para iluminar o corredor quando ele está aberto e a sala está vazia. A luz reduz o avanço da Gótica e da Yandere, favorece a desistência delas e aumenta o avanço da Gatinha. O G01 aparece como uma passagem na planta. O limite de portões fechados começa em zero na Noite 1 e aumenta em um por noite. Na Custom Night, o limite é três. Ao fechar outro portão no limite, o último que foi fechado reabre.
 - Use o botão **Reproduzir som nesta câmera** para atrair ou repelir personagens. O som dura 3 s na câmera de origem, inclusive depois de mudar de câmera, com recarga de 10 s desde o acionamento.
 - Se houver uma invasão, vire para a direita e clique na porta do armário técnico dentro do prazo. A proteção começa no clique. Espere as invasoras saírem antes de voltar ao escritório. Dentro do armário, mova o mouse ou arraste para ajustar a visão. Leve o cursor à borda direita para girar até o fundo escuro. Volte o cursor ao centro e repita o movimento para completar a volta. **D** mira o fundo e **A** mira as frestas. Segure **W** ou pressione e segure sobre a Palhaça para iluminá-la e congelar seu contador. Clique nas frestas para sair.
@@ -162,11 +162,45 @@ A Padrão tenta abrir o portão quando a observação permite. As chances são 7
 
 A vantagem avançada da Yandere começa em `movement.difficulty.abilityLevel` (nível 4). O campo `yandere.firstIntervalFactor` vale 0,60 e incide uma vez, após o cálculo do primeiro intervalo. A rota EE tem peso de 24% e leva a Yandere à Elétrica (21) pelo menor caminho válido para executar a sabotagem. Uma nova sabotagem pode ocorrer depois que ela selecionar outra rota e voltar à Elétrica.
 
-Cada Nathzinha começa o ataque com zero de barulho, acumula até 100 e recebe 80% dos acréscimos no corredor. Ligar a lanterna gera 8 pontos e ligar o computador gera 12 antes do multiplicador. No estoque, a chance de avançar de 10 para 12 vai de 20% a 94%, e a de entrar no escritório vai de 40% a 99%. No corredor, as chances variam por personagem e por etapa.
+Cada ataque de corredor ou estoque começa com uma barra de 0% e um único limite de 24 segundos. A velocidade em pontos percentuais por segundo é `base + coeficiente * ruído recebido + modificadores`. Não há sorteio de avanço, multiplicador por nível, segunda barra ou reinício do tempo na mudança de posição. Aos 50%, a personagem tenta ocupar a posição avançada respeitando a capacidade do mapa; essa posição permanece mesmo se a barra regredir, evitando oscilação visual. A tentativa de invasão acontece aos 100%, sujeita aos portões e bloqueios existentes. Se não completar a barra em 24 segundos, recua, inclusive quando aguarda uma posição ocupada. A janela de tentativa bloqueada após completar 100% continua separada do tempo de preenchimento e não possui outra barra.
 
-Iluminar a Gótica ou a Yandere no corredor por 8 s reduz em até 65 pontos percentuais a chance de avanço. Para a Gatinha, 6 s de luz aumentam a chance em até 65 pontos percentuais. A intensidade máxima se dissipa em 5 s. O áudio das câmeras continua sendo uma atração localizada.
+O ambiente compartilha um ruído entre 0 e 100 com o HUD e o debug, inclusive fora dos ataques. O rádio sustenta 70 pontos independentemente da faixa; computador e movimento sustentam 1,2 e 0,8 ponto. A resposta exponencial usa constante de 0,33 s: após desligar um rádio estabilizado, restam aproximadamente 3,38 pontos em 1 s e 0,16 em 2 s. Picos de ações são limitados e decaem pela mesma resposta. O cálculo não consulta a amplitude dos arquivos de música nem mantém histórico de ruído.
+
+A lanterna acumula intensidade por 5 s e modifica a velocidade máxima em −3 pts/s para Gótica, −0,65 para Yandere e +4 para Gatinha. A Gótica recua após atingir a intensidade máxima e receber mais 5 s de exposição. Olhar a porta esquerda reduz 0,65 pts/s durante todo o ataque pelo estoque. O som das câmeras dura 3 s, tem recarga de 9 s e mantém alcance de duas conexões: efeitos favoráveis reduzem 3 pts/s de perto ou 1,2 de longe; atração em direção ao escritório acrescenta 3 pts/s; Padrão recebe −5 pts/s no estoque com CAM08 próxima. A acústica da barra usa a origem da rota, para a transição visual aos 50% não alterar a velocidade. Navegação e detecção continuam usando a posição física atual. O progresso pode regredir até zero.
+
+O debug mostra posição física, rota, progresso, tempo decorrido/restante, ruído compartilhado, velocidade, modificadores e previsão aproximada sob condições constantes. Sorteios de navegação e de abertura de portão continuam identificados separadamente; o preenchimento da barra é determinístico. Ventilação da Gatinha, invasões, armário, Palhaça e demais eventos continuam em seus sistemas próprios.
 
 O temporizador de permanência de cada invasora conta desde a entrada dela no controle. O clique no armário decide se a permanência usa o tempo normal ou tardio. Em caso de eventos simultâneos, as ações registradas do jogador precedem a resolução das tentativas e dos ataques. O relógio usa tempo real transcorrido, inclusive com a aba oculta.
+
+### Verificação da barra única
+
+Execute `node tests/balance.cjs` e `node tests/attack-system.cjs`. Para regenerar os resultados completos no PowerShell, use `$env:NNN_BALANCE_REPORT='docs/generated/attack-balance.json'; node tests/attack-system.cjs`. O [relatório de medições](docs/generated/attack-balance.json) contém os 108 casos de ruído constante, os 288 casos de reação e 72 configurações de 1.000 ensaios cada, além de quatro controles de noites com 1.000 sementes cada. O gerador usa os módulos reais de efeitos, barra, ameaças e movimentação, sem dependências adicionais.
+
+A tabela abaixo mede o tempo até completar 100%, sem defesas especiais e sem bloqueios, com ruído já estabilizado. **R24** significa recuo aos 24 s, antes de completar a barra. Completar 100% ainda exige uma tentativa de passagem válida.
+
+| Personagem / rota | Ruído 0 | Ruído 70 | Ruído 100 |
+|---|---:|---:|---:|
+| Padrão / corredor | R24 | 12,69 s | 10,08 s |
+| Padrão / estoque | R24 | 12,24 s | 9,74 s |
+| Gótica / corredor | R24 | 11,86 s | 9,39 s |
+| Gótica / estoque | R24 | 12,17 s | 9,66 s |
+| Yandere / corredor | R24 | 11,86 s | 9,39 s |
+| Yandere / estoque | R24 | 11,67 s | 9,22 s |
+| Maid / corredor | R24 | 11,85 s | 9,38 s |
+| Gatinha / corredor | 15,38 s | R24 | R24 |
+| Gatinha / estoque | 15,20 s | R24 | R24 |
+
+Nos cenários de reação, os comuns começam com rádio ligado e a Gatinha com rádio desligado. A defesa troca esse estado no instante indicado. Sem fontes pequenas adicionais, 9/9 ataques recuam com resposta em 0–3 s, 4/9 em 4 s e 0/9 em 5–8 s. Com computador, movimento e pico inicial de portão, os resultados são 9/9 em 0–3 s, 3/9 em 4 s, 1/9 em 5 s e 0/9 em 6–8 s. O ruído residual é integrado, inclusive antes do início do ataque. A ação de rádio neste modelo isolado não inclui o custo de acessar sua interface; portanto esses tempos não são uma garantia de defesa na partida real.
+
+Não houve ajuste das nove bases ou coeficientes solicitados. Durante a calibração, computador e movimento somavam inicialmente 5 pontos sustentados, o que deixou só 3/9 defesas possíveis em 3 s no cenário adverso. Reduzi essas fontes pequenas para 1,2 + 0,8 ponto: com a mesma tabela de ataques, todos os nove casos passaram em 3 s. Picos e lanterna continuam acrescentando pressão real. Os 72.000 ensaios variam a duração dos passos e o estado anterior do rádio; as taxas por configuração estão no JSON. Ensaios cujo rádio já está correto também estão identificados e não devem ser confundidos com reação tardia a uma condição adversa.
+
+Os controles passivos do motor resultaram em 0/1.000 vitórias na Noite 6 silenciosa, 1/1.000 na Noite 6 com rádio, e 0/1.000 no MAX em cada estado do rádio. São controles negativos sem decisões do jogador, não taxas de vitória humanas. Exercitam movimentação, invasões, energia, sanidade e eventos de noite. Pares e trios também foram testados separadamente com as capacidades originais do mapa, portão central fechado, recuos independentes e proteção do armário após a saída da última invasora.
+
+Limitações: falta uma simulação de jogador que percorra toda a interface e gerencie rádio, portões, armário, Palhaça e recursos durante noites completas. A cobertura isolada do armário não substitui uma sessão manual com as transições visuais de entrada/saída. O teste de estresse do Chrome exercita interface, câmeras, rádio, portões, armário e debug por dois minutos; não equivale a uma sessão longa no hardware do jogador. O ruído foi exercitado por 24 horas simuladas com estado limitado, sem arrays de histórico ou timers novos.
+
+A execução final da suíte geral teve 70 verificações aprovadas e seis falhas. As 48 verificações das suítes de balanceamento e barra passaram. A suíte geral foi comparada ao HEAD anterior: suas mesmas seis falhas preexistentes permanecem em `camera-gates`, `movement`, `night-systems`, `notes` e dois testes de `endings`. Incluem fixture DOM incompleta, sintaxe inválida em `night-systems` e expectativas antigas. Não são tratadas como verificações aprovadas deste patch.
+
+No Chrome headless, o teste final durou 120,21 s e terminou com zero erros. Nas quatro janelas, o FPS ficou entre 156,69 e 160,65, com p99 máximo de 7,10 ms. Houve 10 intervalos acima de 50 ms; portanto o teste não demonstrou ausência total de pausas. O heap medido pelo DevTools passou de 2,55 MB para 3,20 MB durante a alternância de telas e noites. Essa amostra curta não prova ausência de vazamentos nem representa o desempenho de todos os computadores. A configuração local e o pacote de 290 arquivos passaram na validação dos 272 caminhos de assets.
 
 ### Pendências da especificação e da arte
 

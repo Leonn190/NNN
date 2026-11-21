@@ -315,35 +315,17 @@ test('Palhaça uses the adjusted growth, wardrobe floor and warning limits', () 
   assert.equal(run.emitted('clownWarning').length, 1);
 });
 
-test('camera audio modestly changes corridor retreat and same-camera stay odds', () => {
-  assert.equal(base.effects.cameraAudio.cooldown, 9);
-  assert.equal(base.effects.cameraAudio.factors[2], .25);
-  const graph = createRoutes(base.map);
-  const yandere = { key: 'yandere', rule: base.characters.yandere,
-    allowed: new Set(base.characters.yandere.positions), position: 14, noise: 0, light: 0 };
-  const effect = createEffects(base, graph, [yandere]);
-  assert(effect.startAudio(0, 'CAM05'));
-  const active = effect.attackOdds(yandere, 'corridor', 'entry', false, 1);
-  const expired = effect.attackOdds(yandere, 'corridor', 'entry', false, 3.01);
-  assert(active.advance < expired.advance);
-  assert(active.abandon > expired.abandon);
-  assert(effect.weight(yandere, 6, 1) > effect.weight(yandere, 7, 1));
-  assert.equal(effect.audioStimulus(yandere, 3.01), null);
-  yandere.position = 6;
-  assert.equal(effect.startAudio(8.99, 'CAM05'), false);
-  assert(effect.startAudio(9, 'CAM05'));
-  near(effect.stayWeight(yandere, 9), 1.75);
-  assert(effect.attackOdds(yandere, 'corridor', 'entry', false, 9).stay
-    > effect.attackOdds(yandere, 'corridor', 'entry', false, 12.01).stay);
-
-  const padrao = { key: 'padrao', rule: base.characters.padrao,
-    allowed: new Set(base.characters.padrao.positions), position: 10, noise: 0, light: 0 };
-  const repulsion = createEffects(base, graph, [padrao]);
-  assert(repulsion.startAudio(0, 'CAM08'));
-  const stock = repulsion.attackOdds(padrao, 'stock', 'approach', false, 1);
-  assert(stock.advance < .25);
-  assert(stock.stay < (1 - stock.advance) * .3);
-  near(repulsion.stayWeight(padrao, 1), .5);
+test('camera audio modifies the real bar and preserves navigation, duration and cooldown', () => {
+  const actor = { key: 'padrao', rule: base.characters.padrao,
+    allowed: new Set(base.characters.padrao.positions), position: 10, light: 0 };
+  const effect = createEffects(base, createRoutes(base.map), [actor]);
+  assert(effect.startAudio(0, 'CAM08'));
+  near(effect.attackBar(actor, 'stock', false, 1).speed, 3.27 - 5);
+  near(effect.attackBar(actor, 'stock', false, 3).speed, 3.27);
+  near(effect.stayWeight(actor, 1), .5);
+  assert.equal(effect.audioStimulus(actor, 3.01), null);
+  assert.equal(effect.startAudio(8.99, 'CAM08'), false);
+  assert(effect.startAudio(9, 'CAM08'));
 });
 
 test('Yandere surprise requires ongoing sanity below 75', () => {
@@ -460,28 +442,24 @@ test('closet protection remains inactive but camera audio is available during th
 });
 
 
-test('low-noise entry retreats at its duration limit without slowing the bar', () => {
-  const rules = base.movement.attack.bar;
-  const effects = { attackBar: () => ({ intensity: .07, progressPerSecond: 0 }) };
-  const { createApproach } = window.NathGame;
-  const approach = createApproach(base.map, effects, () => 0, () => false, () => 0, rules);
-  const actor = { key: 'gotica', position: base.map.back, light: 0, due: 0 };
-  assert.equal(approach.begin(actor, 'corridor'), true);
+test('visual arrival retains progress and the single timeout', () => {
+  const approach = window.NathGame.createApproach(base.map, { attackBar: () => ({ speed: 3 }) },
+    () => 0, () => false, () => 0, base.movement.attack.bar);
+  const actor = { key: 'gotica', position: base.map.back };
+  approach.begin(actor, 'corridor');
   approach.integrate(actor, 20);
   actor.position = base.map.front;
   approach.arrive(actor);
-  near(actor.approach.elapsed, 0);
-  approach.integrate(actor, 29.9);
-  near(actor.approach.progress, 29.9);
-  assert.equal(approach.expired(actor), false);
-  approach.integrate(actor, .1);
-  near(actor.approach.progress, 30);
-  assert.equal(approach.expired(actor), true);
-  assert.equal(approach.completed(actor), false);
+  near(actor.approach.elapsed, 20);
+  near(actor.approach.progress, 60);
+  approach.integrate(actor, 40);
+  near(actor.approach.elapsed, 24);
+  near(actor.approach.progress, 72);
+  assert(approach.expired(actor));
+  assert(!approach.completed(actor));
 });
 
-
-test('a real attack completes its two bars and can invade without RNG advance rolls', () => {
+test('a real attack completes its single bar and can invade without RNG advance rolls', () => {
   const run = scenario({ gotica: 1 }, { view: 'office', radio: true }, config => {
     corridor(config);
     config.effects.noise.rates.radio = 200;
@@ -497,7 +475,7 @@ test('a real attack completes its two bars and can invade without RNG advance ro
 
 test('noise-driven attack progress is independent of character level', () => {
   const rules = base.movement.attack.bar;
-  const effects = { attackBar: () => ({ intensity: 1, progressPerSecond: 0 }) };
+  const effects = { attackBar: () => ({ speed: 100 / 7 }) };
   const { createApproach } = window.NathGame;
   for (const level of [1, 5, 11]) {
     const approach = createApproach(base.map, effects, () => 0, () => false, () => 0, rules);
@@ -509,25 +487,23 @@ test('noise-driven attack progress is independent of character level', () => {
     assert.equal(approach.completed(actor), true);
     actor.position = base.map.front;
     approach.arrive(actor);
-    near(actor.approach.progress, 0);
-    assert.equal(actor.approach.phase, 'entry');
+    near(actor.approach.progress, 100);
+    near(actor.approach.elapsed, 7);
+    assert.equal(actor.approach.phase, 'attack');
   }
 });
 
-test('Gatinha is attracted to silence, common attacks require noise to start', () => {
-  const config = structuredClone(base);
-  const makeActor = key => ({ key, rule: config.characters[key], allowed: new Set(config.characters[key].positions),
-    position: config.map.leftApproach, approach: { objective: 'stock', phase: 'approach' }, light: 0 });
-  const actors = ['gotica', 'gatinha', 'padrao'].map(makeActor);
-  const effects = createEffects(config, createRoutes(config.map), actors);
-  near(effects.attackBar(actors[0], 'stock', 'approach', false, 0).intensity, 0);
-  near(effects.attackBar(actors[1], 'stock', 'approach', false, 0).intensity, .55);
-  for (let i = 0; i < 12; i++) effects.addNoiseEvent('gateClose', 0);
-  const noisyCommon = effects.attackBar(actors[0], 'stock', 'approach', false, 0).intensity;
-  const noisyCat = effects.attackBar(actors[1], 'stock', 'approach', false, 0).intensity;
-  assert(noisyCommon > .9);
-  assert(noisyCat < .3);
-  assert(effects.attackBar(actors[2], 'stock', 'entry', false, 0).intensity > 1);
+test('noise slows Gatinha and accelerates common attacks without phase multipliers', () => {
+  const actors = ['gotica', 'gatinha', 'padrao'].map(key => ({ key,
+    rule: base.characters[key], allowed: new Set(base.characters[key].positions),
+    position: base.map.leftApproach, light: 0 }));
+  const effects = createEffects(base, createRoutes(base.map), actors);
+  near(effects.attackBar(actors[0], 'stock', false).speed, 3.25);
+  near(effects.attackBar(actors[1], 'stock', false).speed, 6.58);
+  for (let i = 0; i < 12; i++) effects.addNoiseEvent('gateClose');
+  near(effects.attackBar(actors[0], 'stock', false).speed, 10.35);
+  near(effects.attackBar(actors[1], 'stock', false).speed, 2.38);
+  near(effects.attackBar(actors[2], 'stock', false).speed, 10.27);
 });
 
 test('blocking clock, route bonuses and counterattack probabilities use the approved values', () => {
@@ -596,31 +572,17 @@ test('empty-office clown entry honors other occupants and all three seconds afte
   assert.equal(threats.entryAttacker({ key: 'maid' }, true, 33), 'palhaca');
 });
 
-test('both attack routes use independent 45/30/25-second phases and ten seconds fully stalled', () => {
-  const { createApproach } = window.NathGame;
-  for (const objective of ['corridor', 'stock']) for (const key of ['gotica', 'gatinha']) {
-    let intensity = .07;
-    const approach = createApproach(base.map, { attackBar: () => ({ intensity, progressPerSecond: 0 }) },
+test('both routes retreat after 24 seconds even at zero or negative speed', () => {
+  for (const objective of ['corridor', 'stock']) for (const speed of [-5, 0, 3]) {
+    const approach = window.NathGame.createApproach(base.map, { attackBar: () => ({ speed }) },
       () => 0, () => false, () => 0, base.movement.attack.bar);
-    const actor = { key, position: objective === 'corridor' ? base.map.back : base.map.leftApproach };
+    const actor = { key: 'gatinha', position: objective === 'corridor' ? base.map.back : base.map.leftApproach };
     approach.begin(actor, objective);
-    approach.integrate(actor, 44.9);
-    assert.equal(approach.expired(actor), false);
-    approach.integrate(actor, .1);
-    assert.equal(approach.expired(actor), true);
-    actor.position = objective === 'corridor' ? base.map.front : base.map.left;
-    approach.arrive(actor);
-    near(actor.approach.elapsed, 0);
-    const limit = key === 'gatinha' ? 25 : 30;
-    approach.integrate(actor, limit - .1);
-    assert.equal(approach.expired(actor), false);
-    approach.integrate(actor, .1);
-    assert.equal(approach.expired(actor), true);
-    approach.arrive(actor);
-    intensity = 0;
-    approach.integrate(actor, 9.9);
-    assert.equal(approach.expired(actor), false);
-    approach.integrate(actor, .1);
-    assert.equal(approach.expired(actor), true);
+    approach.integrate(actor, 23.9);
+    assert(!approach.expired(actor));
+    approach.integrate(actor, 10);
+    assert(approach.expired(actor));
+    near(actor.approach.elapsed, 24);
+    near(actor.approach.progress, Math.max(0, 24 * speed));
   }
 });

@@ -274,6 +274,7 @@ function createMovement(config, { random = Math.random, hallucinationRandom = Ma
   }
 
   function recover(actor, intervalFactor = recovery.intervalFactor) {
+    actor.pending = null;
     actor.route = null;
     actor.retainedRouteMoves = 0;
     actor.approach = null;
@@ -430,6 +431,9 @@ function createMovement(config, { random = Math.random, hallucinationRandom = Ma
     if (choice.free) actor.freeMoves--;
     if (to === office) actor.due = Infinity;
     approach.arrive(actor);
+    if (actor.approach && to !== office && approach.completed(actor)) {
+      actor.pending = { to: office, startedAt: now, expires: now + movement.retryWindow };
+    }
     const recovered = reachCheckpoint(actor, from);
     if (to !== office && !recovered && !actor.approach) schedule(actor);
     emit('move', { actor, from, to });
@@ -633,16 +637,21 @@ function createMovement(config, { random = Math.random, hallucinationRandom = Ma
     if (outcome) return;
     for (const actor of actors) {
       if (actor.key === 'gotica' && actor.approach?.objective === 'corridor'
-          && actor.goticaExposure >= config.effects.flashlight.modifiers.gotica.retreatAfterMaxSeconds) {
+          && actor.goticaExposure >= config.effects.flashlight.modifiers.gotica.retreatAfterMaxSeconds - 1e-9) {
         withdraw(actor, 'corridor');
       }
     }
     for (const actor of actors) {
-      if (actor.pending || !actor.approach) continue;
-      if (approach.completed(actor)) {
-        actor.pending = { to: approach.options(actor).to, startedAt: now, expires: now + movement.retryWindow };
-      } else if (approach.expired(actor)) {
+      if (!actor.approach || actor.approach.phase === 'invasion') continue;
+      if (actor.pending && approach.completed(actor) && actor.pending.expires === Infinity)
+        actor.pending.expires = now + movement.retryWindow;
+      if (approach.expired(actor)) {
+        actor.pending = null;
         withdraw(actor, actor.approach.objective);
+      } else if (!actor.pending && (approach.completed(actor)
+          || (actor.approach.advanced && (actor.position === back || actor.position === leftApproach)))) {
+        actor.pending = { to: approach.options(actor).to, startedAt: now,
+          expires: approach.completed(actor) ? now + movement.retryWindow : Infinity };
       }
     }
     for (const actor of actors) {
@@ -746,7 +755,9 @@ function createMovement(config, { random = Math.random, hallucinationRandom = Ma
 
   function integrate(until, camera) {
     if (movementPaused()) {
-      now = Math.min(until, movementDelay);
+      const end = Math.min(until, movementDelay);
+      effects.integrate(end - now, noiseInput(input.radio && resources.radioAvailable(now), resources.computerOn()));
+      now = end;
       return;
     }
     const computerOn = resources.computerOn();
@@ -767,12 +778,13 @@ function createMovement(config, { random = Math.random, hallucinationRandom = Ma
       }
     }
     const activeInput = { ...noiseInput(radio, computerOn), corridorLight, clownLight };
-    effects.integrate(end - now, { ...activeInput, corridorLight: effectiveCorridorLight });
+    effects.prepare({ ...activeInput, corridorLight: effectiveCorridorLight });
     if (!movementPaused()) {
-      for (const actor of actors) if (actor.approach && !actor.pending) approach.integrate(actor, end - now);
+      for (const actor of actors) if (actor.approach) approach.integrate(actor, end - now);
       threats.integrate(end - now, activeInput);
       smores.integrate(end - now, radio);
     }
+    effects.integrate(end - now, { ...activeInput, corridorLight: effectiveCorridorLight });
     now = end;
     if (won) finish('win');
   }
@@ -784,13 +796,18 @@ function createMovement(config, { random = Math.random, hallucinationRandom = Ma
       let due = Math.min(until, movementDelay);
       if (!movementPaused()) {
         const radio = input.radio && resources.radioAvailable(now);
-        due = Math.min(until, shadow.nextDeadline(), effects.staticDeadline(now), surpriseDeadline(),
+        effects.prepare({ ...noiseInput(radio, resources.computerOn()), corridorLight: corridorLit() });
+        due = Math.min(until, effects.audioDeadline(now), shadow.nextDeadline(), effects.staticDeadline(now), surpriseDeadline(),
           threats.nextDeadline(now, radio, resources.flashlightAvailable(now) && input.clownLight), smores.nextDeadline(now, radio));
         due = Math.min(due, pendingClosetAt);
         for (const actor of actors) {
           due = Math.min(due, actor.pending?.expires ?? moveDue(actor));
-          if (actor.approach && !actor.pending && actor.approach.phase !== 'invasion')
-            due = Math.min(due, now + movement.attack.bar.stepSeconds);
+          due = Math.min(due, approach.nextDeadline(actor, now));
+          if (actor.key === 'gotica' && actor.approach?.objective === 'corridor' && actor.lit) {
+            const light = config.effects.flashlight.modifiers.gotica;
+            due = Math.min(due, now + (1 - actor.light) * light.secondsToMax
+              + Math.max(0, light.retreatAfterMaxSeconds - (actor.goticaExposure ?? 0)));
+          }
         }
         if (closetAttack?.phase === 'closetVent') {
           due = Math.min(due, closetAttack.due, closetAttack.litSince + closetAttack.lightSeconds);
@@ -968,10 +985,7 @@ function createMovement(config, { random = Math.random, hallucinationRandom = Ma
       }
     }
     if (actor.approach) {
-      const { to, objective, advance, stay, abandon } = approach.options(actor);
-      addAttempt(odds, actor, { to }, probability * advance);
-      if (actor.key !== 'maid') addOdds(odds, 'Ficar', probability * stay);
-      addRetreat(odds, actor, objective, probability * (abandon + (actor.key === 'maid' ? stay : 0)));
+      addOdds(odds, attackLabel(actor.approach.objective) + ' (barra deterministica)', probability);
       return;
     }
     if (actor.route?.objective === 'closetVent' && actor.position === actor.route.lastReached) {
@@ -993,6 +1007,16 @@ function createMovement(config, { random = Math.random, hallucinationRandom = Ma
     });
   }
 
+  function attackPrediction(actor) {
+    if (!actor.approach || actor.approach.phase === 'invasion') return null;
+    if (approach.completed(actor)) return 'tentativa de invasão · sujeita a bloqueios';
+    const speed = approach.options(actor).speed;
+    const remaining = Math.max(0, movement.attack.bar.durationSeconds - actor.approach.elapsed);
+    const seconds = speed > 0 ? (100 - actor.approach.progress) / speed : Infinity;
+    return seconds <= remaining ? `invasão em ~${seconds.toFixed(1)} s · sujeita a bloqueios`
+      : `recuo em ~${remaining.toFixed(1)} s`;
+  }
+
   function actorDebug(actor) {
     const { pending, position } = actor;
     const odds = { Ficar: 0 };
@@ -1000,14 +1024,6 @@ function createMovement(config, { random = Math.random, hallucinationRandom = Ma
     const attackActive = Boolean(actor.approach) && !outcome;
     let status;
     let target;
-    let attackOdds = null;
-    if (attackActive && position !== office) {
-      const options = pending ? { to: pending.to, advance: 1, stay: 0, abandon: 0 } : approach.options(actor);
-      const { pass } = attemptOdds(actor, pending ?? { to: options.to });
-      const instant = actor.key === 'maid';
-      attackOdds = { advance: options.advance * pass, stay: instant ? 0 : options.stay,
-        abandon: options.abandon + (instant ? options.stay : 0), blocked: options.advance * (1 - pass) };
-    }
     const selections = actor.level && actor.rule.routes && !outcome && position !== closetVent
       ? attackRoutes.selectionOdds(actor) : [];
     if (!actor.level || outcome) {
@@ -1045,8 +1061,7 @@ function createMovement(config, { random = Math.random, hallucinationRandom = Ma
       const remaining = actor.approach
         ? (100 - actor.approach.progress).toFixed(1) + '%'
         : Math.max(0, moveDue(actor) - now).toFixed(1) + ' s';
-      const phase = actor.retreat ? 'recuou · recuperação' : actor.approach?.phase === 'entry' ? 'entrada'
-        : actor.approach ? 'aproximação'
+      const phase = actor.retreat ? 'recuou · recuperação' : actor.approach ? 'ataque'
         : actor.freeMoves ? 'movimento livre' : movementPaused() ? 'pausa inicial'
         : actor.stage < actor.rule.initialStationaryAttempts ? 'parada inicial' : 'aguardando tentativa';
       status = `${phase} · ${remaining}`;
@@ -1062,12 +1077,13 @@ function createMovement(config, { random = Math.random, hallucinationRandom = Ma
       routeOdds, required: actor.route?.required, lastReached: actor.route?.lastReached,
       completed: actor.route?.completed, bonus: actor.level ? effectiveNavigationBonus(actor) : null,
       target, status, odds, expiryOdds, attackActive, attackPath: actor.approach?.objective ?? null,
-      noise: actor.noise ?? 0, light: actor.light ?? 0, attackOdds,
+      noise: effects.perceivedNoise(), light: actor.light ?? 0,
       attackProgress: actor.approach?.progress ?? null,
-      attackIntensity: actor.approach && actor.approach.phase !== 'invasion'
-        ? approach.options(actor).intensity : null,
-      attackProgressPerSecond: actor.approach && actor.approach.phase !== 'invasion'
-        ? approach.options(actor).progressPerSecond : null,
+      attackElapsed: actor.approach?.elapsed ?? null,
+      attackRemaining: actor.approach ? Math.max(0, movement.attack.bar.durationSeconds - actor.approach.elapsed) : null,
+      attackSpeed: actor.approach && actor.approach.phase !== 'invasion' ? approach.options(actor).speed : null,
+      attackModifiers: actor.approach && actor.approach.phase !== 'invasion' ? approach.options(actor).modifiers : null,
+      attackPrediction: attackPrediction(actor),
       audio: effects.audioStimulus(actor, now),
       invasions: threats.invasionCount(actor),
       instantInvasion: actor.level > 0 && !outcome && position !== office && threats.instantInvasion(actor),

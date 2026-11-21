@@ -274,34 +274,49 @@ function createApproach(map, effects, random, observingLeft = () => false, curre
     corridor: [map.back, map.front, map.office],
     stock: [map.leftApproach, map.left, map.office]
   };
-  const fullSeconds = rules.secondsAtFull ?? 7;
-  const limit = rules.maxPhaseSeconds ?? 45;
-  const stallLimit = rules.stallSeconds ?? 10;
+  const limit = rules.durationSeconds ?? 24;
 
   function begin(actor, objective) {
-    if (actor.position !== stages[objective][0]) return false;
+    if (actor.position !== stages[objective]?.[0]) return false;
     actor.light = 0;
     actor.goticaExposure = 0;
-    actor.approach = { objective, phase: 'approach', progress: 0, elapsed: 0, stalled: 0 };
+    actor.approach = { objective, phase: 'attack', progress: 0, elapsed: 0, advanced: false };
     actor.due = Infinity;
     return true;
   }
 
-  function options(actor) {
-    const { objective, phase, progress } = actor.approach;
-    return { to: stages[objective][phase === 'approach' ? 1 : 2], objective, progress,
-      ...effects.attackBar(actor, objective, phase, observingLeft(), currentTime()) };
+  function options(actor, dt = 0, atEnd = false) {
+    const attack = actor.approach;
+    return { to: stages[attack.objective][actor.position === stages[attack.objective][0] ? 1 : 2],
+      ...effects.attackBar(actor, attack.objective, observingLeft(), currentTime(), dt, atEnd) };
   }
 
-  function integrate(actor, dt) {
-    if (!actor.approach || actor.approach.phase === 'invasion' || dt <= 0) return;
-    const { intensity, progressPerSecond } = options(actor);
-    const speed = intensity * 100 / fullSeconds + progressPerSecond;
-    const attack = actor.approach;
-    const previous = attack.progress;
-    attack.progress = Math.min(100, Math.max(0, previous + dt * speed));
-    attack.elapsed += dt;
-    attack.stalled = Math.abs(attack.progress - previous) < 1e-9 ? attack.stalled + dt : 0;
+  function progressAfter(actor, dt) {
+    const start = actor.approach.progress;
+    const delta = options(actor, dt).speed * dt;
+    // Reflect at zero even if a decaying stimulus changes the sign inside a frame.
+    if (options(actor).speed < 0 && options(actor, dt, true).speed > 0) {
+      let low = 0, high = dt;
+      for (let i = 0; i < 32; i++) {
+        const mid = (low + high) / 2;
+        if (options(actor, mid, true).speed < 0) low = mid;
+        else high = mid;
+      }
+      const minimum = start + options(actor, high).speed * high;
+      return Math.max(0, start + delta - Math.min(0, minimum));
+    }
+    return Math.max(0, start + delta);
+  }
+
+  function risingWindow(actor, dt) {
+    if (!(options(actor).speed > 0 && options(actor, dt, true).speed < 0)) return dt;
+    let low = 0, high = dt;
+    for (let i = 0; i < 32; i++) {
+      const mid = (low + high) / 2;
+      if (options(actor, mid, true).speed > 0) low = mid;
+      else high = mid;
+    }
+    return high;
   }
 
   function completed(actor) {
@@ -309,22 +324,53 @@ function createApproach(map, effects, random, observingLeft = () => false, curre
   }
 
   function expired(actor) {
-    if (!actor.approach || actor.approach.phase === 'invasion') return false;
-    const entryLimit = actor.key === 'gatinha' ? rules.gatinhaMaxEntrySeconds : rules.maxEntrySeconds;
-    const maxSeconds = actor.approach.phase === 'entry' ? entryLimit ?? limit : limit;
-    return actor.approach.elapsed >= maxSeconds || actor.approach.stalled >= stallLimit;
+    return actor.approach && actor.approach.phase !== 'invasion' && !completed(actor)
+      && actor.approach.elapsed >= limit - 1e-9;
+  }
+
+  function integrate(actor, dt) {
+    const attack = actor.approach;
+    if (!attack || attack.phase === 'invasion' || completed(actor) || dt <= 0) return;
+    dt = Math.min(dt, Math.max(0, limit - attack.elapsed));
+    const rising = risingWindow(actor, dt);
+    if (progressAfter(actor, rising) >= 100) {
+      let low = 0, high = rising;
+      for (let i = 0; i < 40; i++) {
+        const mid = (low + high) / 2;
+        if (progressAfter(actor, mid) >= 100) high = mid;
+        else low = mid;
+      }
+      dt = high;
+    }
+    attack.progress = Math.min(100, progressAfter(actor, dt));
+    attack.elapsed += dt;
+    // One-way visual latch avoids flicker when defenses regress the same bar.
+    if (attack.progress >= 50 - 1e-9) attack.advanced = true;
+  }
+
+  function nextDeadline(actor, now) {
+    const attack = actor.approach;
+    if (!attack || attack.phase === 'invasion' || completed(actor)) return Infinity;
+    let dt = Math.min(rules.stepSeconds ?? .1, Math.max(0, limit - attack.elapsed));
+    const target = attack.advanced ? 100 : 50;
+    const rising = risingWindow(actor, dt);
+    if (progressAfter(actor, rising) >= target) {
+      let low = 0, high = rising;
+      for (let i = 0; i < 32; i++) {
+        const mid = (low + high) / 2;
+        if (progressAfter(actor, mid) >= target) high = mid;
+        else low = mid;
+      }
+      dt = high;
+    }
+    return now + dt;
   }
 
   function arrive(actor) {
-    if (!actor.approach) return;
-    if (actor.position === map.office) actor.approach.phase = 'invasion';
-    else if (actor.position === stages[actor.approach.objective][1]) {
-      Object.assign(actor.approach, { phase: 'entry', progress: 0, elapsed: 0, stalled: 0 });
-      actor.due = Infinity;
-    }
+    if (actor.approach && actor.position === map.office) actor.approach.phase = 'invasion';
   }
 
-  return { begin, options, integrate, completed, expired, arrive };
+  return { begin, options, integrate, completed, expired, arrive, nextDeadline };
 }
 
 Object.assign(window.NathGame, { createThreats, createSmores, createApproach });

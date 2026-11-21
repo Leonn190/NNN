@@ -12,10 +12,10 @@ function createEffects(config, routes, actors) {
   let audio;
   let readyAt = 0;
   let staticUntil = 0;
-  let volumePeak = 0;
-  let volumePeakAt = 0;
+  let targetNoise = 0;
   let globalNoise = 0;
-  const transientVolume = now => volumePeak * Math.exp(-(now - volumePeakAt) / .22);
+  let cachedDt = -1, cachedMean = 0;
+
   const activeAudio = (actor, now = 0) => actor.audioStimulus && now < actor.audioStimulus.ends
     ? actor.audioStimulus : null;
   const audibleNeighbors = actor => routes.neighbors.get(actor.position).filter(to => {
@@ -39,125 +39,85 @@ function createEffects(config, routes, actors) {
     return true;
   }
 
-  function addNoise(actor, amount) {
-    actor.noise = clamp(actor.noise + amount, 0, noise.max);
-  }
-
-  const noiseMultiplier = actor => actor.approach.objective === 'corridor' ? noise.corridorMultiplier : 1;
-
   function noiseRate(input) {
     let rate = 0;
     for (const [key, value] of noiseRates) if (input[key]) rate += value;
-    return rate;
+    return clamp(rate, 0, noise.max);
   }
 
-  function perceivedNoise(actor) {
-    if (!actor.approach) return globalNoise;
-    if (actor.approach.objective === 'stock') {
-      return globalNoise * (actor.approach.phase === 'entry' ? 1 : 0.8);
+  // Integral of a first-order response: shared by every actor, HUD and diagnostics.
+  function meanNoise(dt) {
+    if (!(dt > 0)) return globalNoise;
+    if (dt === cachedDt) return cachedMean;
+    cachedDt = dt;
+    const blend = -Math.expm1(-dt / noise.responseSeconds);
+    cachedMean = targetNoise + (globalNoise - targetNoise) * noise.responseSeconds * blend / dt;
+    return cachedMean;
+  }
+
+  function meanLight(actor, dt) {
+    if (!(dt > 0)) return actor.light ?? 0;
+    const rate = actor.lightRate ?? 0;
+    const start = actor.light ?? 0;
+    if (!rate) return start;
+    const ramp = Math.min(dt, Math.max(0, ((rate > 0 ? 1 : 0) - start) / rate));
+    return ((start + start + rate * ramp) * ramp / 2
+      + clamp(start + rate * dt, 0, 1) * (dt - ramp)) / dt;
+  }
+
+  function prepare(input) {
+    const next = noiseRate(input);
+    if (next !== targetNoise) cachedDt = -1;
+    targetNoise = next;
+    for (const actor of actors) {
+      const light = flashlight.modifiers[actor.key];
+      const lit = actor.approach?.objective === 'corridor' && input.corridorLight && corridor.includes(actor.position);
+      actor.lightRate = light ? (lit ? 1 / light.secondsToMax : -flashlight.decayPerSecond) : 0;
+      actor.lit = Boolean(lit);
     }
-    return globalNoise * (actor.approach.phase === 'entry' ? 0.8 : 0.6);
   }
 
   function integrate(dt, input) {
-    const equilibrium = noiseRate(input) * noise.max / noise.decay;
-    const blend = -Math.expm1(-dt * noise.decay / noise.max);
-    globalNoise = clamp(globalNoise + (equilibrium - globalNoise) * blend, 0, noise.max);
+    prepare(input);
+    cachedDt = -1;
+    globalNoise = clamp(targetNoise + (globalNoise - targetNoise)
+      * Math.exp(-dt / noise.responseSeconds), 0, noise.max);
     for (const actor of actors) {
+      actor.noise = globalNoise;
       if (!actor.approach) continue;
-      actor.noise = perceivedNoise(actor);
       const light = flashlight.modifiers[actor.key];
       if (!light) continue;
-      const lit = actor.approach.objective === 'corridor' && input.corridorLight && corridor.includes(actor.position);
-      const lightRate = lit ? 1 / light.secondsToMax : -flashlight.decayPerSecond;
       const previousLight = actor.light;
-      actor.light = clamp(previousLight + lightRate * dt, 0, 1);
+      actor.light = clamp(previousLight + actor.lightRate * dt, 0, 1);
       if (actor.key === 'gotica') {
-        const secondsAtMax = lit ? Math.max(0, dt - (1 - previousLight) * light.secondsToMax) : 0;
-        actor.goticaExposure = lit ? (actor.goticaExposure ?? 0) + secondsAtMax : 0;
+        const secondsAtMax = actor.lit ? Math.max(0, dt - (1 - previousLight) * light.secondsToMax) : 0;
+        actor.goticaExposure = actor.lit ? (actor.goticaExposure ?? 0) + secondsAtMax : 0;
       }
     }
   }
 
-  function attackBar(actor, objective, phase, leftLook, now = 0) {
+  function attackBar(actor, objective, leftLook, now = 0, dt = 0, atEnd = false) {
     const rules = config.movement.attack.bar;
-    const branch = actor.key === 'gatinha'
-      ? objective === 'stock' ? rules.gatinhaStock : rules.gatinhaCorridor
-      : actor.key === 'gotica' && objective === 'corridor' ? rules.gotica
-        : rules[objective];
-    const stage = branch[phase];
-    const heard = perceivedNoise(actor);
-    let intensity = clamp(stage.base + stage.perNoise * heard, 0, stage.cap ?? 1);
-    if (objective === 'corridor') {
-      if (actor.key === 'gotica') intensity = Math.max(phase === 'entry' ? rules.gotica.minimumEntry : 0,
-        intensity - rules.gotica.lightPenalty * actor.light);
-      if (actor.key === 'yandere') intensity = Math.max(phase === 'entry' ? rules.minimumEntry : 0,
-        intensity - flashlight.modifiers.yandere.barPenalty * actor.light);
-      if (actor.key === 'gatinha') intensity = clamp(intensity + stage.lightBonus * actor.light, 0, 1);
-    } else if (leftLook) {
-      intensity = Math.max(phase === 'entry' ? rules.minimumEntry : 0, intensity - rules.lookPenalty);
-    }
-    if (actor.key === 'padrao') intensity = Math.min(1.35, intensity * rules.padraoMultiplier);
-
-    let progressPerSecond = 0;
+    const [base, coefficient] = rules.speeds[actor.key][objective];
+    const heard = atEnd ? targetNoise + (globalNoise - targetNoise) * Math.exp(-dt / noise.responseSeconds) : meanNoise(dt);
+    const exposure = atEnd ? clamp((actor.light ?? 0) + (actor.lightRate ?? 0) * dt, 0, 1) : meanLight(actor, dt);
+    const light = objective === 'corridor' ? (rules.light[actor.key] ?? 0) * exposure : 0;
+    const look = objective === 'stock' && leftLook ? -rules.lookPenalty : 0;
+    let audioSpeed = 0;
     const stimulus = audio && now < audio.ends ? audio : null;
-    const distance = stimulus?.distance;
-    const from = distance?.get(actor.position) ?? Infinity;
-    if (stimulus && from <= 2) {
-      const target = objective === 'stock'
-        ? phase === 'approach' ? config.map.left : config.map.office
-        : phase === 'approach' ? config.map.front : config.map.office;
+    // Keep attack acoustics anchored to its route origin: the visual 50% change
+    // must not change range, direction or speed. Navigation still uses real positions.
+    const origin = actor.approach ? (objective === 'stock' ? config.map.leftApproach : back) : actor.position;
+    const from = stimulus?.distance.get(origin) ?? Infinity;
+    if (from <= 2) {
+      // Direction is measured against the final destination, never against a bar phase.
+      const next = stimulus.distance.get(config.map.office) ?? Infinity;
       if (actor.key === 'padrao') {
-        if (objective === 'stock' && stimulus.camera === 'CAM08' && from <= 1) {
-          intensity -= rules.audio.padraoPenalty;
-          progressPerSecond += rules.audio.padraoProgress;
-        }
-      } else {
-        const next = distance.get(target) ?? Infinity;
-        const close = from <= 1;
-        if (next < from) {
-          intensity -= rules.audio.towardPenalty;
-          progressPerSecond += rules.audio.towardProgress;
-        } else {
-          intensity -= close ? rules.audio.nearPenalty : rules.audio.farPenalty;
-          progressPerSecond += close ? rules.audio.nearProgress : rules.audio.farProgress;
-        }
-      }
+        if (objective === 'stock' && stimulus.camera === 'CAM08' && from <= 1) audioSpeed = rules.audio.padraoStock;
+      } else audioSpeed = next < from ? rules.audio.toward : from <= 1 ? rules.audio.near : rules.audio.far;
     }
-    intensity = clamp(intensity, 0, actor.key === 'padrao' ? 1.35 : 1);
-    return { intensity, progressPerSecond, advance: intensity, stay: 0, abandon: 0 };
-  }
-
-  function attackAudio(actor, objective, now) {
-    const stimulus = activeAudio(actor, now);
-    if (!stimulus) return { retreat: 0, stay: 0 };
-    const distance = stimulus.distance;
-    const from = distance.get(actor.position) ?? Infinity;
-    const modifier = (actor.rule.audioModifier ?? 0) / 100;
-    const intensity = cameraAudio.factors[from] ?? 0;
-    const retreat = config.movement.retreat[objective].some(to => actor.allowed.has(to)
-      && (modifier > 0 ? (distance.get(to) ?? Infinity) < from
-        : modifier < 0 && (distance.get(to) ?? Infinity) > from));
-    return {
-      retreat: retreat ? Math.min(.04, Math.abs(modifier) * .05 * intensity) : 0,
-      stay: from === 0 ? modifier * .12 : 0
-    };
-  }
-
-  function attackOdds(actor, objective, phase, leftLook, now = 0) {
-    const { corridor, stock, stayShare } = config.movement.attack;
-    const [quiet, loud] = (objective === 'corridor' ? corridor[actor.key] : stock)[phase];
-    const intensity = clamp(actor.noise / noise.max, 0, 1);
-    const light = objective === 'corridor' && actor.light > 0 && flashlight.modifiers[actor.key];
-    const doorObserved = objective === 'stock' && leftLook;
-    const modifier = doorObserved ? -stock.observationPenalty : light ? light.advanceDelta * actor.light : 0;
-    const minimum = doorObserved ? stock.minimumObservedAdvance : light ? flashlight.minimumAdvance : 0;
-    const audioEffect = attackAudio(actor, objective, now);
-    const advance = clamp(quiet + (loud - quiet) * intensity + modifier - audioEffect.retreat,
-      minimum, light ? flashlight.maximumAdvance : 1);
-    const failure = 1 - advance;
-    const share = clamp(stayShare + audioEffect.stay, 0, 1);
-    return { advance, stay: failure * share, abandon: failure * (1 - share) };
+    return { speed: base + coefficient * heard + light + look + audioSpeed,
+      noise: heard, modifiers: { light, look, audio: audioSpeed } };
   }
 
   function stayWeight(actor, now = 0) {
@@ -183,7 +143,9 @@ function createEffects(config, routes, actors) {
   }
 
   return {
-    startAudio, integrate, weight, stayWeight, attackOdds, attackBar,
+    startAudio, prepare, integrate, weight, stayWeight, attackBar,
+    perceivedNoise: () => globalNoise,
+    audioDeadline: now => now < audio?.ends ? audio.ends : Infinity,
     staticActive: now => now < staticUntil,
     staticDeadline: now => now < staticUntil ? staticUntil : Infinity,
     triggerStatic: now => { staticUntil = now + config.effects.static.duration; },
@@ -199,14 +161,11 @@ function createEffects(config, routes, actors) {
       }));
       return { camera: stimulus.camera, modifiers };
     },
-    // HUD shows sound being made now, not gameplay noise that lingers for many seconds.
-    noiseIntensity: (now, input) => clamp(noiseRate(input) * 4 + (input.viewMoving ? 4 : 0) + transientVolume(now), 0, noise.max),
-    addNoiseEvent(event, now = volumePeakAt) {
-      const amount = noise.events[event] ?? 0;
-      volumePeak = Math.max(transientVolume(now), amount * 7);
-      volumePeakAt = now;
-      globalNoise = clamp(globalNoise + amount, 0, noise.max);
-      for (const actor of actors) if (actor.approach) actor.noise = perceivedNoise(actor);
+    noiseIntensity: () => globalNoise,
+    addNoiseEvent(event) {
+      cachedDt = -1;
+      globalNoise = clamp(globalNoise + (noise.events[event] ?? 0), 0, noise.max);
+      for (const actor of actors) actor.noise = globalNoise;
     },
     retain(actor) {
       const retain = config.movement.failedModifierRetention;
