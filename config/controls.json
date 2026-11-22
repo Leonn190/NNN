@@ -24,7 +24,7 @@
   },
   "radioAutoStartSeconds": 15,
   "radioTracks": ["caramelldansen.mp3", "shikairo-days.mp3", "kawaikute-gomen.mp3"],
-  "menuMusic": { "startSeconds": 27, "fadeSeconds": 2, "initialVolume": 0.08, "volume": 0.58 },
+  "menuMusic": { "startSeconds": 27, "fadeSeconds": 2, "initialVolume": 0.0736, "volume": 0.5336 },
   "observation": {
     "leftPanFraction": 0.55,
     "corridorPanFraction": 0.5

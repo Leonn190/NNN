@@ -282,7 +282,7 @@ const movement = createMovement(config, {
       const { files, volume } = stockAttackSound;
       if (event === 'stockAttack') {
         if (surprise) return;
-        sound.playSample(files[Math.floor(Math.random() * files.length)], volume, corridorSoundVoices);
+        sound.playSample(files[Math.floor(Math.random() * files.length)], volume * 1.05, corridorSoundVoices);
       } else if (!state.complete && !dom.game.hidden && !dom.game.inert && !document.hidden) {
         sound.playExclusiveSample(files, volume);
       }
@@ -1136,7 +1136,9 @@ function finishShift() {
   const { hour, minutes, period } = clockDisplay(hours);
   $('#shift-time').innerHTML = `${hour}:${minutes} <small>${period}</small>`;
   $('#shift-result').textContent = campaignComplete ? 'Campanha concluída.' : 'O turno terminou.';
-  $('#shift-message').textContent = campaignComplete ? 'Você sobreviveu às nove noites.' : 'Noite concluída.';
+  $('#shift-message').textContent = campaignComplete ? 'Você sobreviveu às nove noites.'
+    : !number && !debugEnabled() ? `Custom Night concluída · ${state.shift.customPoints ?? 0} pontos.`
+    : 'Noite concluída.';
   dom.nextShift.hidden = !number || campaignComplete;
   const showCompletion = () => {
     dom.game.inert = false;

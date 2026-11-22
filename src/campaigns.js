@@ -3,6 +3,7 @@
 
 const KEY = 'nnn.campaigns.v2';
 const STARS_KEY = 'nnn.stars.v1';
+const CUSTOM_RECORD_KEY = 'nnn.custom.record.v1';
 const LEGACY_PROGRESS = 'nnn.campaign.completed';
 
 function createCampaignStore(storage = localStorage, totalNights = 9) {
@@ -13,6 +14,7 @@ function createCampaignStore(storage = localStorage, totalNights = 9) {
     try { storage.setItem(key, value); return true; } catch { return false; }
   };
   let stars = Math.max(0, (Number(read(STARS_KEY)) || 0) & 7);
+  let customRecord = Math.max(0, Number(read(CUSTOM_RECORD_KEY)) || 0);
   let data;
   try { data = JSON.parse(read(KEY)); } catch {}
   if (!data || data.version !== 2 || !Array.isArray(data.slots)) {
@@ -78,9 +80,17 @@ function createCampaignStore(storage = localStorage, totalNights = 9) {
     return stars;
   }
 
+  function recordCustomPoints(points) {
+    if (!Number.isSafeInteger(points) || points < 0 || points <= customRecord) return customRecord;
+    customRecord = points;
+    write(CUSTOM_RECORD_KEY, String(customRecord));
+    return customRecord;
+  }
+
   return { all, get: id => { const slot = get(id); return slot ? { ...slot } : null; },
     eviction: () => { const slot = eviction(); return slot ? { ...slot } : null; },
     create, advance, remove, stars: () => stars,
+    customRecord: () => customRecord, recordCustomPoints,
     awardCampaign: remaining => award(1 | (remaining > 0 ? 2 : 0)),
     awardMaxNight: () => award(4) };
 }

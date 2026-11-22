@@ -39,7 +39,7 @@
       "CAM12"
     ],
     "interval": 22,
-    "reaction": 3.0,
+    "reaction": [3.2, 2.5],
     "routes": { "CV": 19, "CC": 19, "EL": 16, "EC": 15, "EV": 10, "ES": 21 },
     "audioModifier": -50,
     "doorChance": [
@@ -83,7 +83,7 @@
       "CAM12"
     ],
     "interval": 26,
-    "reaction": 4.0,
+    "reaction": [3.2, 2.5],
     "routes": { "CV": 30, "CC": 30, "EL": 20, "EC": 10, "EV": 10 },
     "audioModifier": 35,
     "staticChance": [
@@ -130,7 +130,7 @@
       "CAM12"
     ],
     "interval": 21,
-    "reaction": 4.0,
+    "reaction": [3.2, 2.5],
     "routes": { "CV": 22, "CC": 22, "EL": 10, "EC": 14, "EV": 8, "EE": 24 },
     "audioModifier": 75,
     "staticChance": [75, 99],
@@ -166,8 +166,8 @@
       "CAM08"
     ],
     "interval": 20,
-    "reaction": 4.0,
-    "routes": { "CV": 30, "EL": 30, "AR": 40 },
+    "reaction": [3.2, 2.5],
+    "routes": { "CV": 24, "EL": 24, "AR": 52 },
     "firstRoutes": { "CV": 50, "EL": 50 },
     "audioModifier": 35,
     "hidingPlaces": [
@@ -200,7 +200,7 @@
       "CAM11"
     ],
     "interval": 30,
-    "reaction": 2.0,
+    "reaction": [2.4, 1.8],
     "targetBonus": [10, 18],
     "audioModifier": 35,
     "initialStationaryAttempts": 1,

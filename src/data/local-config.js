@@ -41,7 +41,10 @@ window.NathGame.localConfig = {
         "CAM12"
       ],
       "interval": 22,
-      "reaction": 3,
+      "reaction": [
+        3.2,
+        2.5
+      ],
       "routes": {
         "CV": 19,
         "CC": 19,
@@ -92,7 +95,10 @@ window.NathGame.localConfig = {
         "CAM12"
       ],
       "interval": 26,
-      "reaction": 4,
+      "reaction": [
+        3.2,
+        2.5
+      ],
       "routes": {
         "CV": 30,
         "CC": 30,
@@ -145,7 +151,10 @@ window.NathGame.localConfig = {
         "CAM12"
       ],
       "interval": 21,
-      "reaction": 4,
+      "reaction": [
+        3.2,
+        2.5
+      ],
       "routes": {
         "CV": 22,
         "CC": 22,
@@ -194,11 +203,14 @@ window.NathGame.localConfig = {
         "CAM08"
       ],
       "interval": 20,
-      "reaction": 4,
+      "reaction": [
+        3.2,
+        2.5
+      ],
       "routes": {
-        "CV": 30,
-        "EL": 30,
-        "AR": 40
+        "CV": 24,
+        "EL": 24,
+        "AR": 52
       },
       "firstRoutes": {
         "CV": 50,
@@ -235,7 +247,10 @@ window.NathGame.localConfig = {
         "CAM11"
       ],
       "interval": 30,
-      "reaction": 2,
+      "reaction": [
+        2.4,
+        1.8
+      ],
       "targetBonus": [
         10,
         18
@@ -284,8 +299,8 @@ window.NathGame.localConfig = {
     "menuMusic": {
       "startSeconds": 27,
       "fadeSeconds": 2,
-      "initialVolume": 0.08,
-      "volume": 0.58
+      "initialVolume": 0.0736,
+      "volume": 0.5336
     },
     "observation": {
       "leftPanFraction": 0.55,
@@ -1165,13 +1180,14 @@ window.NathGame.localConfig = {
         }
       },
       "counterattack": {
-        "yandere": 0.2,
-        "gatinha": 0.23,
-        "gotica": 0.3,
+        "yandere": 0.3,
+        "gatinha": 0.25,
+        "gotica": 0.36,
         "cooldownSeconds": 25
       }
     },
     "attack": {
+      "officeGateRetrySeconds": 3,
       "bar": {
         "durationSeconds": 24,
         "stepSeconds": 0.1,

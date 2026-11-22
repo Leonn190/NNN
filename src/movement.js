@@ -64,7 +64,10 @@ function createMovement(config, { random = Math.random, hallucinationRandom = Ma
       : difficulty.maxIntervalReduction;
     const regularFactor = (1 - maxReduction * actor.progress)
       * factor(-extra * actor.progress) * factor(-acceleration * actor.progress);
-    const intervalFactor = regularFactor * firstFactor;
+    // After each completed hour, subsequent movement intervals shrink by 2% (Padrão: 3%).
+    const hour = first ? 0 : Math.min(5, Math.floor(resources.snapshot(now).hours + 1e-9));
+    const hourly = actor.key === 'padrao' ? movement.routes.hourlyBonus.padrao : movement.routes.hourlyBonus.default;
+    const intervalFactor = regularFactor * firstFactor * factor(-hour * hourly);
     const seconds = actor.rule.interval * intervalFactor
       + uniform(random, movement.jitter) * Math.min(1, intervalFactor / regularFactor);
     const baseSeconds = actor.rule.interval * intervalFactor;
@@ -110,7 +113,7 @@ function createMovement(config, { random = Math.random, hallucinationRandom = Ma
       return {
         ...character, allowed, previous: null, pending: null, lastCounterattackAt: -Infinity,
         noise: 0, light: 0, audioStimulus: null, progress,
-        reaction: rule.reaction * (1 - difficulty.maxReactionReduction * progress),
+        reaction: interpolate(rule.reaction, progress),
         targetBonus: rule.targetBonus ? interpolate(rule.targetBonus, progress) : 0,
         firstIntervalReduction: rule.firstIntervalReduction ? interpolate(rule.firstIntervalReduction, progress) : 0,
         staticChance: rule.staticChance && interpolate(rule.staticChance, progress),
@@ -419,6 +422,9 @@ function createMovement(config, { random = Math.random, hallucinationRandom = Ma
     return occupants(position).length + reserved >= capacity;
   }
 
+  const retryWindowFor = (actor, to) => to === office && actor.approach?.objective === 'corridor'
+    ? movement.attack.officeGateRetrySeconds : movement.retryWindow;
+
   function transition(actor, choice, to) {
     const from = actor.position;
     const roomWasEmpty = to === office && officeVacant();
@@ -435,7 +441,7 @@ function createMovement(config, { random = Math.random, hallucinationRandom = Ma
     if (to === office) actor.due = Infinity;
     approach.arrive(actor);
     if (actor.approach && to !== office && approach.completed(actor)) {
-      actor.pending = { to: office, startedAt: now, expires: now + movement.retryWindow };
+      actor.pending = { to: office, startedAt: now, expires: now + retryWindowFor(actor, office) };
     }
     const recovered = reachCheckpoint(actor, from);
     if (to !== office && !recovered && !actor.approach) schedule(actor);
@@ -652,14 +658,14 @@ function createMovement(config, { random = Math.random, hallucinationRandom = Ma
     for (const actor of actors) {
       if (!actor.approach || actor.approach.phase === 'invasion') continue;
       if (actor.pending && approach.completed(actor) && actor.pending.expires === Infinity)
-        actor.pending.expires = now + movement.retryWindow;
+        actor.pending.expires = now + retryWindowFor(actor, actor.pending.to);
       if (approach.expired(actor)) {
         actor.pending = null;
         withdraw(actor, actor.approach.objective);
       } else if (!actor.pending && (approach.completed(actor)
           || (actor.approach.advanced && (actor.position === back || actor.position === leftApproach)))) {
         actor.pending = { to: approach.options(actor).to, startedAt: now,
-          expires: approach.completed(actor) ? now + movement.retryWindow : Infinity };
+          expires: approach.completed(actor) ? now + retryWindowFor(actor, approach.options(actor).to) : Infinity };
       }
     }
     for (const actor of actors) {
@@ -682,7 +688,7 @@ function createMovement(config, { random = Math.random, hallucinationRandom = Ma
         schedule(actor);
         continue;
       }
-      actor.pending = { ...choice, startedAt: now, expires: now + movement.retryWindow };
+      actor.pending = { ...choice, startedAt: now, expires: now + retryWindowFor(actor, choice.to) };
     }
     // A traversal, a forced door or the onset of static can release other pending moves.
     let changed;

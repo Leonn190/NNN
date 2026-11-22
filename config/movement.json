@@ -157,13 +157,14 @@
       }
     },
     "counterattack": {
-      "yandere": 0.2,
-      "gatinha": 0.23,
-      "gotica": 0.3,
+      "yandere": 0.3,
+      "gatinha": 0.25,
+      "gotica": 0.36,
       "cooldownSeconds": 25
     }
   },
   "attack": {
+    "officeGateRetrySeconds": 3,
     "bar": {
       "durationSeconds": 24,
       "stepSeconds": 0.1,

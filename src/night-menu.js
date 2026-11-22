@@ -29,6 +29,8 @@ function createNightMenu(config, { prepareShift, startShift, onEnter,
   const previewSound = $('#extras-jumpscare-sound');
   const maxButton = $('#custom-max');
   const debugButton = $('#custom-debug');
+  const scoreDisplay = $('#custom-score');
+  const recordDisplay = $('#custom-record');
   const fields = $('#custom-levels');
   const settings = config.controls.menuMusic;
   const { campaign, campaignMaxLevel, levels: [min, max], defaultLevel, ...defaults } = config.night;
@@ -44,6 +46,7 @@ function createNightMenu(config, { prepareShift, startShift, onEnter,
   let previewRequest;
   let previewObjectUrl;
   let debug = false;
+  let presetStep = 0;
   const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)');
 
   const levelDisplays = new Map();
@@ -78,6 +81,7 @@ function createNightMenu(config, { prepareShift, startShift, onEnter,
       button.setAttribute('aria-label', action + ' nível: ' + name);
       button.addEventListener('click', () => {
         input.value = String(min + (Number(input.value) - min + delta + max - min + 1) % (max - min + 1));
+        presetStep = 0;
         updateMaxButton();
       });
       arrows.append(button);
@@ -89,13 +93,18 @@ function createNightMenu(config, { prepareShift, startShift, onEnter,
     levelDisplays.set(id, levelDisplay);
   }
 
+  const totalPossiblePoints = max * inputs.size;
+  const selectedPoints = () => [...inputs.values()].reduce((total, input) => total + Number(input.value), 0);
   function updateMaxButton() {
     inputs.forEach((input, id) => {
       levelDisplays.get(id).value = Number(input.value) === max ? 'MAX' : input.value;
     });
     const allMax = [...inputs.values()].every(input => Number(input.value) === max);
     maxButton.setAttribute('aria-pressed', String(allMax));
-    maxButton.textContent = allMax ? 'ZERAR TODAS' : 'MAX NIGHT';
+    maxButton.textContent = ['TODAS NÍVEL 5', 'MAX NIGHT', 'ZERAR TODAS'][presetStep];
+    scoreDisplay.textContent = `PONTOS: ${debug ? 0 : selectedPoints()}/${totalPossiblePoints}`
+      + (debug ? ' · DEBUG NÃO PONTUA' : '');
+    recordDisplay.textContent = `RECORDE: ${store.customRecord()}/${totalPossiblePoints}`;
   }
   updateMaxButton();
 
@@ -312,10 +321,11 @@ function createNightMenu(config, { prepareShift, startShift, onEnter,
   }
 
   function recordCustomWin(shift) {
-    if (shift?.customMax && !shift.debug) {
-      store.awardMaxNight();
-      renderStars();
-    }
+    if (!shift || shift.debug) return;
+    store.recordCustomPoints(shift.customPoints ?? 0);
+    if (shift.customMax) store.awardMaxNight();
+    renderStars();
+    updateMaxButton();
   }
 
   introTitle.addEventListener('animationend', event => {
@@ -356,20 +366,23 @@ function createNightMenu(config, { prepareShift, startShift, onEnter,
   $('#close-custom').addEventListener('click', () => showSubmenu(null, customButton));
   $('#close-extras').addEventListener('click', () => showSubmenu(null, extrasButton));
   maxButton.addEventListener('click', () => {
-    const target = [...inputs.values()].every(select => Number(select.value) === max) ? 0 : max;
+    const target = [5, max, 0][presetStep];
     inputs.forEach(select => { select.value = String(target); });
+    presetStep = (presetStep + 1) % 3;
     updateMaxButton();
   });
   debugButton.addEventListener('click', () => {
     debug = !debug;
     debugButton.setAttribute('aria-pressed', String(debug));
     debugButton.textContent = debug ? 'Debug ativado' : 'Debug desativado';
+    updateMaxButton();
   });
   $('#custom-form').addEventListener('submit', event => {
     event.preventDefault();
     const levels = Object.fromEntries([...inputs].map(([id, select]) => [id, Number(select.value)]));
     const customMax = Object.values(levels).every(level => level === max);
-    play({ label: 'CUSTOM NIGHT', levels, rules: defaults, debug, customMax });
+    play({ label: 'CUSTOM NIGHT', levels, rules: defaults, debug, customMax,
+      customPoints: debug ? 0 : selectedPoints() });
   });
 
   $('#extras-list').addEventListener('click', event => {
