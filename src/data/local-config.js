@@ -40,7 +40,7 @@ window.NathGame.localConfig = {
         "CAM11",
         "CAM12"
       ],
-      "interval": 23,
+      "interval": 22,
       "reaction": 3,
       "routes": {
         "CV": 19,
@@ -193,7 +193,7 @@ window.NathGame.localConfig = {
         "CAM07",
         "CAM08"
       ],
-      "interval": 19,
+      "interval": 20,
       "reaction": 4,
       "routes": {
         "CV": 30,
@@ -1289,7 +1289,7 @@ window.NathGame.localConfig = {
     "campaignMaxLevel": 11,
     "campaign": [
       {
-        "movementDelay": 45,
+        "movementDelay": 52,
         "maxClosedGates": 0,
         "secondsPerHour": 50,
         "hoursToWin": 6,
@@ -1307,7 +1307,7 @@ window.NathGame.localConfig = {
         }
       },
       {
-        "movementDelay": 40,
+        "movementDelay": 48,
         "maxClosedGates": 1,
         "secondsPerHour": 55,
         "hoursToWin": 6,
@@ -1325,7 +1325,7 @@ window.NathGame.localConfig = {
         }
       },
       {
-        "movementDelay": 35,
+        "movementDelay": 40,
         "maxClosedGates": 2,
         "secondsPerHour": 60,
         "hoursToWin": 6,
@@ -1343,7 +1343,7 @@ window.NathGame.localConfig = {
         }
       },
       {
-        "movementDelay": 30,
+        "movementDelay": 35,
         "maxClosedGates": 3,
         "secondsPerHour": 60,
         "hoursToWin": 6,
@@ -1361,7 +1361,7 @@ window.NathGame.localConfig = {
         }
       },
       {
-        "movementDelay": 25,
+        "movementDelay": 30,
         "maxClosedGates": 4,
         "secondsPerHour": 60,
         "hoursToWin": 6,
@@ -1379,7 +1379,7 @@ window.NathGame.localConfig = {
         }
       },
       {
-        "movementDelay": 20,
+        "movementDelay": 30,
         "maxClosedGates": 5,
         "secondsPerHour": 60,
         "hoursToWin": 6,
@@ -1397,7 +1397,7 @@ window.NathGame.localConfig = {
         }
       },
       {
-        "movementDelay": 15,
+        "movementDelay": 25,
         "maxClosedGates": 6,
         "secondsPerHour": 60,
         "hoursToWin": 6,
@@ -1415,7 +1415,7 @@ window.NathGame.localConfig = {
         }
       },
       {
-        "movementDelay": 10,
+        "movementDelay": 24,
         "maxClosedGates": 7,
         "secondsPerHour": 60,
         "hoursToWin": 6,
@@ -1433,7 +1433,7 @@ window.NathGame.localConfig = {
         }
       },
       {
-        "movementDelay": 10,
+        "movementDelay": 30,
         "maxClosedGates": 8,
         "secondsPerHour": 60,
         "hoursToWin": 7,

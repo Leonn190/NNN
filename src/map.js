@@ -16,6 +16,13 @@ const cameraGrid = [
   ['CAM08', 'CAM06', 'CAM04'],
   ['CAM01', 'CAM02', 'CAM07'],
 ];
+// Shortcuts between adjacent areas that are not neighbors in the grid.
+const cameraShortcuts = {
+  CAM04: { d: 'CAM07' },
+  CAM03: { d: 'CAM12' },
+  CAM07: { w: 'CAM12', s: 'CAM02' },
+  CAM12: { w: 'CAM11' }
+};
 // Pinos são pontos de seleção no mapa, não a localização física das lentes.
 const cameraPinPositions = {
   CAM01: [4.6, 2.8],
@@ -149,7 +156,7 @@ function makeCameraMap({ canvas, onSelect, onToggleGate }) {
       if (row < 0) return;
       const column = cameraGrid[row].indexOf(activeCamera.id);
       const [dr, dc] = direction;
-      const next = cameraGrid[row + dr]?.[column + dc];
+      const next = cameraShortcuts[activeCamera.id]?.[key] ?? cameraGrid[row + dr]?.[column + dc];
       if (next) onSelect(next);
     },
     pulseAudio(id) { cameraNodes.get(id)?.classList.add('audio-pulse'); },

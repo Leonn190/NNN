@@ -38,7 +38,7 @@
       "CAM11",
       "CAM12"
     ],
-    "interval": 23,
+    "interval": 22,
     "reaction": 3.0,
     "routes": { "CV": 19, "CC": 19, "EL": 16, "EC": 15, "EV": 10, "ES": 21 },
     "audioModifier": -50,
@@ -165,7 +165,7 @@
       "CAM07",
       "CAM08"
     ],
-    "interval": 19,
+    "interval": 20,
     "reaction": 4.0,
     "routes": { "CV": 30, "EL": 30, "AR": 40 },
     "firstRoutes": { "CV": 50, "EL": 50 },

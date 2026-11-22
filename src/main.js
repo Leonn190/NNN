@@ -913,9 +913,9 @@ function updateRadioMix() {
   const relative = Math.max(-1, Math.min(1, 2 * offset / (viewport.width || 1)));
   const closetPan = -.55 * Math.cos(state.closetPan * Math.PI);
   const pan = Math.round((hiding ? closetPan : relative) * 100) / 100;
-  // Keep the newest recording spatialized at the desk, but cut its brighter
-  // frequencies instead of boosting it above the other radio recordings.
-  const profile = radioMusic.src.endsWith('/' + endingAssets.newRadioTrack) ? 'warm' : 'normal';
+  // All tracks play from the same desk-radio speaker processing. Tsundere's
+  // brighter master also receives a small tone/level adjustment.
+  const profile = radioMusic.src.endsWith('/' + endingAssets.newRadioTrack) ? 'tsundere' : 'normal';
   const normalization = 1;
   if (pan === radioMixPan && hiding === radioMixHiding
       && normalization === radioMixNormalization && profile === radioMixProfile) return;

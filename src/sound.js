@@ -171,8 +171,11 @@ class SoundEngine {
       if (!this.context) this.context = new Ctor();
       await this.context.resume();
       this.enabled = true;
-      if (this.active) this.startAmbience();
-      else this.context.suspend().catch(() => {});
+      if (this.active) {
+        this.startAmbience();
+        // A click may start radio playback before AudioContext unlocking ends.
+        if (this.radioMedia) this.connectRadio(this.radioMedia);
+      } else this.context.suspend().catch(() => {});
       return true;
     } catch { return false; }
   }
@@ -237,43 +240,63 @@ class SoundEngine {
   monitor(){this.tone({frequency:160,endingFrequency:70,duration:.21,volume:.07,wave:'sawtooth'});}
   switch(){this.tone({frequency:520,endingFrequency:180,duration:.08,volume:.055,wave:'square'});}
   connectRadio(media) {
+    // Keep pending playback so the radio is rerouted after the AudioContext is unlocked.
+    this.radioMedia = media;
     const context = this.context;
-    // Local files play directly. Chromium silences file:// sources routed through Web Audio.
+    // Chromium cannot reliably route local file:// audio through Web Audio.
     if (window.location?.protocol === 'file:' || this.radio || !this.enabled || !context?.createStereoPanner) return;
-    // A media element can have only one MediaElementAudioSourceNode in this context.
+    // Each media element can have only one source node in its AudioContext.
     this.radioSource ??= context.createMediaElementSource(media);
+    const highpass = context.createBiquadFilter();
+    highpass.type = 'highpass';
+    // Downmix stereo to a single speaker before filtering and spatial panning.
+    highpass.channelCount = 1;
+    highpass.channelCountMode = 'explicit';
+    highpass.frequency.value = 170;
     const lowpass = context.createBiquadFilter();
     lowpass.type = 'lowpass';
-    // The desk radio is a point source, including stereo tracks and unlocked credits.
-    lowpass.channelCount = 1;
-    lowpass.channelCountMode = 'explicit';
+    lowpass.frequency.value = 4400;
+    const compressor = context.createDynamicsCompressor();
+    compressor.threshold.value = -23;
+    compressor.knee.value = 16;
+    compressor.ratio.value = 3;
+    compressor.attack.value = .008;
+    compressor.release.value = .17;
     const panner = context.createStereoPanner();
     const gain = context.createGain();
     gain.gain.value = 0;
-    this.radioSource.connect(lowpass).connect(panner)
-      .connect(gain).connect(context.destination);
-    this.radio = { lowpass, panner, gain };
+    this.radioSource.connect(highpass).connect(lowpass).connect(compressor)
+      .connect(panner).connect(gain).connect(context.destination);
+    this.radio = { highpass, lowpass, compressor, panner, gain };
     media.volume = 1;
+    // Apply the last requested mix even when AudioContext was enabled late.
+    if (this.radioMixRequest) this.mixRadio(media, ...this.radioMixRequest);
   }
 
   disconnectRadio() {
+    this.radioMedia = null;
+    this.radioMixRequest = null;
     if (!this.radio) return;
-    const { lowpass, panner, gain } = this.radio;
+    const { highpass, lowpass, compressor, panner, gain } = this.radio;
     this.radioSource.disconnect();
+    highpass.disconnect();
     lowpass.disconnect();
+    compressor.disconnect();
     panner.disconnect();
     gain.disconnect();
     this.radio = null;
   }
 
   mixRadio(media, pan, behindDoor, normalization = 1, profile = 'normal') {
-    const volume = (behindDoor ? .045 : .15 * (1 - .35 * Math.abs(pan)))
-      * (this.radio ? normalization : 1);
+    this.radioMixRequest = [pan, behindDoor, normalization, profile];
+    const recordingGain = profile === 'tsundere' ? .82 : 1;
+    const volume = (behindDoor ? .035 : .13 * (1 - .4 * Math.abs(pan)))
+      * normalization * recordingGain;
     if (!this.radio) {
       if (media.volume !== volume) media.volume = volume;
       return;
     }
-    const { lowpass, panner, gain } = this.radio;
+    const { highpass, lowpass, panner, gain } = this.radio;
     if (this.radio.pan === pan && this.radio.behindDoor === behindDoor
         && this.radio.normalization === normalization && this.radio.profile === profile) return;
     this.radio.pan = pan;
@@ -281,7 +304,8 @@ class SoundEngine {
     this.radio.normalization = normalization;
     this.radio.profile = profile;
     const now = this.context.currentTime;
-    lowpass.frequency.setTargetAtTime(behindDoor ? 1250 : profile === 'warm' ? 3400 : 14_000, now, .045);
+    highpass.frequency.setTargetAtTime(behindDoor ? 240 : 170, now, .045);
+    lowpass.frequency.setTargetAtTime(behindDoor ? 1100 : profile === 'tsundere' ? 2600 : 4400, now, .045);
     panner.pan.setTargetAtTime(pan * .85, now, .045);
     gain.gain.setTargetAtTime(volume, now, .045);
   }
