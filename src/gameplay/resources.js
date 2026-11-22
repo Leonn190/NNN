@@ -20,19 +20,20 @@ function hourDuration(clock, sanity) {
     * (clock.slowSecondsPerHour - clock.fastSecondsPerHour);
 }
 
-function clockProgress(clock, sanity, rate, seconds, pauseBelowMinimum = true) {
+function clockProgress(clock, sanity, rate, seconds, pauseAtZero = true) {
   if (rate === 0 || seconds === 0) {
-    return pauseBelowMinimum && sanity < clock.slowSanity ? 0 : seconds / hourDuration(clock, sanity);
+    return pauseAtZero && sanity <= 0 ? 0 : seconds / hourDuration(clock, sanity);
   }
-  // Split where the hourly duration reaches a limit. Between limits it changes linearly.
+  // Slow down until 0.1% sanity; only 0% actually stops the clock.
+  const zeroAt = -sanity / rate;
   const slowAt = (clock.slowSanity - sanity) / rate;
   const fastAt = (clock.fastSanity - sanity) / rate;
-  const cuts = [slowAt, fastAt].filter(time => time > 0 && time < seconds).sort((a, b) => a - b);
+  const cuts = [zeroAt, slowAt, fastAt].filter(time => time > 0 && time < seconds).sort((a, b) => a - b);
   let elapsed = 0;
   let hours = 0;
   for (const end of [...cuts, seconds]) {
-    const belowMinimum = rate > 0 ? end <= slowAt : elapsed >= slowAt;
-    if (!pauseBelowMinimum || !belowMinimum) {
+    const paused = pauseAtZero && sanity + rate * (elapsed + end) / 2 <= 0;
+    if (!paused) {
       const startDuration = hourDuration(clock, sanity + rate * elapsed);
       const endDuration = hourDuration(clock, sanity + rate * end);
       const change = (endDuration - startDuration) / startDuration;
@@ -119,9 +120,9 @@ function createResources({ night: defaults, sanity: sanityRules, power }, night 
     const remaining = hoursToWin - hours;
     let dt = duration;
     let won = false;
-    const thresholdAt = rate === 0 ? Infinity : (clock.slowSanity - sanity) / rate;
-    const eligibleFrom = sanityEnabled && sanity < clock.slowSanity ? (rate > 0 ? thresholdAt : Infinity) : 0;
-    const eligibleUntil = sanityEnabled && rate < 0 ? Math.min(duration, thresholdAt) : duration;
+    const zeroAt = rate === 0 ? Infinity : -sanity / rate;
+    const eligibleFrom = sanityEnabled && sanity <= 0 ? (rate > 0 ? zeroAt : Infinity) : 0;
+    const eligibleUntil = sanityEnabled && rate < 0 ? Math.min(duration, zeroAt) : duration;
     const reached = seconds => progress(seconds) >= remaining - 1e-12;
     if (eligibleFrom <= eligibleUntil && reached(eligibleUntil)) {
       dt = reached(eligibleFrom) ? eligibleFrom : firstTime(eligibleFrom, eligibleUntil, reached);
@@ -132,7 +133,6 @@ function createResources({ night: defaults, sanity: sanityRules, power }, night 
     hours += progress(dt);
     if (won) hours = Math.max(hours, hoursToWin);
     if (sanityEnabled) sanity = clampPercent(sanity + rate * dt);
-    if (won && sanityEnabled) sanity = Math.max(clock.slowSanity, sanity);
     drainEnergy(consumed, end);
     return { end, radio, won };
   }
