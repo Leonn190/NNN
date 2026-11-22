@@ -266,7 +266,7 @@ class SoundEngine {
     this.radio = null;
   }
 
-  mixRadio(media, pan, behindDoor, normalization = 1) {
+  mixRadio(media, pan, behindDoor, normalization = 1, profile = 'normal') {
     const volume = (behindDoor ? .045 : .15 * (1 - .35 * Math.abs(pan)))
       * (this.radio ? normalization : 1);
     if (!this.radio) {
@@ -275,12 +275,13 @@ class SoundEngine {
     }
     const { lowpass, panner, gain } = this.radio;
     if (this.radio.pan === pan && this.radio.behindDoor === behindDoor
-        && this.radio.normalization === normalization) return;
+        && this.radio.normalization === normalization && this.radio.profile === profile) return;
     this.radio.pan = pan;
     this.radio.behindDoor = behindDoor;
     this.radio.normalization = normalization;
+    this.radio.profile = profile;
     const now = this.context.currentTime;
-    lowpass.frequency.setTargetAtTime(behindDoor ? 1250 : 14_000, now, .045);
+    lowpass.frequency.setTargetAtTime(behindDoor ? 1250 : profile === 'warm' ? 3400 : 14_000, now, .045);
     panner.pan.setTargetAtTime(pan * .85, now, .045);
     gain.gain.setTargetAtTime(volume, now, .045);
   }

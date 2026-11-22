@@ -334,6 +334,10 @@ window.NathGame.localConfig = {
       ],
       "volume": 0.32
     },
+    "officeGateKnockSound": {
+      "file": "audio/effects/doors/batida-portao-central.mp3",
+      "volume": 0.18
+    },
     "stockAttackSound": {
       "files": [
         "audio/effects/invasion/estoque/risada-1.wav",
@@ -1466,29 +1470,30 @@ window.NathGame.localConfig = {
   "sanity": {
     "initial": 100,
     "loss": {
-      "camera": 0.2,
-      "yandereCamera": 0.25,
-      "direct": 0.45,
+      "camera": 0.15,
+      "yandereCamera": 0.2,
+      "direct": 0.42,
       "centralGate": 0.12,
       "closet": 0.6,
-      "invasion": 2.5
+      "invasion": 3
     },
     "cameraLossOverrides": {
       "yandere": {
-        "CAM10": 0.5,
-        "CAM07": 0.5,
-        "CAM12": 0.5
+        "CAM10": 0.4,
+        "CAM07": 0.4,
+        "CAM12": 0.4
       },
       "padrao": {
-        "CAM10": 0.4
+        "CAM10": 0.3
       },
       "gotica": {
-        "CAM11": 0.4,
-        "CAM04": 0.4
+        "CAM11": 0.3,
+        "CAM04": 0.3
       }
     },
     "eventLoss": {
-      "cameraInterference": 1.5,
+      "cameraInterference": 2.5,
+      "yandereAttackLaugh": 1,
       "closetEnter": 2,
       "electricalFault": 5,
       "yandereCameraScare": 15
@@ -1523,15 +1528,15 @@ window.NathGame.localConfig = {
     "name": "Nathzinha Shadow",
     "firstLevel": {
       "sanityLimit": 45,
-      "chance": 9,
+      "chance": 8,
       "searchSeconds": 15
     },
     "lastLevel": {
       "sanityLimit": 65,
-      "chance": 12,
+      "chance": 11,
       "searchSeconds": 10
     },
-    "chancePerSanityPoint": 1,
+    "chancePerSanityPoint": 0.95,
     "manifestSeconds": 1.15,
     "foundSeconds": 0.65,
     "jumpscareMs": 980,

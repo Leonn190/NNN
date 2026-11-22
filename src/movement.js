@@ -21,7 +21,7 @@ function createMovement(config, { random = Math.random, hallucinationRandom = Ma
   let closetAttack, flashUntil, smoresVisibleAt, pendingClosetAt;
   let hunters, favored, penalized;
   let yandere, surpriseLimit, surprisesUsed, inactivityEnds, surprise;
-  let interferenceObserved, smoresInRoom;
+  let smoresInRoom;
 
   const movementPaused = () => now < movementDelay;
   const gateControlsAvailable = id => maxClosedGates > 0 && !electrical.failed()
@@ -127,7 +127,6 @@ function createMovement(config, { random = Math.random, hallucinationRandom = Ma
     surpriseLimit = yandereLevel < surpriseRules.firstLevel ? 0 : yandereLevel === effectiveMax ? surpriseRules.uses.max
       : yandereLevel >= surpriseRules.secondLevel ? surpriseRules.uses.second : surpriseRules.uses.first;
     surprisesUsed = 0;
-    interferenceObserved = false;
     smoresInRoom = false;
     surprise = null;
     inactivityEnds = Infinity;
@@ -186,6 +185,7 @@ function createMovement(config, { random = Math.random, hallucinationRandom = Ma
       return;
     }
     resetInactivity();
+    if (actor.key === 'yandere') resources.applyEvent('yandereAttackLaugh', now);
     const event = objective === 'corridor' ? 'corridorAttack' : 'stockAttack';
     if (surpriseAttack) emit(event, actor.key, true);
     else emit(event, actor.key);
@@ -193,8 +193,11 @@ function createMovement(config, { random = Math.random, hallucinationRandom = Ma
 
   function triggerInterference(actor, surpriseAttack = false) {
     effects.triggerStatic(now);
-    interferenceObserved = false;
-    emit('cameraInterference', now);
+    if (actor.key === 'gotica' || actor.key === 'yandere') {
+      // The penalty is part of the event, never dependent on rendering.
+      resources.applyEvent('cameraInterference', now);
+      emit('cameraInterference', now);
+    }
     if (actor.key === 'yandere') emit('yandereSabotage', surpriseAttack);
   }
 
@@ -497,6 +500,11 @@ function createMovement(config, { random = Math.random, hallucinationRandom = Ma
       return false;
     }
     const { gate, observed, staticChance, doorChance, full, invasion } = conditions;
+    if (gate === officeGate && gates.closed.has(officeGate) && !choice.knockedOfficeGate) {
+      // One knock per blocked approach, without replaying on each update.
+      choice.knockedOfficeGate = true;
+      emit('officeGateKnock', actor.key);
+    }
     if (staticChance !== undefined) {
       choice.rolledStatic = true;
       if (random() * 100 < staticChance) {
@@ -1116,11 +1124,6 @@ function createMovement(config, { random = Math.random, hallucinationRandom = Ma
   reset();
   return {
     reset, advance, cameraActors, diagnostics, debugSnapshot,
-    observeInterference() {
-      if (interferenceObserved || !effects.staticActive(now) || !camerasAvailable()) return;
-      interferenceObserved = true;
-      resources.applyEvent('cameraInterference', now);
-    },
     interruptCameraObservation() {
       watchedCamera = undefined;
       input.cameraObservationBlocked = true;

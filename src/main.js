@@ -85,10 +85,11 @@ const CLOWN_RIGHT_IMAGE = './public/images/jumpscares/palhaca-direita.gif';
 const CLOWN_BOTTOM_IMAGE = './public/images/jumpscares/palhaca-baixo.gif';
 const SHADOW_IMAGE = config.shadow.jumpscare;
 const JUMPSCARE_AUDIO = './public/audio/jumpscares/';
-const { corridorAttackSound, stockAttackSound, flashlight, invasion, closetVentSound, clownWarningSound,
+const { corridorAttackSound, stockAttackSound, officeGateKnockSound, flashlight, invasion, closetVentSound, clownWarningSound,
   yandereSabotageSound, yandereSurpriseSound, padraoInvasionSound, mapGateCloseSound, smoresRoomSound } = config.effects;
 const { image: cameraScareImage, sound: cameraScareSound } = config.threats.yandereCameraScare;
-const attackSamples = [...corridorAttackSound.files, ...stockAttackSound.files, invasion.file, closetVentSound.file,
+const attackSamples = [...corridorAttackSound.files, ...stockAttackSound.files, officeGateKnockSound.file,
+  invasion.file, closetVentSound.file,
   yandereSabotageSound.file, yandereSurpriseSound.file, ...padraoInvasionSound.files, cameraScareSound, smoresRoomSound.file];
 const corridorSoundVoices = Object.keys(config.characters).length;
 const MONITOR_TRANSITION_MS = { boot: 6500, shutdown: 2000 };
@@ -142,6 +143,7 @@ let radioPlayback = null;
 let radioMixPan;
 let radioMixHiding;
 let radioMixNormalization;
+let radioMixProfile;
 const playedScares = new Map();
 const imageCache = createImageCache(config.effects.imageCache);
 const interference = createCameraInterference(dom.static, $('#camera-static-band'), dom.feedScene,
@@ -269,6 +271,8 @@ const movement = createMovement(config, {
           || !state.flashlight || !corridorInView()) return;
       dom.office.toggleAttribute('data-flashlight-flicker', true);
       corridorFlickerTimer = setTimeout(clearCorridorFlicker, flashlight.corridorFlickerMs);
+    } else if (event === 'officeGateKnock') {
+      sound.playSample(officeGateKnockSound.file, officeGateKnockSound.volume, corridorSoundVoices);
     } else if ((event === 'corridorAttack' || event === 'stockAttack') && value === 'yandere') {
       sound.playSample(yandereSurpriseSound.file, yandereSurpriseSound.volume, corridorSoundVoices);
     } else if (event === 'corridorAttack') {
@@ -660,7 +664,6 @@ function syncMovement(now, office = movement.officeState()) {
   } else if (changedGates.has(OFFICE.gate)) {
     updateOfficeView();
   }
-  if (visibleGateChanged && watchingCameras()) interference.play('gate', now, now, signal.gate);
   changedCameras.clear();
   changedGates.clear();
   movementChanged = officeChanged = false;
@@ -910,19 +913,23 @@ function updateRadioMix() {
   const relative = Math.max(-1, Math.min(1, 2 * offset / (viewport.width || 1)));
   const closetPan = -.55 * Math.cos(state.closetPan * Math.PI);
   const pan = Math.round((hiding ? closetPan : relative) * 100) / 100;
-  // Mono downmix measures -19.7 dB RMS; +2.8 dB matches the older tracks (~-17 dB).
-  const normalization = radioMusic.src.endsWith('/' + endingAssets.newRadioTrack) ? 1.38 : 1;
-  if (pan === radioMixPan && hiding === radioMixHiding && normalization === radioMixNormalization) return;
+  // Keep the newest recording spatialized at the desk, but cut its brighter
+  // frequencies instead of boosting it above the other radio recordings.
+  const profile = radioMusic.src.endsWith('/' + endingAssets.newRadioTrack) ? 'warm' : 'normal';
+  const normalization = 1;
+  if (pan === radioMixPan && hiding === radioMixHiding
+      && normalization === radioMixNormalization && profile === radioMixProfile) return;
   radioMixPan = pan;
   radioMixHiding = hiding;
   radioMixNormalization = normalization;
-  sound.mixRadio(radioMusic, pan, hiding, normalization);
+  radioMixProfile = profile;
+  sound.mixRadio(radioMusic, pan, hiding, normalization, profile);
 }
 
 function stopRadio() {
   radioPlayback = null;
   delete radioMusic.dataset.fallback;
-  radioMixPan = radioMixHiding = radioMixNormalization = undefined;
+  radioMixPan = radioMixHiding = radioMixNormalization = radioMixProfile = undefined;
   state.radioPlaying = false;
   radioMusic.pause();
   if (radioMusic.getAttribute('src') !== null) {
@@ -1560,7 +1567,6 @@ function renderGameFrame(frame, now) {
     if (now >= goticaStaticAt + signal.gotica.durationMs) goticaStaticAt = undefined;
     else if (goticaStaticAt !== renderedGoticaStaticAt && watchingCameras() && dom.cameraScare.hidden) {
       interference.play('gotica', goticaStaticAt, now, signal.gotica);
-      movement.observeInterference();
       renderedGoticaStaticAt = goticaStaticAt;
     }
   }

@@ -39,6 +39,10 @@
     ],
     "volume": 0.32
   },
+  "officeGateKnockSound": {
+    "file": "audio/effects/doors/batida-portao-central.mp3",
+    "volume": 0.18
+  },
   "stockAttackSound": {
     "files": [
       "audio/effects/invasion/estoque/risada-1.wav",
