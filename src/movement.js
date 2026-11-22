@@ -1150,7 +1150,8 @@ function createMovement(config, { random = Math.random, hallucinationRandom = Ma
         smores: phase,
         smoresVisible: phase === 'room' && now >= smoresVisibleAt,
         room: invaders.filter(actor => now >= actor.visibleAt).map(actor => actor.rule.artId),
-        invasionActive: phase === 'room' || invaders.length > 0,
+        // Smores has his own room audio; only real animatronic invaders use the invasion loop.
+        invasionActive: invaders.length > 0,
         flash: now < flashUntil,
         doorway: occupants(left)[0]?.rule.artId ?? null,
         front: occupants(front).map(actor => actor.rule.artId),

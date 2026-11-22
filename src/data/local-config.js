@@ -1298,6 +1298,7 @@ window.NathGame.localConfig = {
     "powerEnabled": true,
     "sanityEnabled": true,
     "defaultLevel": 0,
+    "movementDelay": 15,
     "levels": [
       0,
       11
