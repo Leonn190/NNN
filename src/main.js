@@ -180,30 +180,24 @@ const officeLayers = ['doorway', 'room'].flatMap(location => OFFICE.characters.m
   dom.officeCharacters.append(image);
   return { location, character, image };
 }));
-const officeApparition = document.createElement('div');
-officeApparition.className = 'office-apparition';
-officeApparition.hidden = true;
-officeApparition.setAttribute('aria-hidden', 'true');
-const apparitionBackground = document.createElement('img');
-apparitionBackground.className = 'office-art';
-apparitionBackground.alt = '';
-officeApparition.append(apparitionBackground);
+// Use the same panorama and panning as real invaders, never a full-screen image overlay.
+const officeHallucinations = document.createElement('div');
+officeHallucinations.className = 'office-hallucinations';
+officeHallucinations.hidden = true;
+officeHallucinations.setAttribute('aria-hidden', 'true');
 for (const character of OFFICE.characters) {
   const image = document.createElement('img');
   image.className = 'office-character';
   image.alt = '';
+  image.draggable = false;
   image.src = officeCharacterImage('room', character);
-  officeApparition.append(image);
+  officeHallucinations.append(image);
 }
-dom.playfield.append(officeApparition);
+dom.officeCharacters.append(officeHallucinations);
 
 function renderHallucination(effect) {
   dom.playfield.classList.toggle('sanity-blur', effect === 'blur');
-  officeApparition.hidden = effect !== 'apparition';
-  if (!officeApparition.hidden) {
-    const background = movement.isGateClosed(OFFICE.gate) ? OFFICE.images.closed : OFFICE.images.dark;
-    setImageSource(apparitionBackground, background);
-  }
+  officeHallucinations.hidden = effect !== 'apparition' || state.mode !== 'office';
 }
 const closetComposition = createSceneComposition(dom.closetScene, dom.closetDoorArt, dom.closetExtra);
 const cameraComposition = createSceneComposition(dom.feedScene, dom.feedArt, dom.feedLayers);
@@ -351,9 +345,10 @@ const movement = createMovement(config, {
 
 let officeViewKey;
 let closetArtKey;
+let shadowAttacking = false;
 function updateOfficeView() {
   const closed = movement.isGateClosed(OFFICE.gate);
-  const lightBlocked = closed || state.officeRoom.size > 0 || !movement.flashlightAvailable();
+  const lightBlocked = closed || state.officeRoom.size > 0 || shadowAttacking || !movement.flashlightAvailable();
   if (lightBlocked && state.flashlight) {
     state.flashlight = state.flashlightKey = false;
     state.flashlightPointer = null;
@@ -1012,7 +1007,7 @@ function setClosetView(view) {
 }
 
 function flashlightTarget() {
-  if (state.complete || state.closetTransition || !movement.flashlightAvailable()) return null;
+  if (state.complete || state.closetTransition || shadowAttacking || !movement.flashlightAvailable()) return null;
   if (state.mode === 'office' && !dom.officeLight.disabled) return dom.officeLight;
   if (state.mode === 'closet' && !dom.closetLight.hidden) return dom.closetLight;
   return null;
@@ -1616,10 +1611,11 @@ function renderResourceState({ energy, blackout, computerOn, radioAvailable, fla
   dom.officeMonitor.disabled = blackout;
   dom.desktopPower.setAttribute('aria-pressed', String(computerOn));
   dom.officeRadio.disabled = !radioAvailable;
-  if (dom.closetLight.disabled !== !flashlightAvailable) {
-    dom.closetLight.disabled = !flashlightAvailable;
-    if (flashlightAvailable) updateOfficeView();
-    else clearFlashlight();
+  const lightDisabled = !flashlightAvailable || shadowAttacking;
+  if (dom.closetLight.disabled !== lightDisabled) {
+    dom.closetLight.disabled = lightDisabled;
+    if (lightDisabled) clearFlashlight();
+    else updateOfficeView();
   }
 }
 
@@ -1632,6 +1628,12 @@ function renderShadow({ phase, camera }) {
   renderedShadowOffice = inOffice;
   renderedShadowFeed = feedVisible;
   const attacking = phase === 'manifested' || phase === 'searching';
+  if (shadowAttacking !== attacking) {
+    shadowAttacking = attacking;
+    dom.closetLight.disabled = attacking || !movement.flashlightAvailable();
+    if (attacking) clearFlashlight();
+    else updateOfficeView();
+  }
   sound.setSampleLoop('nightmare', attacking ? .3 : 0);
   dom.shadowManifest.hidden = !inOffice || phase !== 'manifested';
   dom.shadowOfficeArt.hidden = !inOffice || !attacking;

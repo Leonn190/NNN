@@ -1269,7 +1269,7 @@ window.NathGame.localConfig = {
     "rulesVersion": "1.1.3",
     "clock": {
       "fastSanity": 90,
-      "slowSanity": 4,
+      "slowSanity": 0.1,
       "fastSecondsPerHour": 60,
       "slowSecondsPerHour": 150
     },
