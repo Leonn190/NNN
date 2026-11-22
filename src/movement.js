@@ -633,6 +633,9 @@ function createMovement(config, { random = Math.random, hallucinationRandom = Ma
     }
     const peaceful = movementPaused();
     if (action?.type === 'closetEnter' && !threats.snapshot().hidden) {
+      if (actors.some(actor => actor.key === 'padrao' && threats.invasionStatus(actor, now))) {
+        emit('padraoClosetEnter');
+      }
       if (peaceful) threats.enterCloset(now, true);
       else {
         pendingClosetAt = now + config.threats.attack.closetProtectionDelaySeconds;

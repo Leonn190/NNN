@@ -290,7 +290,7 @@ const movement = createMovement(config, {
       sound.playPannedSample('doorCreak', clownWarningSound.volume, clownWarningSound.pan);
     } else if (event === 'yandereSabotage') {
       sound.playSample(yandereSabotageSound.file, yandereSabotageSound.volume, corridorSoundVoices);
-    } else if (event === 'invasion' && value.key === 'padrao') {
+    } else if (event === 'padraoClosetEnter') {
       const { files, volume } = padraoInvasionSound;
       sound.playSample(files[Math.floor(Math.random() * files.length)], volume);
     } else if (event === 'cameraScareStart') {
