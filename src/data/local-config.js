@@ -306,7 +306,75 @@ window.NathGame.localConfig = {
       "leftPanFraction": 0.55,
       "corridorPanFraction": 0.5
     },
-    "unillustratedCameraPositions": []
+    "unillustratedCameraPositions": [],
+    "nightAudio": {
+      "phone": {
+        "delaySeconds": 2,
+        "musicPauseSeconds": 1,
+        "files": {
+          "1": "audio/radio/phone/noite-01.ogg",
+          "2": "audio/radio/phone/noite-02.ogg",
+          "3": "audio/radio/phone/noite-03.ogg",
+          "4": "audio/radio/phone/noite-04.ogg",
+          "5": "audio/radio/phone/noite-05.ogg"
+        },
+        "volume": 0.22,
+        "closetVolume": 0.055,
+        "highpassHz": 310,
+        "lowpassHz": 3200,
+        "closetLowpassHz": 1100,
+        "thresholdDb": -24,
+        "ratio": 3,
+        "saturation": 0.12,
+        "noiseVolume": 0.009,
+        "connectionSeconds": 0.14,
+        "disconnectSeconds": 0.18
+      },
+      "ambience": {
+        "firstSeconds": [
+          8,
+          18
+        ],
+        "intervalSeconds": [
+          5,
+          20
+        ],
+        "fadeInSeconds": 3,
+        "fadeOutSeconds": 4,
+        "crossfadeSeconds": 3,
+        "sanityThreshold": 65,
+        "lowSanityWeight": 3,
+        "humVolume": 0.009,
+        "tracks": [
+          {
+            "file": "audio/ambience/ambiente-01.wav",
+            "volume": 0.16
+          },
+          {
+            "file": "audio/ambience/ambiente-02.wav",
+            "volume": 0.13
+          },
+          {
+            "file": "audio/ambience/ambiente-03.wav",
+            "volume": 0.14
+          }
+        ]
+      },
+      "sanityMusicBox": {
+        "file": "audio/effects/sanity/music-box.wav",
+        "maxVolume": 0.24,
+        "transitionSeconds": 0.15,
+        "releaseSeconds": 0.5
+      },
+      "mix": {
+        "phoneDuck": 0.38,
+        "criticalDuck": 0.22,
+        "musicBoxDuck": 0.2,
+        "duckSeconds": 0.25,
+        "releaseSeconds": 1.2,
+        "criticalHoldSeconds": 1.5
+      }
+    }
   },
   "effects": {
     "cameraAudio": {

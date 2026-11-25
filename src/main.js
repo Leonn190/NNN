@@ -915,7 +915,8 @@ function updateRadioMix() {
   const pan = Math.round((hiding ? closetPan : relative) * 100) / 100;
   // All tracks play from the same desk-radio speaker processing. Tsundere's
   // brighter master also receives a small tone/level adjustment.
-  const profile = radioMusic.src.endsWith('/' + endingAssets.newRadioTrack) ? 'tsundere' : 'normal';
+  const profile = ['playing', 'ending'].includes(sound.phone?.status) ? 'phone'
+    : radioMusic.src.endsWith('/' + endingAssets.newRadioTrack) ? 'tsundere' : 'normal';
   const normalization = 1;
   if (pan === radioMixPan && hiding === radioMixHiding
       && normalization === radioMixNormalization && profile === radioMixProfile) return;
@@ -943,6 +944,13 @@ function stopRadio() {
 function toggleRadio() {
   if (state.complete || state.closetTransition || state.mode !== 'office') return;
   if (!movement.snapshot().radioAvailable) return;
+  if (['playing', 'ending'].includes(sound.phone?.status)) {
+    sound.phone.status = 'muted';
+    state.radioAutoPending = false;
+    stopRadio();
+    return;
+  }
+  if (sound.phone?.status === 'pending') sound.phone.status = 'muted';
   if (radioPlayback) {
     stopRadio();
     return;
@@ -951,9 +959,11 @@ function toggleRadio() {
 }
 
 function startRadio() {
-  if (state.complete || radioPlayback || !movement.snapshot().radioAvailable) return;
+  if (state.complete || radioPlayback || !movement.snapshot().radioAvailable
+      || ['pending', 'playing', 'ending'].includes(sound.phone?.status)) return;
   state.radioAutoPending = false;
   sound.connectRadio(radioMusic);
+  radioMusic.loop = true;
   const availableTracks = [...controls.radioTracks, endingAssets.newRadioTrack];
   if (window.NathGame.createCampaignStore().stars() & 1) {
     availableTracks.push(endingAssets.creditsRadioTrack);
@@ -970,8 +980,41 @@ function startRadio() {
   });
 }
 
+// Narrative playback uses the same radio element, but never the resource input.
+function updatePhoneCall(now, available) {
+  const phone = sound.phone;
+  if (!phone || state.complete) return;
+  if (!available && ['pending', 'playing', 'ending'].includes(phone.status)) {
+    phone.status = 'unavailable';
+    stopRadio();
+    return;
+  }
+  if (phone.status === 'ending' && now >= phone.finishedAt) {
+    phone.status = 'ended';
+    stopRadio();
+  }
+  if (phone.status !== 'pending' || now - state.startedAt < controls.nightAudio.phone.delaySeconds * 1000) return;
+  stopRadio();
+  phone.status = 'playing';
+  sound.connectRadio(radioMusic, 'phone');
+  radioMusic.src = `./public/${phone.file}`;
+  radioMusic.loop = false;
+  const playback = radioMusic.play();
+  radioPlayback = playback;
+  dom.officeRadio.setAttribute('aria-pressed', 'true');
+  updateRadioMix();
+  playback.catch(() => {
+    if (radioPlayback !== playback || sound.phone !== phone) return;
+    phone.status = 'ended';
+    phone.finishedAt = performance.now();
+    stopRadio();
+  });
+}
+
 function autoStartRadio(now) {
   if (!state.radioAutoPending || state.complete
+      || ['pending', 'playing', 'ending', 'muted'].includes(sound.phone?.status)
+      || now < (sound.phone?.finishedAt ?? -Infinity) + (controls.nightAudio?.phone.musicPauseSeconds ?? 0) * 1000
       || now - state.startedAt < controls.radioAutoStartSeconds * 1000) return;
   state.radioAutoPending = false;
   startRadio();
@@ -1361,6 +1404,7 @@ function prepareShift(shift) {
   dom.toast.classList.remove('show');
   sound.preloadSamples(attackSamples);
   sound.stopSamples();
+  sound.prepareShift(controls.nightAudio, shift.number);
   state.computerMode = 'desktop';
   clearMonitorTransition();
   resourceStateKey = undefined;
@@ -1563,6 +1607,8 @@ function renderElectrical(fault = movement.electricalFault()) {
 }
 
 function renderGameFrame(frame, now) {
+  updatePhoneCall(now, frame.radioAvailable);
+  sound.updatePhoneNoise(now / 1000);
   renderElectrical(frame.electricalFault);
   interference.update(now);
   if (goticaStaticAt !== undefined) {
@@ -1573,6 +1619,7 @@ function renderGameFrame(frame, now) {
     }
   }
   const office = movement.officeState();
+  sound.updateNightAudio(frame.sanity, now / 1000, office.invasionActive || shadowAttacking);
   if (dom.invasionFlash.hidden === office.flash) {
     dom.invasionFlash.hidden = !office.flash;
     officeChanged = true;
@@ -1810,10 +1857,23 @@ function setRadioPlaying(on) {
   state.radioPlaying = on;
   advanceGame(performance.now());
 }
-radioMusic.addEventListener('playing', () => setRadioPlaying(Boolean(radioPlayback)));
+radioMusic.addEventListener('playing', () => setRadioPlaying(Boolean(radioPlayback)
+  && !['playing', 'ending'].includes(sound.phone?.status)));
+radioMusic.addEventListener('ended', () => {
+  if (!radioMusic.ended || sound.phone?.status !== 'playing') return;
+  sound.phone.status = 'ending';
+  sound.phone.finishedAt = performance.now() + controls.nightAudio.phone.disconnectSeconds * 1000;
+  sound.phoneConnectionNoise(controls.nightAudio.phone.disconnectSeconds);
+});
 radioMusic.addEventListener('waiting', () => setRadioPlaying(false));
 radioMusic.addEventListener('pause', () => { if (radioMusic.paused) setRadioPlaying(false); });
 function fallbackRadio() {
+  if (['playing', 'ending'].includes(sound.phone?.status)) {
+    sound.phone.status = 'ended';
+    sound.phone.finishedAt = performance.now();
+    stopRadio();
+    return;
+  }
   // Os arquivos de faixas novas podem chegar depois deste PR. Se faltarem,
   // usamos uma faixa já instalada e não deixamos o rádio silencioso.
   if (!radioPlayback || radioMusic.dataset.fallback) return stopRadio();

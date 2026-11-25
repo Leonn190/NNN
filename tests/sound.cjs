@@ -6,7 +6,12 @@ class AudioNode {
   frequency = this.parameter();
   gain = this.parameter();
   pan = this.parameter();
-  parameter() { return { setValueAtTime() {}, exponentialRampToValueAtTime() {}, setTargetAtTime() {} }; }
+  threshold = this.parameter();
+  knee = this.parameter();
+  ratio = this.parameter();
+  attack = this.parameter();
+  release = this.parameter();
+  parameter() { return { setValueAtTime() {}, exponentialRampToValueAtTime() {}, setTargetAtTime() {}, cancelScheduledValues() {}, linearRampToValueAtTime() {} }; }
   connect(node) { this.connections.add(node); return node; }
   disconnect() { this.connections.clear(); }
   start() { this.started = true; }
@@ -24,6 +29,7 @@ class AudioContext {
   createGain() { return this.makeNode(); }
   createBiquadFilter() { return this.makeNode(); }
   createStereoPanner() { return this.makeNode(); }
+  createDynamicsCompressor() { return this.makeNode(); }
   createMediaElementSource() {
     assert(!this.radioSource);
     return this.radioSource = this.makeNode();
@@ -57,13 +63,13 @@ test('one context, finite voices, radio reuse, and no connected shift nodes afte
   sound.switch();
   const [, , , , , pending, pendingGain] = sound.context.nodes;
   const staleEnded = pending.onended;
-  const media = {};
+  const media = { pause() {} };
   sound.connectRadio(media);
   sound.disconnectRadio();
   sound.connectRadio(media);
   assert.equal(sound.stats().radio, true);
-  assert.equal(sound.radio.lowpass.channelCount, 1);
-  assert.equal(sound.radio.lowpass.channelCountMode, 'explicit');
+  assert.equal(sound.radio.highpass.channelCount, 1);
+  assert.equal(sound.radio.highpass.channelCountMode, 'explicit');
   sound.mixRadio(media, .5, false, 1.38);
   assert.equal(sound.radio.normalization, 1.38);
   sound.mixRadio(media, .5, false);
