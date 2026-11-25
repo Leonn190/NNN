@@ -25,3 +25,18 @@ As ligações não ativam `radioPlaying`; nenhum controlador novo fornece entrad
 - A suíte geral já contém falhas de expectativas de balanceamento, finais e mocks. A comparação com os arquivos do commit original não identificou novos nomes de testes falhando.
 
 A conferência auditiva subjetiva com fones e uma passagem manual completa por morte, vitória e menus não foram realizadas. O loop usa a implementação nativa de WAV do navegador; a percepção da emenda depende da gravação e do navegador. Os testes automatizados cobrem o encerramento compartilhado usado por essas transições.
+
+## Efeitos e falas por evento
+
+Os 18 arquivos da segunda integração foram movidos sem conversão para `effects/interface`, `effects/invasion`, `characters/maid`, `characters/palhaca`, `characters/padrao` e `voices`. `Medo1.mp3`, `Medo2.mp3` e `Medo3.mp3` permanecem intactos, sem referências de reprodução.
+
+As configurações ficam em `config/effects.json`:
+
+- `eventSounds`: erro 0,30; queda de energia 0,40; troca de câmera 0,24; contra-ataque pelo estoque, susto da lanterna, Maid e fase final da Palhaça 0,32. As variantes são escolhidas uma vez por evento. O contra-ataque central aguarda o término real das batidas e omite a risada de estoque daquele ataque. Listeners pendentes são removidos no encerramento.
+- `specialVoices`: exclusivamente campanha 5–9; S1–S4 a 0,28 em defesas efetivas, R1–R2 a 0,30 aos 85% da barra da Padrão, C1 a 0,27 após 25 s sem observação real de câmeras (60%), Now We Can a 0,30 por invasão da Padrão (80%) e Birthday a 0,27 por mudança efetiva de posição da Padrão (1%). Cada arquivo tem limite individual por tentativa; as seleções não usam o gerador injetado na IA. A fala especial de invasão desativa as falas tradicionais de entrada no armário somente naquela invasão.
+- A espera irreversível da Palhaça fica em `config/threats.json`, `clown.finaleSeconds` (8–12 s). O prazo é sorteado uma vez ao atingir 100%; a lanterna do armário é desligada e bloqueada, a pose na porta some e o jumpscare existente acontece no prazo. Outras causas letais da Palhaça são preservadas.
+- A penalidade de lanterna atrasada fica em `config/sanity.json`, `eventLoss.lateFlashlight` (1 ponto percentual). É aplicada pela simulação, uma vez por ataque de corredor, quando a luz é usada apenas após a posição avançada. A luz usada na fase inicial impede essa penalidade.
+
+O rádio silencia a ligação já no `pointerdown` e consome o clique seguinte do mesmo gesto. Teclado e cliques de acessibilidade continuam usando `toggleRadio()`. A identificação inclui o arquivo efetivamente em reprodução para tolerar uma flag de ligação desatualizada. O próximo gesto controla a música normalmente, mantendo o perfil espacial e telefônico existente.
+
+Verificação adicional: `node --test tests/event-audio.cjs tests/night-audio.cjs tests/sound.cjs tests/office-controls-power.cjs` passou nos 27 testes. Chrome headless validou os 18 arquivos, dois cliques reais de mouse no rádio, tentativa de portão na Noite 1, tecla W sem repetição de erro, troca efetiva de câmera e flags visuais da fase final da Palhaça. A suíte completa passou em 69 testes e manteve os mesmos 25 nomes de falhas anteriores. A seleção de publicação inclui todos os novos arquivos; `check-assets.cjs` ainda acusa exclusivamente a nomenclatura de Medo1–3, mantidos conforme solicitado. Não houve conferência auditiva subjetiva com fones.

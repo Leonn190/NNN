@@ -90,6 +90,7 @@ const { corridorAttackSound, stockAttackSound, officeGateKnockSound, flashlight,
 const { image: cameraScareImage, sound: cameraScareSound } = config.threats.yandereCameraScare;
 const attackSamples = [...corridorAttackSound.files, ...stockAttackSound.files, officeGateKnockSound.file,
   invasion.file, closetVentSound.file,
+  ...Object.values(config.effects.eventSounds).flatMap(rule => rule.files ?? [rule.file]),
   yandereSabotageSound.file, yandereSurpriseSound.file, ...padraoInvasionSound.files, cameraScareSound, smoresRoomSound.file];
 const corridorSoundVoices = Object.keys(config.characters).length;
 const MONITOR_TRANSITION_MS = { boot: 6500, shutdown: 2000 };
@@ -251,14 +252,33 @@ function warmCamera(cam, actors, frame) {
 const map = makeCameraMap({
   canvas: $('#map-canvas'),
   onToggleGate(id) {
-    if (state.mode === 'cameras') advanceGame(performance.now(), { type: 'gate', id, source: 'cameras' });
+    if (state.mode !== 'cameras') return;
+    if (state.shift?.number === 1 && !movement.gateControlsAvailable(id)) return sound.playConfiguredEffect('error');
+    advanceGame(performance.now(), { type: 'gate', id, source: 'cameras' });
   },
+  onDeniedGate() { if (state.shift?.number === 1) sound.playConfiguredEffect('error'); },
   onSelect(id) {
     if (!state.complete) changeCamera(id, true);
   }
 });
 const movement = createMovement(config, {
   emit(event, value, surprise) {
+    sound.handleGameAudioEvent(event, value);
+    if (event === 'stockCounterattack') {
+      sound.playAfterSample(officeGateKnockSound.file, () => sound.playConfiguredEffect('stockCounterattack'));
+      return;
+    }
+    if (event === 'clownFinale') {
+      sound.stopSample('musicBox');
+      sound.playConfiguredEffect('clownFinale');
+      clearFlashlight();
+      dom.closetLight.disabled = true;
+      dom.clownPeek.hidden = true;
+      return;
+    }
+    if (event === 'lateFlashlight' || event === 'powerdown') { sound.playConfiguredEffect(event); return; }
+    if (event === 'stockAttack' && surprise === 'counterattack') return;
+    if ((event === 'corridorAttack' || event === 'stockAttack') && value === 'maid') { sound.playConfiguredEffect('maidAttack'); return; }
     if (event === 'move') {
       movementChanged = true;
       officeChanged ||= officePositions.has(value.from) || officePositions.has(value.to);
@@ -291,6 +311,7 @@ const movement = createMovement(config, {
     } else if (event === 'yandereSabotage') {
       sound.playSample(yandereSabotageSound.file, yandereSabotageSound.volume, corridorSoundVoices);
     } else if (event === 'padraoClosetEnter') {
+      if (sound.specialVoices?.padraoInvasion) return;
       const { files, volume } = padraoInvasionSound;
       sound.playSample(files[Math.floor(Math.random() * files.length)], volume);
     } else if (event === 'cameraScareStart') {
@@ -352,7 +373,8 @@ let closetArtKey;
 let shadowAttacking = false;
 function updateOfficeView() {
   const closed = movement.isGateClosed(OFFICE.gate);
-  const lightBlocked = closed || state.officeRoom.size > 0 || shadowAttacking || !movement.flashlightAvailable();
+  const deniedLight = officeFlashlightDenied();
+  const lightBlocked = closed || state.officeRoom.size > 0 || deniedLight || !movement.flashlightAvailable();
   if (lightBlocked && state.flashlight) {
     state.flashlight = state.flashlightKey = false;
     state.flashlightPointer = null;
@@ -360,15 +382,17 @@ function updateOfficeView() {
   const illuminated = state.flashlight && corridorInView();
   const view = closed ? 'closed' : illuminated ? 'lit' : 'dark';
   const doorsOnline = movement.gateControlsAvailable(OFFICE.gate);
-  const viewKey = `${view}|${doorsOnline}|${lightBlocked}|${state.flashlight}`;
+  const viewKey = `${view}|${doorsOnline}|${lightBlocked}|${state.flashlight}|${deniedLight}|${state.shift?.number}`;
   if (viewKey !== officeViewKey) {
     officeViewKey = viewKey;
     dom.office.dataset.gate = closed ? 'closed' : 'open';
     dom.office.dataset.flashlight = String(illuminated);
     dom.officeGate.setAttribute('aria-pressed', String(closed));
-    dom.officeGate.disabled = !doorsOnline;
+    dom.officeGate.disabled = !doorsOnline && state.shift?.number !== 1;
+    dom.officeGate.setAttribute('aria-disabled', String(!doorsOnline));
     dom.officeLight.setAttribute('aria-pressed', String(state.flashlight));
-    dom.officeLight.disabled = lightBlocked;
+    dom.officeLight.disabled = lightBlocked && !deniedLight;
+    dom.officeLight.setAttribute('aria-disabled', String(lightBlocked));
     dom.corridorCharacters.hidden = !illuminated;
     setImageSource(dom.officeArt, OFFICE.images[view]);
     dom.officeArt.alt = closed
@@ -696,7 +720,7 @@ function changeCamera(id, withSound = false) {
     if (changed) interference.clearTransient();
     interference.play('switch', now, now, signal.switch);
   }
-  if (withSound && changed) sound.switch();
+  if (withSound && changed) sound.playConfiguredEffect('cameraSwitch');
 }
 
 function setMode(mode, withSound = true, force = false) {
@@ -941,15 +965,20 @@ function stopRadio() {
   dom.officeRadio.setAttribute('aria-pressed', 'false');
 }
 
+function mutePhoneCall() {
+  const phone = sound.phone;
+  const recording = phone?.file && !radioMusic.paused && radioMusic.src.endsWith('/' + phone.file);
+  if (!phone || (!recording && !['playing', 'ending'].includes(phone.status))) return false;
+  phone.status = 'muted';
+  state.radioAutoPending = false;
+  stopRadio();
+  return true;
+}
+
 function toggleRadio() {
   if (state.complete || state.closetTransition || state.mode !== 'office') return;
   if (!movement.snapshot().radioAvailable) return;
-  if (['playing', 'ending'].includes(sound.phone?.status)) {
-    sound.phone.status = 'muted';
-    state.radioAutoPending = false;
-    stopRadio();
-    return;
-  }
+  if (mutePhoneCall()) return;
   if (sound.phone?.status === 'pending') sound.phone.status = 'muted';
   if (radioPlayback) {
     stopRadio();
@@ -1051,15 +1080,24 @@ function setClosetView(view) {
   dom.closetLight.hidden = view !== 'back';
   clearFlashlight();
   if (state.mode === 'closet') {
-    sound.setSampleLoop('musicBox', view === 'back' ? .065 : .035);
+    if (!movement.snapshot().clownFinale) sound.setSampleLoop('musicBox', view === 'back' ? .065 : .035);
     dom.closet.focus({ preventScroll: true });
   }
 }
 
+function officeFlashlightDenied() {
+  return shadowAttacking || movement.officeState().smores === 'room';
+}
+function rejectFlashlightAttempt() {
+  if (state.complete || state.closetTransition || state.mode !== 'office' || !officeFlashlightDenied()) return false;
+  sound.playConfiguredEffect('error');
+  return true;
+}
+
 function flashlightTarget() {
   if (state.complete || state.closetTransition || shadowAttacking || !movement.flashlightAvailable()) return null;
-  if (state.mode === 'office' && !dom.officeLight.disabled) return dom.officeLight;
-  if (state.mode === 'closet' && !dom.closetLight.hidden) return dom.closetLight;
+  if (state.mode === 'office' && !dom.officeLight.disabled && !officeFlashlightDenied()) return dom.officeLight;
+  if (state.mode === 'closet' && !dom.closetLight.hidden && !movement.snapshot().clownFinale) return dom.closetLight;
   return null;
 }
 
@@ -1113,7 +1151,7 @@ function advanceClosetTransition(now) {
       case 'enter':
         resetClosetPan();
         setMode('closet', false);
-        sound.setSampleLoop('musicBox', .035);
+        if (!movement.snapshot().clownFinale) sound.setSampleLoop('musicBox', .035);
         dom.closet.focus({ preventScroll: true });
         break;
       case 'exit':
@@ -1404,7 +1442,9 @@ function prepareShift(shift) {
   dom.toast.classList.remove('show');
   sound.preloadSamples(attackSamples);
   sound.stopSamples();
-  sound.prepareShift(controls.nightAudio, shift.number);
+  sound.prepareShift(controls.nightAudio, shift.number, config.effects);
+  if (sound.specialVoices.enabled) sound.preloadSamples(Object.values(config.effects.specialVoices)
+    .filter(rule => rule && typeof rule === 'object' && (rule.file || rule.files)).flatMap(rule => rule.files ?? [rule.file]));
   state.computerMode = 'desktop';
   clearMonitorTransition();
   resourceStateKey = undefined;
@@ -1600,7 +1640,7 @@ let renderedElectrical;
 function renderElectrical(fault = movement.electricalFault()) {
   if (renderedElectrical === fault) return;
   renderedElectrical = fault;
-  map.setGateControls(movement.gateControlsAvailable());
+  map.setGateControls(movement.gateControlsAvailable(), state.shift?.number === 1);
   if (state.mode === 'cameras') updateCameraFeed(CAMERAS[state.cameraIndex]);
   updateAudioControl();
   updateOfficeView();
@@ -1609,6 +1649,7 @@ function renderElectrical(fault = movement.electricalFault()) {
 function renderGameFrame(frame, now) {
   updatePhoneCall(now, frame.radioAvailable);
   sound.updatePhoneNoise(now / 1000);
+  sound.updateSpecialVoices((now - state.startedAt) / 1000, frame.observingCamera);
   renderElectrical(frame.electricalFault);
   interference.update(now);
   if (goticaStaticAt !== undefined) {
@@ -1634,6 +1675,8 @@ function renderGameFrame(frame, now) {
   autoStartRadio(now);
   renderShadow(frame.shadow);
   setClownPhase(frame.clownStage);
+  if (frame.clownFinale) { dom.clownPeek.hidden = true; clearFlashlight(); }
+  dom.closetLight.disabled = frame.clownFinale || shadowAttacking || !frame.flashlightAvailable;
   if (now >= nextHudUpdate) {
     nextHudUpdate = now + 100;
     renderResources(dom, frame);
@@ -1851,7 +1894,19 @@ document.addEventListener('click', event => {
   if (event.target === document.body) closeComputer();
 });
 dom.officeCloset.addEventListener('click', () => beginClosetTransition('enter'));
-dom.officeRadio.addEventListener('click', toggleRadio);
+let radioMutedOnPointerDown = false;
+dom.officeRadio.addEventListener('pointerdown', event => {
+  radioMutedOnPointerDown = false;
+  if (event.button !== 0 || state.complete || state.closetTransition || state.mode !== 'office') return;
+  state.targetPan = state.pan;
+  radioMutedOnPointerDown = mutePhoneCall();
+});
+dom.officeRadio.addEventListener('pointercancel', () => { radioMutedOnPointerDown = false; });
+dom.officeRadio.addEventListener('click', event => {
+  const consumed = radioMutedOnPointerDown && event.detail > 0;
+  radioMutedOnPointerDown = false;
+  if (!consumed) toggleRadio();
+});
 function setRadioPlaying(on) {
   if (state.radioPlaying === on) return;
   state.radioPlaying = on;
@@ -1887,13 +1942,19 @@ function fallbackRadio() {
 radioMusic.addEventListener('error', fallbackRadio);
 dom.closetExit.addEventListener('click', () => beginClosetTransition('exit'));
 function toggleOfficeGate() {
-  if (state.complete || state.mode !== 'office' || state.closetTransition || !movement.gateControlsAvailable(OFFICE.gate)) return;
+  if (state.complete || state.mode !== 'office' || state.closetTransition) return;
+  if (!movement.gateControlsAvailable(OFFICE.gate)) {
+    if (state.shift?.number === 1) sound.playConfiguredEffect('error');
+    return;
+  }
   advanceGame(performance.now(), { type: 'gate', id: OFFICE.gate, source: 'office' });
 }
 dom.officeGate.addEventListener('click', toggleOfficeGate);
 for (const button of [dom.officeLight, dom.closetLight]) {
   button.addEventListener('pointerdown', event => {
-    if (event.button !== 0 || state.flashlightPointer !== null || flashlightTarget() !== button) return;
+    if (event.button !== 0 || state.flashlightPointer !== null) return;
+    if (button === dom.officeLight && rejectFlashlightAttempt()) return;
+    if (flashlightTarget() !== button) return;
     button.setPointerCapture(event.pointerId);
     state.flashlightPointer = event.pointerId;
     updateFlashlight();
@@ -2222,6 +2283,7 @@ document.addEventListener('keydown', event => {
     }
     return;
   }
+  if (key === 'w' && rejectFlashlightAttempt()) { event.preventDefault(); return; }
   if (key === 'w' && flashlightTarget()) {
     state.flashlightKey = true;
     updateFlashlight();

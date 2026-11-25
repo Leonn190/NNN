@@ -79,7 +79,7 @@ test('radio starts once at 12 seconds in any view, unless manually started earli
   const fs = require('node:fs');
   const vm = require('node:vm');
   const main = fs.readFileSync(require('node:path').join(__dirname, '../src/main.js'), 'utf8');
-  const source = main.slice(main.indexOf('function toggleRadio()'), main.indexOf('function setClownPhase('));
+  const source = main.slice(main.indexOf('function mutePhoneCall()'), main.indexOf('function setClownPhase('));
   for (const mode of ['office', 'desktop', 'cameras', 'closet']) {
     const state = { mode, startedAt: 1000, radioAutoPending: true };
     let starts = 0;

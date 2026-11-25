@@ -34,12 +34,68 @@ class SoundEngine {
     this.mediaEpoch = 0;
     this.nightMedia = new Map();
     this.radioSources = new WeakMap();
+    this.pendingSampleEvents = new Set();
+    this.lastSampleVoice = new Map();
   }
-  prepareShift(settings, number) {
+  prepareShift(settings, number, effects) {
     this.stopNightAudio();
     this.nightAudio = settings;
     const file = settings.phone.files[number];
     this.phone = { file, status: file ? 'pending' : 'unavailable', finishedAt: -Infinity };
+    this.eventSounds = effects?.eventSounds;
+    this.specialVoiceRules = effects?.specialVoices;
+    this.specialVoices = { enabled: effects?.specialVoices?.campaignNights.includes(number) ?? false,
+      used: new Set(), absentSince: 0, absenceRolled: false, padraoInvasion: false };
+  }
+  playConfiguredEffect(name) {
+    const rule = this.eventSounds?.[name];
+    if (!rule || !this.active) return;
+    const file = rule.file ?? rule.files[Math.floor(Math.random() * rule.files.length)];
+    this.playSample(file, rule.volume);
+  }
+  playAfterSample(name, callback) {
+    const audio = this.lastSampleVoice.get(name);
+    if (!audio || audio.paused || audio.ended) { if (this.active) callback(); return; }
+    const epoch = this.mediaEpoch;
+    const cancel = () => {
+      audio.removeEventListener('ended', ended);
+      audio.removeEventListener('error', ended);
+      this.pendingSampleEvents.delete(cancel);
+    };
+    const ended = () => { cancel(); if (this.active && epoch === this.mediaEpoch) callback(); };
+    this.pendingSampleEvents.add(cancel);
+    audio.addEventListener('ended', ended, { once: true });
+    audio.addEventListener('error', ended, { once: true });
+  }
+  playSpecialVoice(name, chance = 1) {
+    const state = this.specialVoices, rule = this.specialVoiceRules?.[name];
+    if (!this.active || !state?.enabled || !rule) return false;
+    const available = (rule.files ?? [rule.file]).filter(file => !state.used.has(file));
+    if (!available.length || (chance < 1 && Math.random() >= chance)) return false;
+    const file = available[Math.floor(Math.random() * available.length)];
+    state.used.add(file);
+    this.playSample(file, rule.volume);
+    return true;
+  }
+  handleGameAudioEvent(event, value) {
+    if (event === 'defended') this.playSpecialVoice('defense');
+    else if (event === 'padraoAttackWarning') this.playSpecialVoice('attackWarning');
+    else if (event === 'invasion' && value.key === 'padrao' && this.specialVoices) {
+      this.specialVoices.padraoInvasion = this.playSpecialVoice('invasion', this.specialVoiceRules?.invasion.chance);
+    } else if (event === 'move' && value.actor.key === 'padrao' && value.from !== value.to) {
+      this.playSpecialVoice('birthday', this.specialVoiceRules?.birthday.chance);
+    }
+  }
+  updateSpecialVoices(now, observing) {
+    const state = this.specialVoices;
+    if (!this.active || !state?.enabled) return;
+    if (observing) { state.absentSince = undefined; state.absenceRolled = false; return; }
+    state.absentSince ??= now;
+    const rule = this.specialVoiceRules.cameraAbsence;
+    if (!state.absenceRolled && now - state.absentSince >= rule.seconds) {
+      state.absenceRolled = true;
+      this.playSpecialVoice('cameraAbsence', rule.chance);
+    }
   }
   randomInterval(range) { return range[0] + Math.random() * (range[1] - range[0]); }
   nightClip(file) {
@@ -65,6 +121,8 @@ class SoundEngine {
   }
   stopNightAudio() {
     this.mediaEpoch++;
+    for (const cancel of this.pendingSampleEvents) cancel();
+    this.specialVoices = null;
     for (const audio of this.nightMedia.values()) {
       audio.pause();
       audio.onerror = null;
@@ -193,6 +251,7 @@ class SoundEngine {
     }
     audio.volume = volume;
     audio.currentTime = 0;
+    this.lastSampleVoice.set(file, audio);
     audio.play().catch(() => {});
   }
   playPannedSample(name, volume, pan, polyphony = 1) {

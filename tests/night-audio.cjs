@@ -32,10 +32,11 @@ function radioHarness(number) {
     viewport: { width: 1000, panoramaWidth: 3000 }, endingAssets: { newRadioTrack: 'new.mp3' },
     window: { NathGame: { createCampaignStore: () => ({ stars: () => 0 }) } },
     movement: { snapshot: () => ({ radioAvailable: true }) },
-    dom: { officeRadio: { setAttribute() {} } }, advanceGame() {} };
+    dom: { officeRadio: { setAttribute() {}, listeners: {}, addEventListener(name, fn) { this.listeners[name] = fn; } } }, advanceGame() {} };
   vm.createContext(context);
   const main = fs.readFileSync(require.resolve('../src/main.js'), 'utf8');
   vm.runInContext(main.slice(main.indexOf('function updateRadioMix()'), main.indexOf('function setClownPhase(')), context);
+  vm.runInContext(main.slice(main.indexOf('let radioMutedOnPointerDown ='), main.indexOf('function setRadioPlaying(')), context);
   const start = main.indexOf('function setRadioPlaying(');
   const end = main.indexOf("radioMusic.addEventListener('error', fallbackRadio);") + "radioMusic.addEventListener('error', fallbackRadio);".length;
   vm.runInContext(main.slice(start, end), context);
@@ -187,4 +188,32 @@ test('the sanity music box and Palhaca loop remain independent, including playba
   assert(sound.nextAmbienceAt >= 15 && sound.nextAmbienceAt <= 30);
   sound.stopShift();
   assert(palhaca.paused);
+});
+
+
+test('pointer press mutes immediately and consumes its click; the next pointer click starts music', () => {
+  const c = radioHarness(1);
+  c.updatePhoneCall(2000, true);
+  const handlers = c.dom.officeRadio.listeners;
+  handlers.pointerdown({ button: 0 });
+  assert.equal(c.sound.phone.status, 'muted');
+  assert(c.radioMusic.paused);
+  handlers.click({ detail: 1 });
+  assert.equal(c.radioMusic.plays, 1);
+  assert.equal(c.state.radioAutoPending, false);
+  handlers.pointerdown({ button: 0 });
+  handlers.click({ detail: 1 });
+  assert.equal(c.radioMusic.plays, 2);
+  c.sound.stopShift();
+});
+
+test('radio muting also recognizes a recording when its playback flag became stale', () => {
+  const c = radioHarness(1);
+  c.updatePhoneCall(2000, true);
+  c.sound.phone.status = 'stopped';
+  c.toggleRadio();
+  assert(c.radioMusic.paused);
+  assert.equal(c.sound.phone.status, 'muted');
+  assert.equal(c.radioMusic.plays, 1);
+  c.sound.stopShift();
 });

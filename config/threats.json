@@ -90,6 +90,10 @@
     "warningAt": 79,
     "closetGrowthFactor": 3.25,
     "litClosetGrowthFactor": 1.625,
-    "musicReduction": 2
+    "musicReduction": 2,
+    "finaleSeconds": {
+      "min": 8,
+      "max": 12
+    }
   }
 }

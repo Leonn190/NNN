@@ -60,7 +60,7 @@ function setGateClosed(gate, closed) {
   gate.setAttribute('aria-pressed', String(closed));
 }
 
-function makeCameraMap({ canvas, onSelect, onToggleGate }) {
+function makeCameraMap({ canvas, onSelect, onToggleGate, onDeniedGate = () => {} }) {
   const svg = makeSvg('svg', {
     viewBox: '0 0 380 332',
     role: 'group',
@@ -99,7 +99,10 @@ function makeCameraMap({ canvas, onSelect, onToggleGate }) {
       });
       gate.append(makeSvg('title', {}, label));
       gate.append(makeSvg('line', {...coords, class: 'gate-hit-area'}));
-      bindMapButton(gate, () => { if (gate.getAttribute('aria-disabled') !== 'true') onToggleGate(id); });
+      bindMapButton(gate, () => {
+        if (gate.getAttribute('aria-disabled') === 'true') onDeniedGate(id);
+        else onToggleGate(id);
+      });
       gate.append(makeSvg('line', {...coords, class: 'gate-line'}));
       gateNodes.set(id, gate);
       gateLayer.append(gate);
@@ -167,9 +170,10 @@ function makeCameraMap({ canvas, onSelect, onToggleGate }) {
       const gate = gateNodes.get(id);
       if (gate) setGateClosed(gate, closed);
     },
-    setGateControls(enabled) {
+    setGateControls(enabled, reportDenied = false) {
       for (const gate of gateNodes.values()) {
         gate.setAttribute('aria-disabled', String(!enabled));
+        gate.toggleAttribute('data-reports-denial', !enabled && reportDenied);
         gate.setAttribute('tabindex', enabled ? '0' : '-1');
       }
     },

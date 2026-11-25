@@ -106,6 +106,7 @@ function createSmores(rules, level, maxLevel, random, emit) {
         setPhase('room');
       } else if (lookedAway && retreatReady) {
         setPhase('idle');
+        emit('defended', { key: 'smores', reason: 'vent' });
       }
       looking = Boolean(input.smoresLooking);
       if (looking) ignoredTime = 0;
@@ -147,6 +148,7 @@ function createThreats(config, levels, random, emit, reactionReduction = () => 0
   let floor = clownEnabled ? clown.min : 0;
   let entries = 0;
   let clownDeath = false;
+  let clownFinaleAt = Infinity;
   let lastOfficeExit = -Infinity;
 
   const invasionCount = actor => invasionCounts.get(actor.key) ?? 0;
@@ -173,7 +175,7 @@ function createThreats(config, levels, random, emit, reactionReduction = () => 0
   }
 
   function enterCloset(now, peaceful = false) {
-    if (!peaceful && clownEnabled && counter > clown.entryDeathAbove) {
+    if (!peaceful && clownEnabled && clownFinaleAt === Infinity && counter > clown.entryDeathAbove) {
       clownDeath = true;
       return false;
     }
@@ -205,7 +207,7 @@ function createThreats(config, levels, random, emit, reactionReduction = () => 0
   }
 
   function integrate(dt, input) {
-    if (!clownEnabled) return;
+    if (!clownEnabled || clownFinaleAt !== Infinity) return;
     const rate = clownRate(input.radio, input.clownLight);
     let next = Math.max(floor, Math.min(clown.max, counter + dt * rate));
     if (rate > 0 && counter < clown.warningAt && clown.warningAt - next <= 1e-9) {
@@ -219,6 +221,7 @@ function createThreats(config, levels, random, emit, reactionReduction = () => 0
   }
 
   function clownDeadline(now, radio, light) {
+    if (clownFinaleAt !== Infinity) return clownFinaleAt;
     const rate = clownEnabled ? clownRate(radio, light) : 0;
     return rate > 0 ? now + (clown.max - counter) / rate : Infinity;
   }
@@ -236,8 +239,13 @@ function createThreats(config, levels, random, emit, reactionReduction = () => 0
   }
 
   function resolve(now, retreat, lose, radio, light) {
-    if (clownEnabled && (clownDeath || clown.max - counter <= Number.EPSILON * clown.max
-        || clownDeadline(now, radio, light) <= now)) return lose('palhaca');
+    if (clownEnabled && (clownDeath || now >= clownFinaleAt)) return lose('palhaca');
+    if (clownEnabled && clownFinaleAt === Infinity
+        && (clown.max - counter <= Number.EPSILON * clown.max || clownDeadline(now, radio, light) <= now)) {
+      counter = clown.max;
+      clownFinaleAt = now + uniform(random, clown.finaleSeconds);
+      emit('clownFinale');
+    }
     for (const [actor, invasion] of invasions) {
       if (!hidden && now >= reactionDeadline(actor, invasion)) return lose(actor.key);
       if (hidden && now >= invasion.leaveAt) {
@@ -248,14 +256,16 @@ function createThreats(config, levels, random, emit, reactionReduction = () => 0
     }
   }
 
-  const clownStage = () => clownEnabled ? clown.stages.findLastIndex(threshold => counter >= threshold) : -1;
+  const clownStage = () => clownFinaleAt !== Infinity ? -1
+    : clownEnabled ? clown.stages.findLastIndex(threshold => counter >= threshold) : -1;
   return {
     enterCloset, exitCloset: () => { hidden = false; },
     delayReactions(seconds) {
       for (const invasion of invasions.values()) invasion.arrived += seconds;
     },
     invade, officeExited, integrate, nextDeadline, resolve, clownStage, reactionTime, invasionCount, instantInvasion, entryAttacker,
-    snapshot: () => ({ hidden, counter, floor, clownStage: clownStage() }),
+    snapshot: () => ({ hidden, counter, floor, clownStage: clownStage(),
+      clownFinale: clownFinaleAt !== Infinity, clownFinaleAt }),
     invasionStatus(actor, now) {
       const invasion = invasions.get(actor);
       if (!invasion) return null;
@@ -352,7 +362,9 @@ function createApproach(map, effects, random, observingLeft = () => false, curre
     const attack = actor.approach;
     if (!attack || attack.phase === 'invasion' || completed(actor)) return Infinity;
     let dt = Math.min(rules.stepSeconds ?? .1, Math.max(0, limit - attack.elapsed));
-    const target = attack.advanced ? 100 : 50;
+    const warning = rules.warningProgress;
+    const target = !attack.advanced ? 50
+      : actor.key === 'padrao' && warning && !attack.warningReported && attack.progress < warning - 1e-9 ? warning : 100;
     const rising = risingWindow(actor, dt);
     if (progressAfter(actor, rising) >= target) {
       let low = 0, high = rising;

@@ -517,6 +517,84 @@ window.NathGame.localConfig = {
       },
       "max": 100,
       "responseSeconds": 0.33
+    },
+    "eventSounds": {
+      "error": {
+        "file": "audio/effects/interface/error.wav",
+        "volume": 0.3
+      },
+      "powerdown": {
+        "file": "audio/effects/interface/powerdown.wav",
+        "volume": 0.4
+      },
+      "cameraSwitch": {
+        "file": "audio/effects/interface/camera-switch.wav",
+        "volume": 0.24
+      },
+      "stockCounterattack": {
+        "file": "audio/effects/invasion/estoque/counterattack.wav",
+        "volume": 0.32
+      },
+      "lateFlashlight": {
+        "file": "audio/effects/invasion/corredor/late-flashlight.wav",
+        "volume": 0.32
+      },
+      "maidAttack": {
+        "files": [
+          "audio/characters/maid/metalwalk-02.wav",
+          "audio/characters/maid/metalwalk-03.wav"
+        ],
+        "volume": 0.32
+      },
+      "clownFinale": {
+        "files": [
+          "audio/characters/palhaca/finale-01.wav",
+          "audio/characters/palhaca/finale-02.wav"
+        ],
+        "volume": 0.32
+      }
+    },
+    "specialVoices": {
+      "campaignNights": [
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "defense": {
+        "files": [
+          "audio/voices/defense/success-01.ogg",
+          "audio/voices/defense/success-02.ogg",
+          "audio/voices/defense/success-03.ogg",
+          "audio/voices/defense/success-04.ogg"
+        ],
+        "volume": 0.28
+      },
+      "attackWarning": {
+        "files": [
+          "audio/characters/padrao/attack-warning-01.ogg",
+          "audio/characters/padrao/attack-warning-02.ogg"
+        ],
+        "volume": 0.3,
+        "progress": 85
+      },
+      "cameraAbsence": {
+        "file": "audio/voices/cameras/absence.ogg",
+        "volume": 0.27,
+        "seconds": 25,
+        "chance": 0.6
+      },
+      "invasion": {
+        "file": "audio/characters/padrao/now-we-can.ogg",
+        "volume": 0.3,
+        "chance": 0.8
+      },
+      "birthday": {
+        "file": "audio/characters/padrao/birthday.ogg",
+        "volume": 0.27,
+        "chance": 0.01
+      }
     }
   },
   "map": {
@@ -1577,6 +1655,7 @@ window.NathGame.localConfig = {
       }
     },
     "eventLoss": {
+      "lateFlashlight": 1,
       "cameraInterference": 2.5,
       "yandereAttackLaugh": 1,
       "closetEnter": 2,
@@ -1721,7 +1800,11 @@ window.NathGame.localConfig = {
       "warningAt": 79,
       "closetGrowthFactor": 3.25,
       "litClosetGrowthFactor": 1.625,
-      "musicReduction": 2
+      "musicReduction": 2,
+      "finaleSeconds": {
+        "min": 8,
+        "max": 12
+      }
     }
   }
 };
