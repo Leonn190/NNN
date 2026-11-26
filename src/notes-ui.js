@@ -1,7 +1,66 @@
 (() => {
 'use strict';
 
-function createNotesUI(system, { openCameras } = {}) {
+// One stack for every monitor application; hiding the monitor does not close it.
+function createDesktopWindows(changed = () => {}) {
+  const apps = new Map();
+  const stack = [];
+  const foreground = () => stack.filter(id => !apps.get(id).panel.hidden).at(-1);
+  function render() {
+    const active = foreground();
+    for (const [id, app] of apps) {
+      app.panel.toggleAttribute('data-active', id === active);
+      app.panel.style.zIndex = String(1 + Math.max(0, stack.indexOf(id)));
+      app.task.toggleAttribute('data-open', app.open);
+      app.task.setAttribute('aria-pressed', String(id === active));
+    }
+  }
+  function notify() { render(); changed(foreground()); }
+  function raise(id) {
+    const app = apps.get(id);
+    app.open = true;
+    app.panel.hidden = false;
+    const index = stack.indexOf(id);
+    if (index >= 0) stack.splice(index, 1);
+    stack.push(id);
+    notify();
+  }
+  function minimize(id) { apps.get(id).panel.hidden = true; notify(); }
+  function close(id) {
+    const app = apps.get(id);
+    app.open = false;
+    app.panel.hidden = true;
+    const index = stack.indexOf(id);
+    if (index >= 0) stack.splice(index, 1);
+    notify();
+  }
+  return {
+    register(id, panel, task) {
+      apps.set(id, { panel, task, open: false });
+      panel.hidden = true;
+      panel.addEventListener('pointerdown', () => { if (foreground() !== id) raise(id); });
+      panel.addEventListener('focusin', () => { if (foreground() !== id) raise(id); });
+      render();
+    },
+    raise, minimize, close, foreground, render,
+    isOpen: id => apps.get(id).open,
+    toggle(id, open) { if (foreground() === id) minimize(id); else if (apps.get(id).open) raise(id); else open(); },
+    minimizeAll() { for (const app of apps.values()) app.panel.hidden = true; notify(); },
+    reset() {
+      stack.length = 0;
+      for (const app of apps.values()) {
+        app.open = false;
+        app.panel.hidden = true;
+        delete app.panel.dataset.maximized;
+        delete app.panel.dataset.snapped;
+        for (const key of ['left', 'top', 'width', 'height']) app.panel.style[key] = '';
+      }
+      notify();
+    }
+  };
+}
+
+function createNotesUI(system, { openCameras, windowManager = createDesktopWindows() } = {}) {
   const $ = id => document.getElementById(id);
   const explorer = $('file-explorer-window');
   const editor = $('notes-editor-window');
@@ -19,8 +78,10 @@ function createNotesUI(system, { openCameras } = {}) {
   const taskNotes = $('taskbar-notes');
   const windows = [explorer, editor];
   const tasks = new Map([[explorer, taskExplorer], [editor, taskNotes]]);
+  for (const panel of windows) windowManager.register(panel.id, panel, tasks.get(panel));
   const history = [{ kind: 'root' }];
   let historyIndex = 0;
+  const resetWindows = [];
 
 
   const view = () => history[historyIndex];
@@ -137,7 +198,7 @@ function createNotesUI(system, { openCameras } = {}) {
     if (current.kind === 'root') {
       explorerContent.append(node('div', 'file-explorer-heading', 'Aplicativos'));
       for (const [symbol, name, description, action] of [
-        ['cameras', 'Câmeras', 'Aplicativo', () => { hide(); openCameras?.(); }],
+        ['cameras', 'Câmeras', 'Aplicativo', () => openCameras?.()],
         ['notes', 'Notas', 'Aplicativo', openEditor]
       ]) {
         if (matches(name, description)) { explorerContent.append(entry(symbol, name, description, '', action)); count++; }
@@ -169,33 +230,18 @@ function createNotesUI(system, { openCameras } = {}) {
   }
 
   function raise(panel) {
-    for (const win of windows) {
-      win.removeAttribute('data-active');
-      win.style.zIndex = '6';
-    }
-    panel.setAttribute('data-active', '');
-    panel.style.zIndex = '7';
+    windowManager.raise(panel.id);
   }
 
   function close(panel) {
-    panel.hidden = true;
-    panel.removeAttribute('data-active');
-    const task = tasks.get(panel);
-    task.setAttribute('aria-pressed', 'false');
-    task.removeAttribute('data-open');
+    windowManager.close(panel.id);
   }
 
   function minimize(panel) {
-    panel.hidden = true;
-    panel.removeAttribute('data-active');
-    tasks.get(panel).setAttribute('aria-pressed', 'false');
+    windowManager.minimize(panel.id);
   }
 
   function show(panel) {
-    panel.hidden = false;
-    const task = tasks.get(panel);
-    task.setAttribute('aria-pressed', 'true');
-    task.setAttribute('data-open', '');
     raise(panel);
     // Window positions are stored in pixels after dragging. Keep them visible on resize.
     if (!panel.hasAttribute('data-maximized') && panel.style.left) {
@@ -217,7 +263,6 @@ function createNotesUI(system, { openCameras } = {}) {
 
   function openEditor() {
     show(editor);
-    feedback.textContent = '';
     input.focus({ preventScroll: true });
   }
 
@@ -266,7 +311,7 @@ function createNotesUI(system, { openCameras } = {}) {
       if (event.button !== 0 || panel.hasAttribute('data-maximized')) return;
       const area = bounds();
       const rect = panel.getBoundingClientRect();
-      gesture = { mode, id: event.pointerId, x: event.clientX, y: event.clientY,
+      gesture = { mode, handle, id: event.pointerId, x: event.clientX, y: event.clientY,
         left: rect.left - area.left, top: rect.top - area.top,
         width: rect.width, height: rect.height };
       handle.setPointerCapture(event.pointerId);
@@ -304,6 +349,13 @@ function createNotesUI(system, { openCameras } = {}) {
       handle.addEventListener('pointercancel', finish);
       handle.addEventListener('lostpointercapture', finish);
     }
+    resetWindows.push(() => {
+      const previous = gesture;
+      gesture = oldGeometry = undefined;
+      if (previous?.handle.hasPointerCapture?.(previous.id)) previous.handle.releasePointerCapture(previous.id);
+      maximizeButton.setAttribute('aria-label', 'Maximizar janela');
+      maximizeButton.title = 'Maximizar';
+    });
   }
 
   bindWindow(explorer, {
@@ -335,8 +387,16 @@ function createNotesUI(system, { openCameras } = {}) {
     }
   });
   system.subscribe(() => { if (!explorer.hidden) render(); });
-  return { openExplorer, openEditor, hide, render };
+  return { openExplorer, openEditor, hide, render,
+    reset() {
+      for (const reset of resetWindows) reset();
+      history.splice(0, history.length, { kind: 'root' });
+      historyIndex = 0;
+      search.value = input.value = feedback.textContent = '';
+      render();
+    }
+  };
 }
 
-window.NathGame.createNotesUI = createNotesUI;
+Object.assign(window.NathGame, { createNotesUI, createDesktopWindows });
 })();

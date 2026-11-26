@@ -76,7 +76,14 @@ const cameraApp = {
   launchEndAt: null,
   open: false
 };
-const notesUI = createNotesUI(notesSystem, { openCameras: showCameraApp });
+const desktopWindows = window.NathGame.createDesktopWindows(active => {
+  if (state.complete) return;
+  const mode = active === 'cameras' ? 'cameras' : 'desktop';
+  state.computerMode = mode;
+  if (!dom.desktop.hidden) setMode(mode, false);
+});
+desktopWindows.register('cameras', cameraApp.panel, cameraApp.task);
+const notesUI = createNotesUI(notesSystem, { openCameras: showCameraApp, windowManager: desktopWindows });
 const desktopTime = new Intl.DateTimeFormat('pt-BR', { hour: '2-digit', minute: '2-digit' });
 const desktopDate = new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
 let lastDesktopMinute;
@@ -159,6 +166,7 @@ let officeChanged = false;
 let officePreview = false;
 let goticaStaticAt;
 let renderedGoticaStaticAt;
+let gateStatic;
 let corridorFlickerTimer;
 let cameraScareRequest;
 let cameraScareBlob;
@@ -349,6 +357,8 @@ const movement = createMovement(config, {
           sound.playPannedSample('officeGateClose', spatial.volume, spatial.pan, Object.keys(mapGateCloseSound).length + 1);
         }
       }
+    } else if (event === 'gateInterference') {
+      gateStatic = value;
     } else if (event === 'cameraInterference') {
       goticaStaticAt = state.startedAt + value * 1000;
     } else if (event === 'electricalFault') {
@@ -641,6 +651,7 @@ function updateMovementDebug() {
       .map(([key, value]) => `${key} ${value.toFixed(2)} pts/s`).join(', ');
     setText(attackOdds, actor.attackSpeed === null ? ''
       : `${actor.attackElapsed.toFixed(1)} s decorridos / ${actor.attackRemaining.toFixed(1)} s restantes`
+        + ` / limite ${actor.attackDuration.toFixed(0)} s`
         + ` / velocidade ${actor.attackSpeed.toFixed(2)} pts/s / ${activeModifiers || 'sem modificadores'}`
         + ` / previsao aproximada: ${actor.attackPrediction}`);
   }
@@ -702,6 +713,7 @@ function watchingCameras() {
 function clearCameraInterference() {
   interference.clear();
   renderedGoticaStaticAt = undefined;
+  if (gateStatic) gateStatic.rendered = false;
 }
 
 function changeCamera(id, withSound = false) {
@@ -718,7 +730,10 @@ function changeCamera(id, withSound = false) {
   updateMovementDebug();
   if (watchingCameras()) {
     const now = performance.now();
-    if (changed) interference.clearTransient();
+    if (changed) {
+      interference.clearTransient();
+      if (gateStatic) gateStatic.rendered = false;
+    }
     interference.play('switch', now, now, signal.switch);
   }
   if (withSound && changed) sound.playConfiguredEffect('cameraSwitch');
@@ -728,7 +743,6 @@ function setMode(mode, withSound = true, force = false) {
   if (!force && (state.complete || state.mode === mode)) return;
   const watching = mode === 'cameras';
   const hiding = mode === 'closet';
-  if (mode !== 'desktop') notesUI.hide();
   if (state.mode === 'cameras' && !watching) movement.interruptCameraObservation();
   state.mode = mode;
   if (!watching) {
@@ -836,9 +850,8 @@ function advanceComputerTransition(now) {
   if (cameraApp.launchEndAt !== null && now >= cameraApp.launchEndAt) {
     clearCameraLaunch();
     cameraApp.open = true;
-    cameraApp.panel.hidden = false;
-    if (dom.desktop.hidden) state.computerMode = 'cameras';
-    else {
+    desktopWindows.raise('cameras');
+    if (!dom.desktop.hidden) {
       cameraApp.panel.dataset.opening = '';
       setMode('cameras');
     }
@@ -868,24 +881,17 @@ function setStartMenu(open) {
 }
 
 function renderCameraApp() {
-  const active = state.mode === 'cameras';
-  cameraApp.task.setAttribute('aria-pressed', String(active));
-  if (active) cameraApp.panel.dataset.active = '';
-  else delete cameraApp.panel.dataset.active;
-  if (cameraApp.open) cameraApp.task.dataset.open = '';
-  else delete cameraApp.task.dataset.open;
+  desktopWindows.render();
 }
 
 function showCameraApp() {
-  notesUI.hide();
   const now = performance.now();
   if (state.monitorTransition || cameraApp.launchEndAt !== null) advanceGame(now);
   if (state.complete || dom.desktop.hidden || dom.computerScreen.inert || cameraApp.launchEndAt !== null) return;
   const fromStart = !dom.startMenu.hidden;
   setStartMenu(false);
   if (cameraApp.open) {
-    cameraApp.panel.hidden = false;
-    setMode('cameras');
+    desktopWindows.raise('cameras');
   } else {
     cameraApp.launchEndAt = now + CAMERA_LAUNCH_MS;
     cameraApp.launch.hidden = false;
@@ -912,7 +918,7 @@ function resetCameraApp() {
   clearCameraLaunch();
   delete cameraApp.panel.dataset.opening;
   cameraApp.open = false;
-  cameraApp.panel.hidden = true;
+  desktopWindows.close('cameras');
   setMaximized(false);
   delete cameraApp.panel.dataset.snapped;
   for (const property of ['--window-x', '--window-y', '--resized-width', '--resized-height']) {
@@ -923,9 +929,8 @@ function resetCameraApp() {
 function hideCameraApp(close = false) {
   if (state.complete) return;
   if (close) resetCameraApp();
-  else cameraApp.panel.hidden = true;
-  if (state.mode === 'cameras') setMode('desktop');
-  else renderCameraApp();
+  else desktopWindows.minimize('cameras');
+  renderCameraApp();
   cameraApp.task.focus({ preventScroll: true });
 }
 
@@ -1450,6 +1455,9 @@ function prepareShift(shift) {
   clearMonitorTransition();
   resourceStateKey = undefined;
   resetCameraApp();
+  desktopWindows.reset();
+  notesUI.reset();
+  gateStatic = undefined;
   movement.reset(shift.levels, {}, shift.rules);
   const { powerEnabled, sanityEnabled } = shift.rules;
   dom.energyMeter.hidden = $('#energy-label').hidden = !powerEnabled;
@@ -1653,6 +1661,14 @@ function renderGameFrame(frame, now) {
   sound.updateSpecialVoices((now - state.startedAt) / 1000, frame.observingCamera);
   renderElectrical(frame.electricalFault);
   interference.update(now);
+  if (gateStatic) {
+    const start = state.startedAt + gateStatic.at * 1000;
+    if (now >= state.startedAt + gateStatic.until * 1000) gateStatic = undefined;
+    else if (!gateStatic.rendered && watchingCameras() && gateStatic.camera === CAMERAS[state.cameraIndex].id && dom.cameraScare.hidden) {
+      interference.play('gate', start, now, signal.gate);
+      gateStatic.rendered = true;
+    }
+  }
   if (goticaStaticAt !== undefined) {
     if (now >= goticaStaticAt + signal.gotica.durationMs) goticaStaticAt = undefined;
     else if (goticaStaticAt !== renderedGoticaStaticAt && watchingCameras() && dom.cameraScare.hidden) {
@@ -1699,6 +1715,15 @@ function renderResourceState({ energy, blackout, computerOn, radioAvailable, fla
   dom.energyMeter.classList.toggle('low', low);
   dom.game.toggleAttribute('data-blackout', blackout);
   dom.game.toggleAttribute('data-computer-off', !computerOn);
+  if (!computerOn) {
+    resetCameraApp();
+    desktopWindows.reset();
+    notesUI.reset();
+    state.computerMode = 'desktop';
+    setStartMenu(false);
+    gateStatic = undefined;
+    clearCameraInterference();
+  }
   if (blackout) {
     clearMonitorTransition();
     clearCameraLaunch();
@@ -1975,7 +2000,6 @@ function bindCameraWindow() {
   $('#open-cameras').addEventListener('click', showCameraApp);
   $('#start-cameras').addEventListener('click', showCameraApp);
   app.task.addEventListener('click', () => state.mode === 'cameras' ? hideCameraApp() : showCameraApp());
-  app.panel.addEventListener('focusin', showCameraApp);
   app.panel.addEventListener('animationend', event => {
     if (event.target === app.panel && event.animationName === 'camera-window-open') delete app.panel.dataset.opening;
   });
@@ -2119,8 +2143,7 @@ dom.desktop.addEventListener('pointerdown', event => {
 });
 $('#show-desktop').addEventListener('click', () => {
   if (state.complete) return;
-  cameraApp.panel.hidden = true;
-  notesUI.hide();
+  desktopWindows.minimizeAll();
   setStartMenu(false);
   setMode('desktop');
 });
@@ -2134,10 +2157,11 @@ for (const [id, openApp] of [
 ]) {
   $( '#' + id ).addEventListener('click', () => {
     if (state.complete || dom.computerScreen.inert) return;
-    if (state.mode === 'cameras') hideCameraApp();
-    if (state.mode !== 'desktop') return;
+    if (dom.desktop.hidden) return;
     setStartMenu(false);
-    openApp();
+    const appId = id.includes('explorer') ? 'file-explorer-window' : 'notes-editor-window';
+    if (id.startsWith('taskbar-')) desktopWindows.toggle(appId, openApp);
+    else openApp();
   });
 }
 dom.cameraAudio.addEventListener('click', playCameraAudio);
@@ -2245,6 +2269,7 @@ for (const eventName of ['pointerup', 'pointercancel', 'lostpointercapture']) {
 let lastCameraKeyAt = -Infinity;
 document.addEventListener('keydown', event => {
   if (dom.game.hidden || state.complete || event.altKey || event.ctrlKey || event.metaKey) return;
+  if (event.target?.isContentEditable || event.target?.closest?.('input, textarea, select, [role="textbox"]')) return;
   const key = event.key.toLowerCase();
   if ((key === 'escape' || key === 'q') && !dom.desktop.hidden) {
     event.preventDefault();

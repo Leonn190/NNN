@@ -22,6 +22,7 @@ function createMovement(config, { random = Math.random, hallucinationRandom = Ma
   let hunters, favored, penalized;
   let yandere, surpriseLimit, surprisesUsed, inactivityEnds, surprise;
   let smoresInRoom;
+  let gateStaticCamera, gateStaticUntil;
 
   const movementPaused = () => now < movementDelay;
   const gateControlsAvailable = id => maxClosedGates > 0 && !electrical.failed()
@@ -88,6 +89,8 @@ function createMovement(config, { random = Math.random, hallucinationRandom = Ma
 
   function reset(levels = {}, initialInput = {}, rules = night) {
     now = frameUntil = 0;
+    gateStaticCamera = undefined;
+    gateStaticUntil = 0;
     outcome = null;
     stopped = false;
     closetAttack = null;
@@ -103,6 +106,13 @@ function createMovement(config, { random = Math.random, hallucinationRandom = Ma
     input = startingInput;
     gates = createGates(maxClosedGates, changes => {
       for (const { closed } of changes) effects.addNoiseEvent(closed ? 'gateClose' : 'gateOpen', now);
+      if (camerasAvailable() && input.camera && !input.cameraObservationBlocked && cameraScareEnds === undefined && changes.some(({ id }) =>
+        CAMERAS.find(camera => camera.id === input.camera)?.gateStateImages?.gates.includes(id))) {
+        gateStaticCamera = input.camera;
+        gateStaticUntil = now + config.effects.static.visual.gate.durationMs / 1000;
+        watchedCamera = undefined;
+        emit('gateInterference', { camera: gateStaticCamera, at: now, until: gateStaticUntil });
+      }
       emit('gatesChanged', changes);
     }, initialGates);
     electrical = createElectrical();
@@ -428,7 +438,8 @@ function createMovement(config, { random = Math.random, hallucinationRandom = Ma
     return watchingCamera() && (cameraObserves(from) || cameraObserves(to));
   }
 
-  const watchingCamera = () => camerasAvailable() && input.camera && !effects.staticActive(now);
+  const watchingCamera = () => camerasAvailable() && input.camera && !input.cameraObservationBlocked
+    && !effects.staticActive(now) && !(input.camera === gateStaticCamera && now < gateStaticUntil);
 
   function isFull(position) {
     const capacity = map.capacities[position];
@@ -747,7 +758,7 @@ function createMovement(config, { random = Math.random, hallucinationRandom = Ma
     if (outcome) return;
     const available = camerasAvailable();
     const shadowBefore = shadow.snapshot().phase;
-    if (shadow.update(now, available && input.findShadow !== false ? input.camera : null,
+    if (shadow.update(now, available && watchingCamera() && cameraScareEnds === undefined && input.findShadow !== false ? input.camera : null,
       resources.snapshot(now).blackout)) {
       finish('loss', 'shadow');
     }
@@ -756,7 +767,7 @@ function createMovement(config, { random = Math.random, hallucinationRandom = Ma
   }
 
   function observeCamera() {
-    if (!input.camera || cameraScareEnds !== undefined || !camerasAvailable() || effects.staticActive(now)) return;
+    if (!watchingCamera() || cameraScareEnds !== undefined) return;
     return window.NathGame.cameraObservation(config, cameraActors, { ...input, gates: gates.closed });
   }
 
@@ -880,6 +891,7 @@ function createMovement(config, { random = Math.random, hallucinationRandom = Ma
         }
       }
       const camera = observeCamera();
+      if (now < gateStaticUntil) due = Math.min(due, gateStaticUntil);
       if (sanityEnabled && surprisesUsed < surpriseLimit && inactivityEnds === Infinity) {
         const frame = resources.snapshot(now);
         if (frame.sanity >= surpriseRules.sanityThreshold) {
@@ -1159,6 +1171,7 @@ function createMovement(config, { random = Math.random, hallucinationRandom = Ma
       noise: effects.perceivedNoise(), light: actor.light ?? 0,
       attackProgress: actor.approach?.progress ?? null,
       attackElapsed: actor.approach?.elapsed ?? null,
+      attackDuration: actor.approach ? approach.duration(actor) : null,
       attackRemaining: actor.approach ? Math.max(0, approach.duration(actor) - actor.approach.elapsed) : null,
       attackSpeed: actor.approach && actor.approach.phase !== 'invasion' ? approach.options(actor).speed : null,
       attackModifiers: actor.approach && actor.approach.phase !== 'invasion' ? approach.options(actor).modifiers : null,

@@ -25,7 +25,7 @@ function createCameraInterference(overlay, band, feed, reducedMotion) {
       if (kind !== 'gate') return;
       // A gate adds a fresh pulse to the existing interference using the same layers.
       kind = current.kind;
-      durationMs = Math.max(durationMs, current.end - now);
+      durationMs = Math.max(durationMs, current.end - start);
       intensity = Math.max(intensity, current.intensity);
     }
     clear();

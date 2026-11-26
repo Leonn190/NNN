@@ -222,13 +222,14 @@ test('all stock attacks use the existing doorway and withdraw at the original ti
 
 test('regression below 55% keeps one consistent visual position and one bar', () => {
   const b = bar('padrao', 'stock');
-  b.step(17); assert(b.actor.approach.advanced);
+  const advancedAt = base.movement.attack.bar.advancedProgress / base.movement.attack.bar.speeds.padrao.stock[0] + .01;
+  b.step(advancedAt); assert(b.actor.approach.advanced);
   b.actor.position = base.map.left; b.approach.arrive(b.actor);
-  b.effects.startAudio(17, 'CAM08'); b.step(2);
+  b.effects.startAudio(advancedAt, 'CAM08'); b.step(2);
   assert(b.actor.approach.progress < base.movement.attack.bar.advancedProgress);
   assert(b.actor.approach.advanced);
   assert.equal(b.actor.position, base.map.left);
-  near(b.actor.approach.elapsed, 19);
+  near(b.actor.approach.elapsed, advancedAt + 2);
 });
 
 test('the visual midpoint does not change attack acoustics or speed', () => {
@@ -246,7 +247,7 @@ test('real pairs and trios share the original map; a blocked visual move never s
     ['padrao', 'gotica', 'gatinha'], ['gotica', 'yandere', 'gatinha'], ['padrao', 'yandere', 'gatinha']]) {
     for (const radio of [false, true]) {
       const { game, input, events } = movementScenario(keys, radio, true);
-      game.advance(25.001, input);
+      game.advance(31.001, input);
       assert.equal(game.snapshot().outcome, null);
       assert(game.isGateClosed('G01'));
       assert(!events.some(e => e[0] === 'invasion'));
@@ -298,7 +299,11 @@ test('288 delayed-reaction scenarios cover both prior radio states and backgroun
   for (const attack of attacks) for (const delay of delays) for (const wasOn of [false, true]) for (const background of [false, true]) {
     const result = reaction(attack, delay, wasOn, background);
     assert(Number.isFinite(result.progress));
-    if (delay <= 3 && attack.key !== 'maid') assert(result.defended, JSON.stringify({ attack, delay, wasOn, background, result }));
+    assert.equal(result.defended, result.progress < 100);
+    if (wasOn === (attack.key !== 'gatinha')) {
+      const earlier = reaction(attack, Math.max(0, delay - 1), wasOn, background);
+      assert(result.progress + 1e-5 >= earlier.progress, 'A slower radio response improved an adverse attack');
+    }
     reactions.push({ key: attack.key, route: attack.route, delay, wasOn, background, ...result });
   }
 });
@@ -364,6 +369,7 @@ test('bounded noise state remains finite through 24 simulated hours', () => {
 
 test('write reproducible measurements when explicitly requested', () => {
   if (process.env.NNN_BALANCE_REPORT) fs.writeFileSync(process.env.NNN_BALANCE_REPORT,
-    JSON.stringify({ matrix, reactions, stress, passiveNights,
+    JSON.stringify({ rules: { attackBar: base.movement.attack.bar, clownMusicReduction: base.threats.clown.musicReduction,
+      sanityLoss: base.sanity.loss, cameraLossOverrides: base.sanity.cameraLossOverrides }, matrix, reactions, stress, passiveNights,
       scope: 'Isolated attack model and passive engine controls; not human night win rates.' }, null, 2) + '\n');
 });

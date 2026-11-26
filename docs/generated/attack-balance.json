@@ -1,266 +1,364 @@
 {
+  "rules": {
+    "attackBar": {
+      "durationSeconds": 24,
+      "durationOverrides": {
+        "maid": {
+          "corridor": 30
+        },
+        "gotica": {
+          "corridor": 30
+        }
+      },
+      "advancedProgress": 55,
+      "stepSeconds": 0.1,
+      "speeds": {
+        "padrao": {
+          "corridor": [
+            3.4,
+            0.08
+          ],
+          "stock": [
+            3.45,
+            0.08
+          ]
+        },
+        "gotica": {
+          "corridor": [
+            3.25,
+            0.074
+          ],
+          "stock": [
+            3.25,
+            0.071
+          ]
+        },
+        "yandere": {
+          "corridor": [
+            3.25,
+            0.074
+          ],
+          "stock": [
+            3.25,
+            0.076
+          ]
+        },
+        "maid": {
+          "corridor": [
+            3.26,
+            0.074
+          ]
+        },
+        "gatinha": {
+          "corridor": [
+            6.5,
+            -0.042
+          ],
+          "stock": [
+            6.58,
+            -0.042
+          ]
+        }
+      },
+      "light": {
+        "gotica": -3,
+        "yandere": -0.65,
+        "gatinha": 4
+      },
+      "lookPenalty": 0.65,
+      "audio": {
+        "padraoStock": -5,
+        "near": -3,
+        "far": -1.2,
+        "toward": 3
+      }
+    },
+    "clownMusicReduction": 1.85,
+    "sanityLoss": {
+      "camera": 0.13,
+      "yandereCamera": 0.18,
+      "direct": 0.44,
+      "centralGate": 0.12,
+      "closet": 0.6,
+      "invasion": 3
+    },
+    "cameraLossOverrides": {
+      "yandere": {
+        "CAM10": 0.36,
+        "CAM07": 0.36,
+        "CAM12": 0.36
+      },
+      "padrao": {
+        "CAM10": 0.26
+      },
+      "gotica": {
+        "CAM11": 0.26,
+        "CAM04": 0.26
+      }
+    }
+  },
   "matrix": [
     {
       "key": "padrao",
       "route": "corridor",
-      "speed": 3.12,
-      "coefficient": 0.068,
+      "speed": 3.4,
+      "coefficient": 0.08,
       "noise": 0,
-      "measuredSpeed": 3.12,
+      "measuredSpeed": 3.4,
       "invasionSeconds": null,
       "retreatSeconds": 24,
-      "progress": 74.88
+      "progress": 81.6
     },
     {
       "key": "padrao",
       "route": "corridor",
-      "speed": 3.12,
-      "coefficient": 0.068,
+      "speed": 3.4,
+      "coefficient": 0.08,
       "noise": 5,
-      "measuredSpeed": 3.46,
+      "measuredSpeed": 3.8,
       "invasionSeconds": null,
       "retreatSeconds": 24,
-      "progress": 83.03999999999999
+      "progress": 91.19999999999999
     },
     {
       "key": "padrao",
       "route": "corridor",
-      "speed": 3.12,
-      "coefficient": 0.068,
+      "speed": 3.4,
+      "coefficient": 0.08,
       "noise": 10,
-      "measuredSpeed": 3.8000000000000003,
-      "invasionSeconds": null,
-      "retreatSeconds": 24,
-      "progress": 91.2
+      "measuredSpeed": 4.2,
+      "invasionSeconds": 23.80952380952658,
+      "retreatSeconds": null,
+      "progress": 100
     },
     {
       "key": "padrao",
       "route": "corridor",
-      "speed": 3.12,
-      "coefficient": 0.068,
+      "speed": 3.4,
+      "coefficient": 0.08,
       "noise": 15,
-      "measuredSpeed": 4.140000000000001,
-      "invasionSeconds": null,
-      "retreatSeconds": 24,
-      "progress": 99.36000000000001
+      "measuredSpeed": 4.6,
+      "invasionSeconds": 21.739130434798426,
+      "retreatSeconds": null,
+      "progress": 100
     },
     {
       "key": "padrao",
       "route": "corridor",
-      "speed": 3.12,
-      "coefficient": 0.068,
+      "speed": 3.4,
+      "coefficient": 0.08,
       "noise": 20,
-      "measuredSpeed": 4.48,
-      "invasionSeconds": 22.321428571442084,
+      "measuredSpeed": 5,
+      "invasionSeconds": 20.000000000014552,
       "retreatSeconds": null,
       "progress": 100
     },
     {
       "key": "padrao",
       "route": "corridor",
-      "speed": 3.12,
-      "coefficient": 0.068,
+      "speed": 3.4,
+      "coefficient": 0.08,
       "noise": 30,
-      "measuredSpeed": 5.16,
-      "invasionSeconds": 19.37984496124409,
+      "measuredSpeed": 5.8,
+      "invasionSeconds": 17.241379310355114,
       "retreatSeconds": null,
       "progress": 100
     },
     {
       "key": "padrao",
       "route": "corridor",
-      "speed": 3.12,
-      "coefficient": 0.068,
+      "speed": 3.4,
+      "coefficient": 0.08,
       "noise": 40,
-      "measuredSpeed": 5.84,
-      "invasionSeconds": 17.123287671245635,
+      "measuredSpeed": 6.6,
+      "invasionSeconds": 15.151515151526837,
       "retreatSeconds": null,
       "progress": 100
     },
     {
       "key": "padrao",
       "route": "corridor",
-      "speed": 3.12,
-      "coefficient": 0.068,
+      "speed": 3.4,
+      "coefficient": 0.08,
       "noise": 50,
-      "measuredSpeed": 6.5200000000000005,
-      "invasionSeconds": 15.337423312885221,
+      "measuredSpeed": 7.4,
+      "invasionSeconds": 13.513513513535145,
       "retreatSeconds": null,
       "progress": 100
     },
     {
       "key": "padrao",
       "route": "corridor",
-      "speed": 3.12,
-      "coefficient": 0.068,
+      "speed": 3.4,
+      "coefficient": 0.08,
       "noise": 60,
-      "measuredSpeed": 7.2,
-      "invasionSeconds": 13.888888888905058,
+      "measuredSpeed": 8.2,
+      "invasionSeconds": 12.195121951241163,
       "retreatSeconds": null,
       "progress": 100
     },
     {
       "key": "padrao",
       "route": "corridor",
-      "speed": 3.12,
-      "coefficient": 0.068,
+      "speed": 3.4,
+      "coefficient": 0.08,
       "noise": 70,
-      "measuredSpeed": 7.880000000000001,
-      "invasionSeconds": 12.690355329970771,
+      "measuredSpeed": 9,
+      "invasionSeconds": 11.111111111124046,
       "retreatSeconds": null,
       "progress": 100
     },
     {
       "key": "padrao",
       "route": "corridor",
-      "speed": 3.12,
-      "coefficient": 0.068,
+      "speed": 3.4,
+      "coefficient": 0.08,
       "noise": 85,
-      "measuredSpeed": 8.9,
-      "invasionSeconds": 11.235955056188686,
+      "measuredSpeed": 10.2,
+      "invasionSeconds": 9.803921568644,
       "retreatSeconds": null,
       "progress": 100
     },
     {
       "key": "padrao",
       "route": "corridor",
-      "speed": 3.12,
-      "coefficient": 0.068,
+      "speed": 3.4,
+      "coefficient": 0.08,
       "noise": 100,
-      "measuredSpeed": 9.920000000000002,
-      "invasionSeconds": 10.080645161309803,
+      "measuredSpeed": 11.4,
+      "invasionSeconds": 8.771929824564722,
       "retreatSeconds": null,
       "progress": 100
     },
     {
       "key": "padrao",
       "route": "stock",
-      "speed": 3.27,
-      "coefficient": 0.07,
+      "speed": 3.45,
+      "coefficient": 0.08,
       "noise": 0,
-      "measuredSpeed": 3.27,
+      "measuredSpeed": 3.45,
       "invasionSeconds": null,
       "retreatSeconds": 24,
-      "progress": 78.48
+      "progress": 82.80000000000001
     },
     {
       "key": "padrao",
       "route": "stock",
-      "speed": 3.27,
-      "coefficient": 0.07,
+      "speed": 3.45,
+      "coefficient": 0.08,
       "noise": 5,
-      "measuredSpeed": 3.62,
+      "measuredSpeed": 3.85,
       "invasionSeconds": null,
       "retreatSeconds": 24,
-      "progress": 86.88
+      "progress": 92.4
     },
     {
       "key": "padrao",
       "route": "stock",
-      "speed": 3.27,
-      "coefficient": 0.07,
+      "speed": 3.45,
+      "coefficient": 0.08,
       "noise": 10,
-      "measuredSpeed": 3.97,
-      "invasionSeconds": null,
-      "retreatSeconds": 24,
-      "progress": 95.28
+      "measuredSpeed": 4.25,
+      "invasionSeconds": 23.52941176470631,
+      "retreatSeconds": null,
+      "progress": 100
     },
     {
       "key": "padrao",
       "route": "stock",
-      "speed": 3.27,
-      "coefficient": 0.07,
+      "speed": 3.45,
+      "coefficient": 0.08,
       "noise": 15,
-      "measuredSpeed": 4.32,
-      "invasionSeconds": 23.14814814815327,
+      "measuredSpeed": 4.65,
+      "invasionSeconds": 21.505376344095566,
       "retreatSeconds": null,
       "progress": 100
     },
     {
       "key": "padrao",
       "route": "stock",
-      "speed": 3.27,
-      "coefficient": 0.07,
+      "speed": 3.45,
+      "coefficient": 0.08,
       "noise": 20,
-      "measuredSpeed": 4.67,
-      "invasionSeconds": 21.41327623128018,
+      "measuredSpeed": 5.050000000000001,
+      "invasionSeconds": 19.80198019803356,
       "retreatSeconds": null,
       "progress": 100
     },
     {
       "key": "padrao",
       "route": "stock",
-      "speed": 3.27,
-      "coefficient": 0.07,
+      "speed": 3.45,
+      "coefficient": 0.08,
       "noise": 30,
-      "measuredSpeed": 5.37,
-      "invasionSeconds": 18.621973929242813,
+      "measuredSpeed": 5.85,
+      "invasionSeconds": 17.094017094030278,
       "retreatSeconds": null,
       "progress": 100
     },
     {
       "key": "padrao",
       "route": "stock",
-      "speed": 3.27,
-      "coefficient": 0.07,
+      "speed": 3.45,
+      "coefficient": 0.08,
       "noise": 40,
-      "measuredSpeed": 6.07,
-      "invasionSeconds": 16.474464579921914,
+      "measuredSpeed": 6.65,
+      "invasionSeconds": 15.037593984983687,
       "retreatSeconds": null,
       "progress": 100
     },
     {
       "key": "padrao",
       "route": "stock",
-      "speed": 3.27,
-      "coefficient": 0.07,
+      "speed": 3.45,
+      "coefficient": 0.08,
       "noise": 50,
-      "measuredSpeed": 6.7700000000000005,
-      "invasionSeconds": 14.77104874446377,
+      "measuredSpeed": 7.45,
+      "invasionSeconds": 13.42281879195798,
       "retreatSeconds": null,
       "progress": 100
     },
     {
       "key": "padrao",
       "route": "stock",
-      "speed": 3.27,
-      "coefficient": 0.07,
+      "speed": 3.45,
+      "coefficient": 0.08,
       "noise": 60,
-      "measuredSpeed": 7.470000000000001,
-      "invasionSeconds": 13.386880856778589,
+      "measuredSpeed": 8.25,
+      "invasionSeconds": 12.1212121212302,
       "retreatSeconds": null,
       "progress": 100
     },
     {
       "key": "padrao",
       "route": "stock",
-      "speed": 3.27,
-      "coefficient": 0.07,
+      "speed": 3.45,
+      "coefficient": 0.08,
       "noise": 70,
-      "measuredSpeed": 8.17,
-      "invasionSeconds": 12.239902080800675,
+      "measuredSpeed": 9.05,
+      "invasionSeconds": 11.049723756921594,
       "retreatSeconds": null,
       "progress": 100
     },
     {
       "key": "padrao",
       "route": "stock",
-      "speed": 3.27,
-      "coefficient": 0.07,
+      "speed": 3.45,
+      "coefficient": 0.08,
       "noise": 85,
-      "measuredSpeed": 9.22,
-      "invasionSeconds": 10.845986984830233,
+      "measuredSpeed": 10.25,
+      "invasionSeconds": 9.756097560988565,
       "retreatSeconds": null,
       "progress": 100
     },
     {
       "key": "padrao",
       "route": "stock",
-      "speed": 3.27,
-      "coefficient": 0.07,
+      "speed": 3.45,
+      "coefficient": 0.08,
       "noise": 100,
-      "measuredSpeed": 10.270000000000001,
-      "invasionSeconds": 9.737098344703554,
+      "measuredSpeed": 11.45,
+      "invasionSeconds": 8.733624454165692,
       "retreatSeconds": null,
       "progress": 100
     },
@@ -272,8 +370,8 @@
       "noise": 0,
       "measuredSpeed": 3.25,
       "invasionSeconds": null,
-      "retreatSeconds": 24,
-      "progress": 78
+      "retreatSeconds": 30,
+      "progress": 97.5
     },
     {
       "key": "gotica",
@@ -282,9 +380,9 @@
       "coefficient": 0.074,
       "noise": 5,
       "measuredSpeed": 3.62,
-      "invasionSeconds": null,
-      "retreatSeconds": 24,
-      "progress": 86.88
+      "invasionSeconds": 27.6243093922767,
+      "retreatSeconds": null,
+      "progress": 100
     },
     {
       "key": "gotica",
@@ -293,9 +391,9 @@
       "coefficient": 0.074,
       "noise": 10,
       "measuredSpeed": 3.99,
-      "invasionSeconds": null,
-      "retreatSeconds": 24,
-      "progress": 95.76
+      "invasionSeconds": 25.062656641621288,
+      "retreatSeconds": null,
+      "progress": 100
     },
     {
       "key": "gotica",
@@ -304,7 +402,7 @@
       "coefficient": 0.074,
       "noise": 15,
       "measuredSpeed": 4.359999999999999,
-      "invasionSeconds": 22.935779816529248,
+      "invasionSeconds": 22.935779816534705,
       "retreatSeconds": null,
       "progress": 100
     },
@@ -315,7 +413,7 @@
       "coefficient": 0.074,
       "noise": 20,
       "measuredSpeed": 4.73,
-      "invasionSeconds": 21.141649048629915,
+      "invasionSeconds": 21.14164904864083,
       "retreatSeconds": null,
       "progress": 100
     },
@@ -326,7 +424,7 @@
       "coefficient": 0.074,
       "noise": 30,
       "measuredSpeed": 5.47,
-      "invasionSeconds": 18.281535648995487,
+      "invasionSeconds": 18.281535649011857,
       "retreatSeconds": null,
       "progress": 100
     },
@@ -337,7 +435,7 @@
       "coefficient": 0.074,
       "noise": 40,
       "measuredSpeed": 6.21,
-      "invasionSeconds": 16.1030595813354,
+      "invasionSeconds": 16.103059581346315,
       "retreatSeconds": null,
       "progress": 100
     },
@@ -359,7 +457,7 @@
       "coefficient": 0.074,
       "noise": 60,
       "measuredSpeed": 7.6899999999999995,
-      "invasionSeconds": 13.003901170362951,
+      "invasionSeconds": 13.003901170368408,
       "retreatSeconds": null,
       "progress": 100
     },
@@ -370,7 +468,7 @@
       "coefficient": 0.074,
       "noise": 70,
       "measuredSpeed": 8.43,
-      "invasionSeconds": 11.862396204043762,
+      "invasionSeconds": 11.862396204060133,
       "retreatSeconds": null,
       "progress": 100
     },
@@ -392,7 +490,7 @@
       "coefficient": 0.074,
       "noise": 100,
       "measuredSpeed": 10.649999999999999,
-      "invasionSeconds": 9.389671361503133,
+      "invasionSeconds": 9.389671361514047,
       "retreatSeconds": null,
       "progress": 100
     },
@@ -1197,7 +1295,7 @@
       "wasOn": false,
       "background": false,
       "defended": true,
-      "progress": 74.88000000000002,
+      "progress": 81.60000000000001,
       "extra": 0
     },
     {
@@ -1207,7 +1305,7 @@
       "wasOn": false,
       "background": true,
       "defended": true,
-      "progress": 78.41328,
+      "progress": 85.75680000000007,
       "extra": 2
     },
     {
@@ -1217,7 +1315,7 @@
       "wasOn": true,
       "background": false,
       "defended": true,
-      "progress": 76.45080000000002,
+      "progress": 83.44800000000002,
       "extra": 0
     },
     {
@@ -1227,7 +1325,7 @@
       "wasOn": true,
       "background": true,
       "defended": true,
-      "progress": 79.98408,
+      "progress": 87.60480000000007,
       "extra": 2
     },
     {
@@ -1237,7 +1335,7 @@
       "wasOn": false,
       "background": false,
       "defended": true,
-      "progress": 74.88000000000002,
+      "progress": 81.60000000000002,
       "extra": 0
     },
     {
@@ -1247,7 +1345,7 @@
       "wasOn": false,
       "background": true,
       "defended": true,
-      "progress": 78.41328,
+      "progress": 85.75680000000007,
       "extra": 2
     },
     {
@@ -1257,7 +1355,7 @@
       "wasOn": true,
       "background": false,
       "defended": true,
-      "progress": 81.21080000000006,
+      "progress": 89.04800000000003,
       "extra": 0
     },
     {
@@ -1267,7 +1365,7 @@
       "wasOn": true,
       "background": true,
       "defended": true,
-      "progress": 84.74408000000005,
+      "progress": 93.20480000000003,
       "extra": 2
     },
     {
@@ -1277,7 +1375,7 @@
       "wasOn": false,
       "background": false,
       "defended": true,
-      "progress": 74.88000000000002,
+      "progress": 81.60000000000002,
       "extra": 0
     },
     {
@@ -1287,7 +1385,7 @@
       "wasOn": false,
       "background": true,
       "defended": true,
-      "progress": 78.41328,
+      "progress": 85.75680000000007,
       "extra": 2
     },
     {
@@ -1297,7 +1395,7 @@
       "wasOn": true,
       "background": false,
       "defended": true,
-      "progress": 85.97080000000005,
+      "progress": 94.64800000000005,
       "extra": 0
     },
     {
@@ -1307,7 +1405,7 @@
       "wasOn": true,
       "background": true,
       "defended": true,
-      "progress": 89.50408000000007,
+      "progress": 98.80480000000001,
       "extra": 2
     },
     {
@@ -1317,7 +1415,7 @@
       "wasOn": false,
       "background": false,
       "defended": true,
-      "progress": 74.87999999999998,
+      "progress": 81.60000000000001,
       "extra": 0
     },
     {
@@ -1327,7 +1425,7 @@
       "wasOn": false,
       "background": true,
       "defended": true,
-      "progress": 78.41327999999999,
+      "progress": 85.75680000000007,
       "extra": 2
     },
     {
@@ -1336,8 +1434,8 @@
       "delay": 3,
       "wasOn": true,
       "background": false,
-      "defended": true,
-      "progress": 90.73079999999997,
+      "defended": false,
+      "progress": 100,
       "extra": 0
     },
     {
@@ -1346,8 +1444,8 @@
       "delay": 3,
       "wasOn": true,
       "background": true,
-      "defended": true,
-      "progress": 94.26408000000005,
+      "defended": false,
+      "progress": 100,
       "extra": 2
     },
     {
@@ -1357,7 +1455,7 @@
       "wasOn": false,
       "background": false,
       "defended": true,
-      "progress": 74.88,
+      "progress": 81.60000000000001,
       "extra": 0
     },
     {
@@ -1367,7 +1465,7 @@
       "wasOn": false,
       "background": true,
       "defended": true,
-      "progress": 78.41327999999999,
+      "progress": 85.75680000000007,
       "extra": 2
     },
     {
@@ -1376,8 +1474,8 @@
       "delay": 4,
       "wasOn": true,
       "background": false,
-      "defended": true,
-      "progress": 95.49080000000001,
+      "defended": false,
+      "progress": 100,
       "extra": 0
     },
     {
@@ -1386,8 +1484,8 @@
       "delay": 4,
       "wasOn": true,
       "background": true,
-      "defended": true,
-      "progress": 99.02408000000008,
+      "defended": false,
+      "progress": 100,
       "extra": 2
     },
     {
@@ -1397,7 +1495,7 @@
       "wasOn": false,
       "background": false,
       "defended": true,
-      "progress": 74.88000000000001,
+      "progress": 81.60000000000002,
       "extra": 0
     },
     {
@@ -1407,7 +1505,7 @@
       "wasOn": false,
       "background": true,
       "defended": true,
-      "progress": 78.41327999999999,
+      "progress": 85.75680000000007,
       "extra": 2
     },
     {
@@ -1437,7 +1535,7 @@
       "wasOn": false,
       "background": false,
       "defended": true,
-      "progress": 74.88000000000001,
+      "progress": 81.60000000000002,
       "extra": 0
     },
     {
@@ -1447,7 +1545,7 @@
       "wasOn": false,
       "background": true,
       "defended": true,
-      "progress": 78.41328,
+      "progress": 85.75680000000006,
       "extra": 2
     },
     {
@@ -1477,7 +1575,7 @@
       "wasOn": false,
       "background": false,
       "defended": true,
-      "progress": 74.88000000000001,
+      "progress": 81.60000000000002,
       "extra": 0
     },
     {
@@ -1487,7 +1585,7 @@
       "wasOn": false,
       "background": true,
       "defended": true,
-      "progress": 78.41327999999999,
+      "progress": 85.75680000000008,
       "extra": 2
     },
     {
@@ -1517,7 +1615,7 @@
       "wasOn": false,
       "background": false,
       "defended": true,
-      "progress": 78.48,
+      "progress": 82.8,
       "extra": 0
     },
     {
@@ -1527,7 +1625,7 @@
       "wasOn": false,
       "background": true,
       "defended": true,
-      "progress": 82.11719999999998,
+      "progress": 86.95679999999999,
       "extra": 2
     },
     {
@@ -1537,7 +1635,7 @@
       "wasOn": true,
       "background": false,
       "defended": true,
-      "progress": 80.09700000000002,
+      "progress": 84.648,
       "extra": 0
     },
     {
@@ -1547,7 +1645,7 @@
       "wasOn": true,
       "background": true,
       "defended": true,
-      "progress": 83.73419999999999,
+      "progress": 88.80479999999999,
       "extra": 2
     },
     {
@@ -1557,7 +1655,7 @@
       "wasOn": false,
       "background": false,
       "defended": true,
-      "progress": 78.48,
+      "progress": 82.8,
       "extra": 0
     },
     {
@@ -1567,7 +1665,7 @@
       "wasOn": false,
       "background": true,
       "defended": true,
-      "progress": 82.1172,
+      "progress": 86.95679999999999,
       "extra": 2
     },
     {
@@ -1577,7 +1675,7 @@
       "wasOn": true,
       "background": false,
       "defended": true,
-      "progress": 84.99699999999997,
+      "progress": 90.24799999999998,
       "extra": 0
     },
     {
@@ -1587,7 +1685,7 @@
       "wasOn": true,
       "background": true,
       "defended": true,
-      "progress": 88.63419999999996,
+      "progress": 94.40480000000004,
       "extra": 2
     },
     {
@@ -1597,7 +1695,7 @@
       "wasOn": false,
       "background": false,
       "defended": true,
-      "progress": 78.48,
+      "progress": 82.80000000000001,
       "extra": 0
     },
     {
@@ -1607,7 +1705,7 @@
       "wasOn": false,
       "background": true,
       "defended": true,
-      "progress": 82.11719999999998,
+      "progress": 86.9568,
       "extra": 2
     },
     {
@@ -1617,7 +1715,7 @@
       "wasOn": true,
       "background": false,
       "defended": true,
-      "progress": 89.897,
+      "progress": 95.84799999999997,
       "extra": 0
     },
     {
@@ -1626,8 +1724,8 @@
       "delay": 2,
       "wasOn": true,
       "background": true,
-      "defended": true,
-      "progress": 93.53419999999997,
+      "defended": false,
+      "progress": 100,
       "extra": 2
     },
     {
@@ -1637,7 +1735,7 @@
       "wasOn": false,
       "background": false,
       "defended": true,
-      "progress": 78.48,
+      "progress": 82.79999999999998,
       "extra": 0
     },
     {
@@ -1647,7 +1745,7 @@
       "wasOn": false,
       "background": true,
       "defended": true,
-      "progress": 82.1172,
+      "progress": 86.95679999999996,
       "extra": 2
     },
     {
@@ -1656,8 +1754,8 @@
       "delay": 3,
       "wasOn": true,
       "background": false,
-      "defended": true,
-      "progress": 94.79699999999998,
+      "defended": false,
+      "progress": 100,
       "extra": 0
     },
     {
@@ -1666,8 +1764,8 @@
       "delay": 3,
       "wasOn": true,
       "background": true,
-      "defended": true,
-      "progress": 98.43419999999999,
+      "defended": false,
+      "progress": 100,
       "extra": 2
     },
     {
@@ -1677,7 +1775,7 @@
       "wasOn": false,
       "background": false,
       "defended": true,
-      "progress": 78.47999999999998,
+      "progress": 82.8,
       "extra": 0
     },
     {
@@ -1687,7 +1785,7 @@
       "wasOn": false,
       "background": true,
       "defended": true,
-      "progress": 82.11719999999998,
+      "progress": 86.95679999999996,
       "extra": 2
     },
     {
@@ -1696,8 +1794,8 @@
       "delay": 4,
       "wasOn": true,
       "background": false,
-      "defended": true,
-      "progress": 99.69699999999996,
+      "defended": false,
+      "progress": 100,
       "extra": 0
     },
     {
@@ -1717,7 +1815,7 @@
       "wasOn": false,
       "background": false,
       "defended": true,
-      "progress": 78.48,
+      "progress": 82.8,
       "extra": 0
     },
     {
@@ -1727,7 +1825,7 @@
       "wasOn": false,
       "background": true,
       "defended": true,
-      "progress": 82.11719999999998,
+      "progress": 86.95679999999997,
       "extra": 2
     },
     {
@@ -1757,7 +1855,7 @@
       "wasOn": false,
       "background": false,
       "defended": true,
-      "progress": 78.48000000000002,
+      "progress": 82.80000000000001,
       "extra": 0
     },
     {
@@ -1767,7 +1865,7 @@
       "wasOn": false,
       "background": true,
       "defended": true,
-      "progress": 82.11719999999998,
+      "progress": 86.95679999999999,
       "extra": 2
     },
     {
@@ -1797,7 +1895,7 @@
       "wasOn": false,
       "background": false,
       "defended": true,
-      "progress": 78.48,
+      "progress": 82.8,
       "extra": 0
     },
     {
@@ -1807,7 +1905,7 @@
       "wasOn": false,
       "background": true,
       "defended": true,
-      "progress": 82.1172,
+      "progress": 86.95679999999997,
       "extra": 2
     },
     {
@@ -1837,7 +1935,7 @@
       "wasOn": false,
       "background": false,
       "defended": true,
-      "progress": 78.00000000000004,
+      "progress": 97.5,
       "extra": 0
     },
     {
@@ -1846,8 +1944,8 @@
       "delay": 0,
       "wasOn": false,
       "background": true,
-      "defended": true,
-      "progress": 81.84504000000004,
+      "defended": false,
+      "progress": 100,
       "extra": 2
     },
     {
@@ -1857,7 +1955,7 @@
       "wasOn": true,
       "background": false,
       "defended": true,
-      "progress": 79.70940000000003,
+      "progress": 99.20939999999999,
       "extra": 0
     },
     {
@@ -1866,8 +1964,8 @@
       "delay": 0,
       "wasOn": true,
       "background": true,
-      "defended": true,
-      "progress": 83.55444000000001,
+      "defended": false,
+      "progress": 100,
       "extra": 2
     },
     {
@@ -1877,7 +1975,7 @@
       "wasOn": false,
       "background": false,
       "defended": true,
-      "progress": 78.00000000000006,
+      "progress": 97.50000000000001,
       "extra": 0
     },
     {
@@ -1886,8 +1984,8 @@
       "delay": 1,
       "wasOn": false,
       "background": true,
-      "defended": true,
-      "progress": 81.84504000000005,
+      "defended": false,
+      "progress": 100,
       "extra": 2
     },
     {
@@ -1896,8 +1994,8 @@
       "delay": 1,
       "wasOn": true,
       "background": false,
-      "defended": true,
-      "progress": 84.88940000000005,
+      "defended": false,
+      "progress": 100,
       "extra": 0
     },
     {
@@ -1906,8 +2004,8 @@
       "delay": 1,
       "wasOn": true,
       "background": true,
-      "defended": true,
-      "progress": 88.73444000000005,
+      "defended": false,
+      "progress": 100,
       "extra": 2
     },
     {
@@ -1917,7 +2015,7 @@
       "wasOn": false,
       "background": false,
       "defended": true,
-      "progress": 78.00000000000003,
+      "progress": 97.5,
       "extra": 0
     },
     {
@@ -1926,8 +2024,8 @@
       "delay": 2,
       "wasOn": false,
       "background": true,
-      "defended": true,
-      "progress": 81.84504000000004,
+      "defended": false,
+      "progress": 100,
       "extra": 2
     },
     {
@@ -1936,8 +2034,8 @@
       "delay": 2,
       "wasOn": true,
       "background": false,
-      "defended": true,
-      "progress": 90.06940000000003,
+      "defended": false,
+      "progress": 100,
       "extra": 0
     },
     {
@@ -1946,8 +2044,8 @@
       "delay": 2,
       "wasOn": true,
       "background": true,
-      "defended": true,
-      "progress": 93.91444,
+      "defended": false,
+      "progress": 100,
       "extra": 2
     },
     {
@@ -1957,7 +2055,7 @@
       "wasOn": false,
       "background": false,
       "defended": true,
-      "progress": 78.00000000000003,
+      "progress": 97.5,
       "extra": 0
     },
     {
@@ -1966,8 +2064,8 @@
       "delay": 3,
       "wasOn": false,
       "background": true,
-      "defended": true,
-      "progress": 81.84504000000005,
+      "defended": false,
+      "progress": 100,
       "extra": 2
     },
     {
@@ -1976,8 +2074,8 @@
       "delay": 3,
       "wasOn": true,
       "background": false,
-      "defended": true,
-      "progress": 95.24940000000007,
+      "defended": false,
+      "progress": 100,
       "extra": 0
     },
     {
@@ -1986,8 +2084,8 @@
       "delay": 3,
       "wasOn": true,
       "background": true,
-      "defended": true,
-      "progress": 99.09444000000002,
+      "defended": false,
+      "progress": 100,
       "extra": 2
     },
     {
@@ -1997,7 +2095,7 @@
       "wasOn": false,
       "background": false,
       "defended": true,
-      "progress": 78.00000000000004,
+      "progress": 97.5,
       "extra": 0
     },
     {
@@ -2006,8 +2104,8 @@
       "delay": 4,
       "wasOn": false,
       "background": true,
-      "defended": true,
-      "progress": 81.84504000000005,
+      "defended": false,
+      "progress": 100,
       "extra": 2
     },
     {
@@ -2037,7 +2135,7 @@
       "wasOn": false,
       "background": false,
       "defended": true,
-      "progress": 78.00000000000003,
+      "progress": 97.5,
       "extra": 0
     },
     {
@@ -2046,8 +2144,8 @@
       "delay": 5,
       "wasOn": false,
       "background": true,
-      "defended": true,
-      "progress": 81.84504000000005,
+      "defended": false,
+      "progress": 100,
       "extra": 2
     },
     {
@@ -2077,7 +2175,7 @@
       "wasOn": false,
       "background": false,
       "defended": true,
-      "progress": 78.00000000000006,
+      "progress": 97.50000000000001,
       "extra": 0
     },
     {
@@ -2086,8 +2184,8 @@
       "delay": 6,
       "wasOn": false,
       "background": true,
-      "defended": true,
-      "progress": 81.84504000000003,
+      "defended": false,
+      "progress": 100,
       "extra": 2
     },
     {
@@ -2117,7 +2215,7 @@
       "wasOn": false,
       "background": false,
       "defended": true,
-      "progress": 78.00000000000004,
+      "progress": 97.50000000000001,
       "extra": 0
     },
     {
@@ -2126,8 +2224,8 @@
       "delay": 8,
       "wasOn": false,
       "background": true,
-      "defended": true,
-      "progress": 81.84504000000004,
+      "defended": false,
+      "progress": 100,
       "extra": 2
     },
     {
@@ -4101,16 +4199,16 @@
       "route": "corridor",
       "delay": 3,
       "trials": 1000,
-      "defended": 1000,
-      "invasions": 0
+      "defended": 496,
+      "invasions": 504
     },
     {
       "key": "padrao",
       "route": "corridor",
       "delay": 4,
       "trials": 1000,
-      "defended": 1000,
-      "invasions": 0
+      "defended": 496,
+      "invasions": 504
     },
     {
       "key": "padrao",
@@ -4157,16 +4255,16 @@
       "route": "stock",
       "delay": 2,
       "trials": 1000,
-      "defended": 1000,
-      "invasions": 0
+      "defended": 496,
+      "invasions": 504
     },
     {
       "key": "padrao",
       "route": "stock",
       "delay": 3,
       "trials": 1000,
-      "defended": 1000,
-      "invasions": 0
+      "defended": 496,
+      "invasions": 504
     },
     {
       "key": "padrao",
@@ -4205,64 +4303,64 @@
       "route": "corridor",
       "delay": 0,
       "trials": 1000,
-      "defended": 1000,
-      "invasions": 0
+      "defended": 0,
+      "invasions": 1000
     },
     {
       "key": "gotica",
       "route": "corridor",
       "delay": 1,
       "trials": 1000,
-      "defended": 1000,
-      "invasions": 0
+      "defended": 0,
+      "invasions": 1000
     },
     {
       "key": "gotica",
       "route": "corridor",
       "delay": 2,
       "trials": 1000,
-      "defended": 1000,
-      "invasions": 0
+      "defended": 0,
+      "invasions": 1000
     },
     {
       "key": "gotica",
       "route": "corridor",
       "delay": 3,
       "trials": 1000,
-      "defended": 1000,
-      "invasions": 0
+      "defended": 0,
+      "invasions": 1000
     },
     {
       "key": "gotica",
       "route": "corridor",
       "delay": 4,
       "trials": 1000,
-      "defended": 496,
-      "invasions": 504
+      "defended": 0,
+      "invasions": 1000
     },
     {
       "key": "gotica",
       "route": "corridor",
       "delay": 5,
       "trials": 1000,
-      "defended": 496,
-      "invasions": 504
+      "defended": 0,
+      "invasions": 1000
     },
     {
       "key": "gotica",
       "route": "corridor",
       "delay": 6,
       "trials": 1000,
-      "defended": 496,
-      "invasions": 504
+      "defended": 0,
+      "invasions": 1000
     },
     {
       "key": "gotica",
       "route": "corridor",
       "delay": 8,
       "trials": 1000,
-      "defended": 496,
-      "invasions": 504
+      "defended": 0,
+      "invasions": 1000
     },
     {
       "key": "gotica",
@@ -4672,9 +4770,9 @@
       "losses": 1000,
       "causes": {
         "gotica": 232,
-        "maid": 385,
-        "yandere": 192,
-        "padrao": 191
+        "padrao": 193,
+        "maid": 383,
+        "yandere": 192
       },
       "firstLoss": 85.38533518990032,
       "lastLoss": 386.6335666611612,
@@ -4687,8 +4785,8 @@
       "wins": 0,
       "losses": 1000,
       "causes": {
-        "palhaca": 707,
-        "gatinha": 293
+        "palhaca": 706,
+        "gatinha": 294
       },
       "firstLoss": 49.38810936012773,
       "lastLoss": 90.45468468734835,
@@ -4702,9 +4800,9 @@
       "losses": 1000,
       "causes": {
         "maid": 378,
-        "padrao": 188,
-        "yandere": 219,
-        "gotica": 215
+        "padrao": 196,
+        "yandere": 216,
+        "gotica": 210
       },
       "firstLoss": 51.724804629087494,
       "lastLoss": 243.352513922872,

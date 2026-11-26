@@ -285,7 +285,11 @@ function createApproach(map, effects, random, observingLeft = () => false, curre
     corridor: [map.back, map.front, map.office],
     stock: [map.leftApproach, map.left, map.office]
   };
-  const duration = actor => rules.durationOverrides?.[actor.key] ?? rules.durationSeconds ?? 24;
+  const duration = actor => {
+    const override = rules.durationOverrides?.[actor.key];
+    return (typeof override === 'number' ? override : override?.[actor.approach?.objective])
+      ?? rules.durationSeconds ?? 24;
+  };
   const advancedProgress = rules.advancedProgress;
 
   function begin(actor, objective) {

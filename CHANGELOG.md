@@ -1,5 +1,14 @@
 # Histórico
 
+## Balanceamento, interferência mecânica e janelas — 26/11/2026
+
+- Padrão: corredor 3,40 + 0,080 × barulho; estoque 3,45 + 0,080 × barulho, ambos com 24 s. Gótica no corredor passa a 30 s; estoque mantém 24 s. Maid no corredor mantém 30 s. Debug e previsões usam o prazo da personagem e rota.
+- Rádio contra Palhaça: redução de 1,85 ponto/s. Sanidade: câmera 0,13%/s, Yandere 0,18%/s e observação direta 0,44%/s; câmeras com perda dobrada atualizadas proporcionalmente.
+- Portões visíveis no feed geram estática mecânica de 650 ms, com o mesmo prazo na animação e no bloqueio de observação, sem penalidade de sanidade ou som especial.
+- Câmeras, arquivos e notas compartilham foco, profundidade, minimização e restauração. Câmeras em segundo plano não observam posições nem encontram a Shadow; temporizadores continuam correndo.
+- Desligamento e apagão escondem o sistema operacional e encerram os aplicativos. Minimização e saída do monitor preservam as janelas. Boot retorna à área de trabalho.
+- Configuração local, relatório de balanceamento, documentação e testes de integração atualizados, sem dependências novas.
+
 ## Organização dos recursos — 08/11/2026
 
 - Cada câmera reúne o fundo, a planta técnica e os estados em uma pasta própria. Os portões têm subpastas por posição.

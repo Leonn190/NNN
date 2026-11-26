@@ -279,6 +279,12 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid #ffd3e8;outline-
   font: 400 12px/1.35 'Segoe UI', Arial, sans-serif;
 }
 .computer-screen[inert] { pointer-events: none; }
+.game:is([data-computer-off], [data-blackout], [data-monitor-transition])
+  :is(.desktop-workspace, .computer-taskbar, .desktop-start-menu) {
+  visibility: hidden;
+  pointer-events: none;
+}
+.desktop-workspace { isolation: isolate; }
 .game:is([data-computer-off], [data-monitor-transition]):is([data-mode="desktop"], [data-mode="cameras"])
   :is(.hud-top, .resource-hud, .toast) {
   visibility: hidden;

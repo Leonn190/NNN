@@ -1359,19 +1359,24 @@ window.NathGame.localConfig = {
       "bar": {
         "durationSeconds": 24,
         "durationOverrides": {
-          "maid": 30
+          "maid": {
+            "corridor": 30
+          },
+          "gotica": {
+            "corridor": 30
+          }
         },
         "advancedProgress": 55,
         "stepSeconds": 0.1,
         "speeds": {
           "padrao": {
             "corridor": [
-              3.12,
-              0.068
+              3.4,
+              0.08
             ],
             "stock": [
-              3.27,
-              0.07
+              3.45,
+              0.08
             ]
           },
           "gotica": {
@@ -1659,25 +1664,25 @@ window.NathGame.localConfig = {
   "sanity": {
     "initial": 100,
     "loss": {
-      "camera": 0.15,
-      "yandereCamera": 0.2,
-      "direct": 0.42,
+      "camera": 0.13,
+      "yandereCamera": 0.18,
+      "direct": 0.44,
       "centralGate": 0.12,
       "closet": 0.6,
       "invasion": 3
     },
     "cameraLossOverrides": {
       "yandere": {
-        "CAM10": 0.4,
-        "CAM07": 0.4,
-        "CAM12": 0.4
+        "CAM10": 0.36,
+        "CAM07": 0.36,
+        "CAM12": 0.36
       },
       "padrao": {
-        "CAM10": 0.3
+        "CAM10": 0.26
       },
       "gotica": {
-        "CAM11": 0.3,
-        "CAM04": 0.3
+        "CAM11": 0.26,
+        "CAM04": 0.26
       }
     },
     "eventLoss": {
@@ -1826,7 +1831,7 @@ window.NathGame.localConfig = {
       "warningAt": 79,
       "closetGrowthFactor": 3.25,
       "litClosetGrowthFactor": 1.625,
-      "musicReduction": 2,
+      "musicReduction": 1.85,
       "finaleSeconds": {
         "min": 8,
         "max": 12

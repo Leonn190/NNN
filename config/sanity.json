@@ -1,17 +1,17 @@
 {
   "initial": 100,
   "loss": {
-    "camera": 0.15,
-    "yandereCamera": 0.20,
-    "direct": 0.42,
+    "camera": 0.13,
+    "yandereCamera": 0.18,
+    "direct": 0.44,
     "centralGate": 0.12,
     "closet": 0.60,
     "invasion": 3.00
   },
   "cameraLossOverrides": {
-    "yandere": { "CAM10": 0.40, "CAM07": 0.40, "CAM12": 0.40 },
-    "padrao": { "CAM10": 0.30 },
-    "gotica": { "CAM11": 0.30, "CAM04": 0.30 }
+    "yandere": { "CAM10": 0.36, "CAM07": 0.36, "CAM12": 0.36 },
+    "padrao": { "CAM10": 0.26 },
+    "gotica": { "CAM11": 0.26, "CAM04": 0.26 }
   },
   "eventLoss": { "lateFlashlight": 1, "cameraInterference": 2.5, "yandereAttackLaugh": 1, "closetEnter": 2, "electricalFault": 5, "yandereCameraScare": 15 },
   "recovery": {

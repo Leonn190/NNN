@@ -168,19 +168,20 @@
     "bar": {
       "durationSeconds": 24,
       "durationOverrides": {
-        "maid": 30
+        "maid": { "corridor": 30 },
+        "gotica": { "corridor": 30 }
       },
       "advancedProgress": 55,
       "stepSeconds": 0.1,
       "speeds": {
         "padrao": {
           "corridor": [
-            3.12,
-            0.068
+            3.40,
+            0.080
           ],
           "stock": [
-            3.27,
-            0.07
+            3.45,
+            0.080
           ]
         },
         "gotica": {

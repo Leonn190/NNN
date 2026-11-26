@@ -129,12 +129,15 @@ test('the radio offsets clown growth in every closet lighting state', () => {
     for (const radio of [false, true]) {
       for (const clownLight of [false, true]) {
         const input = { radio, clownLight };
-        const run = scenario({ palhaca: 1 }, input, config => { config.threats.clown.initial = 20; });
+        const run = scenario({ palhaca: 1 }, input, config => {
+          config.threats.clown.initial = 20;
+          config.night.movementDelay = 0;
+        });
         if (hidden) run.at(0, input, { type: 'closetEnter' });
         run.at(1);
         const growth = base.threats.clown.growth[0];
-        const normal = growth * Number(!radio) - (radio ? 2 : 0);
-        const hiddenRate = growth * (clownLight ? 1.625 : 3.25) - (radio ? 2 : 0);
+        const normal = growth * Number(!radio) - (radio ? 1.85 : 0);
+        const hiddenRate = growth * (clownLight ? 1.625 : 3.25) - (radio ? 1.85 : 0);
         near(run.game.snapshot().counter, hidden ? 20 + normal * .35 + hiddenRate * .65 : 20 + normal);
       }
     }
@@ -320,8 +323,8 @@ test('camera audio modifies the real bar and preserves navigation, duration and 
     allowed: new Set(base.characters.padrao.positions), position: 10, light: 0 };
   const effect = createEffects(base, createRoutes(base.map), [actor]);
   assert(effect.startAudio(0, 'CAM08'));
-  near(effect.attackBar(actor, 'stock', false, 1).speed, 3.27 - 5);
-  near(effect.attackBar(actor, 'stock', false, 3).speed, 3.27);
+  near(effect.attackBar(actor, 'stock', false, 1).speed, 3.45 - 5);
+  near(effect.attackBar(actor, 'stock', false, 3).speed, 3.45);
   near(effect.stayWeight(actor, 1), .5);
   assert.equal(effect.audioStimulus(actor, 3.01), null);
   assert.equal(effect.startAudio(8.99, 'CAM08'), false);
@@ -453,8 +456,8 @@ test('visual arrival retains progress and the single timeout', () => {
   near(actor.approach.elapsed, 20);
   near(actor.approach.progress, 60);
   approach.integrate(actor, 40);
-  near(actor.approach.elapsed, 24);
-  near(actor.approach.progress, 72);
+  near(actor.approach.elapsed, 30);
+  near(actor.approach.progress, 90);
   assert(approach.expired(actor));
   assert(!approach.completed(actor));
 });
@@ -503,7 +506,7 @@ test('noise slows Gatinha and accelerates common attacks without phase multiplie
   for (let i = 0; i < 12; i++) effects.addNoiseEvent('gateClose');
   near(effects.attackBar(actors[0], 'stock', false).speed, 10.35);
   near(effects.attackBar(actors[1], 'stock', false).speed, 2.38);
-  near(effects.attackBar(actors[2], 'stock', false).speed, 10.27);
+  near(effects.attackBar(actors[2], 'stock', false).speed, 11.45);
 });
 
 test('blocking clock, route bonuses and counterattack probabilities use the approved values', () => {
@@ -572,13 +575,13 @@ test('empty-office clown entry honors other occupants and all three seconds afte
   assert.equal(threats.entryAttacker({ key: 'maid' }, true, 33), 'palhaca');
 });
 
-test('attack duration is 30 seconds only for Maid, independent of level and speed', () => {
+test('attack duration depends on character and route, independent of level and speed', () => {
   for (const key of Object.keys(base.movement.attack.bar.speeds)) for (const level of [1, 6, 11])
     for (const objective of Object.keys(base.movement.attack.bar.speeds[key])) for (const speed of [-5, 0, 3]) {
       const approach = window.NathGame.createApproach(base.map, { attackBar: () => ({ speed }) },
         () => 0, () => false, () => 0, base.movement.attack.bar);
       const actor = { key, level, position: objective === 'corridor' ? base.map.back : base.map.leftApproach };
-      const duration = key === 'maid' ? 30 : 24;
+      const duration = objective === 'corridor' && ['maid', 'gotica'].includes(key) ? 30 : 24;
       approach.begin(actor, objective);
       approach.integrate(actor, duration - .1);
       assert(!approach.expired(actor));
