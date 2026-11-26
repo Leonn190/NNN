@@ -105,7 +105,7 @@ function createEffects(config, routes, actors) {
     const look = objective === 'stock' && leftLook ? -rules.lookPenalty : 0;
     let audioSpeed = 0;
     const stimulus = audio && now < audio.ends ? audio : null;
-    // Keep attack acoustics anchored to its route origin: the visual 50% change
+    // Keep attack acoustics anchored to its route origin: the visual advanced-stage change
     // must not change range, direction or speed. Navigation still uses real positions.
     const origin = actor.approach ? (objective === 'stock' ? config.map.leftApproach : back) : actor.position;
     const from = stimulus?.distance.get(origin) ?? Infinity;

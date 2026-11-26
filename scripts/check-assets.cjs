@@ -134,11 +134,14 @@ function checkPublicLayout(files) {
   // Preserve the supplied portrait filenames; these exact paths are validated and packaged from config.
   const portraits = new Set(Object.values(config['config/controls.json'].customPortraits ?? {})
     .map(file => 'public/' + file));
+  // These supplied fear recordings retain their original, explicitly configured names.
+  const fearTracks = new Set(Object.values(config['config/effects.json'].fear.tracks)
+    .map(track => 'public/' + track.file));
   for (const file of files) {
     if (/^public\/[^/]+$/.test(file)) errors.add(`public/: arquivo solto na raiz: ${file}`);
     if (!/^public\/(?:images|audio)\//.test(file)) continue;
     const filename = path.posix.basename(file);
-    if (/[A-Z\s\u0080-\uffff]/u.test(filename) && !portraits.has(file)) {
+    if (/[A-Z\s\u0080-\uffff]/u.test(filename) && !portraits.has(file) && !fearTracks.has(file)) {
       errors.add(`public/: nome de mídia sem padronização: ${file}`);
     }
   }

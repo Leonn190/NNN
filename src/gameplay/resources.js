@@ -76,8 +76,8 @@ function createResources({ night: defaults, sanity: sanityRules, power }, night 
     }
   }
 
-  function applyEvent(event, now) {
-    if (sanityEnabled) sanity = clampPercent(sanity - (sanityRules.eventLoss[event] ?? 0));
+  function applyEvent(event, now, { loseSanity = true } = {}) {
+    if (sanityEnabled && loseSanity) sanity = clampPercent(sanity - (sanityRules.eventLoss[event] ?? 0));
     drainEnergy(power.eventDrain[event] ?? 0, now);
   }
 

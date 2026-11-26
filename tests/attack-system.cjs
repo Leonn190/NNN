@@ -45,13 +45,14 @@ test('all 108 fixed-noise cases match their analytical speeds and first terminal
     const speed = attack.speed + attack.coefficient * noise;
     near(b.effects.attackBar(b.actor, attack.route, false).speed, speed);
     b.step(60, { radio: true });
-    const invasion = 100 / speed <= 24;
-    near(b.actor.approach.elapsed, invasion ? 100 / speed : 24);
-    near(b.actor.approach.progress, Math.min(100, speed * 24));
+    const limit = b.approach.duration(b.actor);
+    const invasion = 100 / speed <= limit;
+    near(b.actor.approach.elapsed, invasion ? 100 / speed : limit);
+    near(b.actor.approach.progress, Math.min(100, speed * limit));
     assert.equal(Boolean(b.approach.completed(b.actor)), invasion);
     assert.equal(Boolean(b.approach.expired(b.actor)), !invasion);
     matrix.push({ ...attack, noise, measuredSpeed: speed, invasionSeconds: invasion ? b.actor.approach.elapsed : null,
-      retreatSeconds: invasion ? null : 24, progress: b.actor.approach.progress });
+      retreatSeconds: invasion ? null : limit, progress: b.actor.approach.progress });
   }
 });
 
@@ -145,6 +146,7 @@ test('flashlight, observation and camera audio modify actual progress on both ha
 
 function movementScenario(keys, radio, gate = false, route = 'corridor') {
   const config = structuredClone(base), events = [];
+  config.night.movementDelay = 0;
   config.movement.jitter = { min: 0, max: 0 };
   const start = route === 'stock' ? config.map.leftApproach : config.map.back;
   const routeId = route === 'stock' ? 'EL' : 'CV';
@@ -157,13 +159,13 @@ function movementScenario(keys, radio, gate = false, route = 'corridor') {
   return { game, input, events, config };
 }
 
-test('real visual transition occurs at 50% without reset or duplicated attack audio', () => {
+test('real visual transition occurs at 55% without reset or duplicated attack audio', () => {
   const { game, input, events } = movementScenario(['gotica'], true);
   for (let time = 0; time <= 16; time += .025) {
     game.advance(time, input);
     const a = game.debugSnapshot().actors.find(a => a.key === 'gotica');
     if (a.position === base.map.front) {
-      near(a.attackProgress, 50, .3); assert(a.attackElapsed > 5);
+      near(a.attackProgress, base.movement.attack.bar.advancedProgress, .3); assert(a.attackElapsed > 5);
       assert.equal(events.filter(e => e[0] === 'corridorAttack').length, 1); return;
     }
   }
@@ -218,15 +220,15 @@ test('all stock attacks use the existing doorway and withdraw at the original ti
   }
 });
 
-test('regression below 50% keeps one consistent visual position and one bar', () => {
+test('regression below 55% keeps one consistent visual position and one bar', () => {
   const b = bar('padrao', 'stock');
-  b.step(16); assert(b.actor.approach.advanced);
+  b.step(17); assert(b.actor.approach.advanced);
   b.actor.position = base.map.left; b.approach.arrive(b.actor);
-  b.effects.startAudio(16, 'CAM08'); b.step(2);
-  assert(b.actor.approach.progress < 50);
+  b.effects.startAudio(17, 'CAM08'); b.step(2);
+  assert(b.actor.approach.progress < base.movement.attack.bar.advancedProgress);
   assert(b.actor.approach.advanced);
   assert.equal(b.actor.position, base.map.left);
-  near(b.actor.approach.elapsed, 18);
+  near(b.actor.approach.elapsed, 19);
 });
 
 test('the visual midpoint does not change attack acoustics or speed', () => {
@@ -261,12 +263,14 @@ test('real pairs and trios share the original map; a blocked visual move never s
 
 test('simultaneous invaders retain independent closet reactions and the three-second exit protection', () => {
   for (const keys of [['padrao', 'gatinha'], ['gotica', 'gatinha', 'yandere']]) {
-    const threats = N.createThreats(base, { palhaca: 0 }, () => .5, () => {});
+    const events = [];
+    const threats = N.createThreats(base, { palhaca: 0 }, () => .5, event => events.push(event));
     const actors = keys.map(key => ({ key, reaction: base.characters[key].reaction }));
     actors.forEach((actor, i) => assert.equal(threats.invade(actor, i * .1, i * .1, i === 0), undefined));
     assert(threats.enterCloset(.5));
     threats.resolve(20, () => {}, assert.fail);
     actors.forEach(actor => assert.equal(threats.invasionStatus(actor, 20), null));
+    assert.equal(events.filter(event => event === 'fearRecovery').length, 1);
     assert.equal(threats.entryAttacker({ key: 'maid' }, true, 22.99), null);
     assert.equal(threats.entryAttacker({ key: 'maid' }, true, 23), 'palhaca');
   }
@@ -279,11 +283,12 @@ function reaction(attack, delay, wasOn, background, seed = 1) {
   if (background) b.effects.addNoiseEvent('gateClose');
   // Scripted action at the requested time; no inspection of progress to decide actions.
   // Radio access/UI costs are excluded and this is explicitly an isolated bar model.
+  const limit = b.approach.duration(b.actor);
   let time = 0;
-  while (time < 24 - 1e-9 && !b.approach.completed(b.actor)) {
+  while (time < limit - 1e-9 && !b.approach.completed(b.actor)) {
     const reacting = time >= delay - 1e-9;
     const radio = reacting ? attack.key === 'gatinha' : wasOn;
-    const dt = Math.min(.1 + random() * .05, 24 - time, !reacting ? delay - time : Infinity);
+    const dt = Math.min(.1 + random() * .05, limit - time, !reacting ? delay - time : Infinity);
     b.step(dt, { radio, computer: background, viewMoving: background }); time += dt;
   }
   return { defended: !b.approach.completed(b.actor), progress: b.actor.approach.progress, extra };
@@ -293,7 +298,7 @@ test('288 delayed-reaction scenarios cover both prior radio states and backgroun
   for (const attack of attacks) for (const delay of delays) for (const wasOn of [false, true]) for (const background of [false, true]) {
     const result = reaction(attack, delay, wasOn, background);
     assert(Number.isFinite(result.progress));
-    if (delay <= 3) assert(result.defended, JSON.stringify({ attack, delay, wasOn, background, result }));
+    if (delay <= 3 && attack.key !== 'maid') assert(result.defended, JSON.stringify({ attack, delay, wasOn, background, result }));
     reactions.push({ key: attack.key, route: attack.route, delay, wasOn, background, ...result });
   }
 });

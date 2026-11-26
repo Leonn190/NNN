@@ -105,47 +105,77 @@ test('a pending audio resume cannot recreate ambience after a shift stops', asyn
   assert.equal(sound.context.nodes.length, 0);
 });
 
-test('invasions share a loop that fades, resumes and cleans up on shift stop', ({ mock }) => {
-  mock.timers.enable({ apis: ['setInterval'] });
+test('fear priority, continuous invasion, reversible release, loop crossfade and shutdown', async t => {
+  const { mock } = t;
+  const previousAudio = global.Audio;
+  t.after(() => { global.Audio = previousAudio; });
   let now = 0;
-  mock.method(performance, 'now', () => now);
-  const sound = new SoundEngine();
-  const invasion = require('../config/effects.json').invasion;
-  const sample = {
-    paused: true, plays: 0,
-    async play() { this.paused = false; this.plays++; },
+  mock.method(performance, 'now', () => now * 1000);
+  const effects = require('../config/effects.json');
+  const settings = require('../config/controls.json').nightAudio;
+  const voices = [];
+  global.Audio = class {
+    paused = true; currentTime = 0; duration = 10; plays = 0;
+    constructor(src) { this.src = src; voices.push(this); }
+    async play() { this.paused = false; this.plays++; }
     pause() { this.paused = true; }
+    removeAttribute() {}
+    load() {}
   };
-  sound.samples.set(invasion.file, sample);
+  const sound = new SoundEngine();
+  sound.prepareShift(settings, 5, effects);
   sound.startShift();
-  sound.setInvasionLoop(true, invasion);
-  sound.setInvasionLoop(true, invasion);
-  assert.equal(sample.plays, 1);
-  assert.equal(sample.loop, true);
-
-  sound.setInvasionLoop(false, invasion);
-  now = 500;
-  mock.timers.tick(500);
-  assert.equal(sample.paused, false);
-  assert.equal(sample.volume, invasion.volume / 2);
-  sound.setInvasionLoop(true, invasion);
-  assert.equal(sample.volume, invasion.volume);
-  assert.equal(sample.plays, 1);
-  sound.setInvasionLoop(false, invasion);
-  now = 1499;
-  mock.timers.tick(999);
-  assert.equal(sample.paused, false);
-  now = 1500;
-  mock.timers.tick(1);
-  assert.equal(sample.volume, 0);
-  assert.equal(sample.loop, false);
-  assert.equal(sample.paused, true);
-
-  sound.setInvasionLoop(true, invasion);
-  sound.setInvasionLoop(false, invasion);
+  const update = (seconds, invasion, imminent) => { now = seconds; sound.updateFear(invasion, imminent, now); };
+  update(0, false, false);
+  update(.1, false, true);
+  const danger = sound.fearLayers.get('imminent').voices[0].audio;
+  update(.11, false, false);
+  update(.12, false, true);
+  update(.13, false, false);
+  update(.14, false, true);
+  assert.equal(danger.plays, 1);
+  update(.4, false, true);
+  assert.equal(danger.plays, 1);
+  update(.5, false, false);
+  update(.6, false, true);
+  assert.equal(danger.plays, 1); // Tiny threshold oscillations reverse the release.
+  update(.7, true, true);
+  update(.9, true, false); // Closet/camera changes have no separate audio condition.
+  const layer = sound.fearLayers.get('invasion');
+  const first = layer.voices[0].audio, second = layer.voices[1].audio;
+  assert.equal(sound.fearState, 'invasion');
+  assert.equal(first.plays, 1);
+  first.currentTime = 9.7;
+  update(1, true, true);
+  assert.equal(second.plays, 1);
+  second.currentTime = .2;
+  update(1.2, true, false);
+  assert(Math.abs(first.volume - effects.fear.tracks.invasion.volume / 2) < 1e-9);
+  second.currentTime = .4;
+  update(1.4, true, false);
+  assert(first.paused);
+  assert(!second.paused);
+  sound.requestFearRecovery();
+  update(1.5, false, true);
+  assert.equal(sound.fearState, 'imminent');
+  update(2.5, false, false);
+  assert.equal(sound.fearState, null); // Recovery suppressed by real danger is discarded.
+  sound.requestFearRecovery();
+  update(2.6, false, false);
+  assert.equal(sound.fearState, 'recovery');
+  update(9.6, false, false);
+  assert.equal(sound.fearState, null);
+  update(10.5, false, false);
+  assert(voices.every(audio => audio.paused));
+  let resolvePlay;
+  first.play = () => { first.paused = false; return new Promise(resolve => { resolvePlay = resolve; }); };
+  update(11, true, false);
   sound.stopShift();
-  assert.equal(sound.invasionFade, undefined);
-  assert.equal(sample.paused, true);
+  resolvePlay();
+  await Promise.resolve();
+  assert(voices.every(audio => audio.paused));
+  assert.equal(sound.fearLayers.size, 0);
+  assert.equal(sound.fearRecoveryUntil, 0);
 });
 
 test('spatial gate closures overlap with independent pan and preserve the central gate sample', ({ mock }) => {

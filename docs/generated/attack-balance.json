@@ -800,8 +800,8 @@
       "noise": 0,
       "measuredSpeed": 3.26,
       "invasionSeconds": null,
-      "retreatSeconds": 24,
-      "progress": 78.24
+      "retreatSeconds": 30,
+      "progress": 97.8
     },
     {
       "key": "maid",
@@ -810,9 +810,9 @@
       "coefficient": 0.074,
       "noise": 5,
       "measuredSpeed": 3.63,
-      "invasionSeconds": null,
-      "retreatSeconds": 24,
-      "progress": 87.12
+      "invasionSeconds": 27.54820936640499,
+      "retreatSeconds": null,
+      "progress": 100
     },
     {
       "key": "maid",
@@ -821,9 +821,9 @@
       "coefficient": 0.074,
       "noise": 10,
       "measuredSpeed": 4,
-      "invasionSeconds": null,
-      "retreatSeconds": 24,
-      "progress": 96
+      "invasionSeconds": 25.00000000001819,
+      "retreatSeconds": null,
+      "progress": 100
     },
     {
       "key": "maid",
@@ -832,7 +832,7 @@
       "coefficient": 0.074,
       "noise": 15,
       "measuredSpeed": 4.369999999999999,
-      "invasionSeconds": 22.88329519452236,
+      "invasionSeconds": 22.883295194533275,
       "retreatSeconds": null,
       "progress": 100
     },
@@ -843,7 +843,7 @@
       "coefficient": 0.074,
       "noise": 20,
       "measuredSpeed": 4.74,
-      "invasionSeconds": 21.097046413509815,
+      "invasionSeconds": 21.097046413515272,
       "retreatSeconds": null,
       "progress": 100
     },
@@ -854,7 +854,7 @@
       "coefficient": 0.074,
       "noise": 30,
       "measuredSpeed": 5.4799999999999995,
-      "invasionSeconds": 18.248175182503473,
+      "invasionSeconds": 18.248175182498017,
       "retreatSeconds": null,
       "progress": 100
     },
@@ -865,7 +865,7 @@
       "coefficient": 0.074,
       "noise": 40,
       "measuredSpeed": 6.22,
-      "invasionSeconds": 16.07717041800788,
+      "invasionSeconds": 16.07717041802971,
       "retreatSeconds": null,
       "progress": 100
     },
@@ -876,7 +876,7 @@
       "coefficient": 0.074,
       "noise": 50,
       "measuredSpeed": 6.959999999999999,
-      "invasionSeconds": 14.367816091966233,
+      "invasionSeconds": 14.36781609197169,
       "retreatSeconds": null,
       "progress": 100
     },
@@ -898,7 +898,7 @@
       "coefficient": 0.074,
       "noise": 70,
       "measuredSpeed": 8.44,
-      "invasionSeconds": 11.84834123224573,
+      "invasionSeconds": 11.848341232234816,
       "retreatSeconds": null,
       "progress": 100
     },
@@ -909,7 +909,7 @@
       "coefficient": 0.074,
       "noise": 85,
       "measuredSpeed": 9.55,
-      "invasionSeconds": 10.471204188492266,
+      "invasionSeconds": 10.471204188497722,
       "retreatSeconds": null,
       "progress": 100
     },
@@ -920,7 +920,7 @@
       "coefficient": 0.074,
       "noise": 100,
       "measuredSpeed": 10.66,
-      "invasionSeconds": 9.380863039419637,
+      "invasionSeconds": 9.38086303941418,
       "retreatSeconds": null,
       "progress": 100
     },
@@ -3117,7 +3117,7 @@
       "wasOn": false,
       "background": false,
       "defended": true,
-      "progress": 78.24000000000005,
+      "progress": 97.80000000000001,
       "extra": 0
     },
     {
@@ -3126,8 +3126,8 @@
       "delay": 0,
       "wasOn": false,
       "background": true,
-      "defended": true,
-      "progress": 82.08503999999999,
+      "defended": false,
+      "progress": 100,
       "extra": 2
     },
     {
@@ -3137,7 +3137,7 @@
       "wasOn": true,
       "background": false,
       "defended": true,
-      "progress": 79.94940000000004,
+      "progress": 99.5094,
       "extra": 0
     },
     {
@@ -3146,8 +3146,8 @@
       "delay": 0,
       "wasOn": true,
       "background": true,
-      "defended": true,
-      "progress": 83.79443999999998,
+      "defended": false,
+      "progress": 100,
       "extra": 2
     },
     {
@@ -3157,7 +3157,7 @@
       "wasOn": false,
       "background": false,
       "defended": true,
-      "progress": 78.24000000000005,
+      "progress": 97.80000000000001,
       "extra": 0
     },
     {
@@ -3166,8 +3166,8 @@
       "delay": 1,
       "wasOn": false,
       "background": true,
-      "defended": true,
-      "progress": 82.08504,
+      "defended": false,
+      "progress": 100,
       "extra": 2
     },
     {
@@ -3176,8 +3176,8 @@
       "delay": 1,
       "wasOn": true,
       "background": false,
-      "defended": true,
-      "progress": 85.12940000000006,
+      "defended": false,
+      "progress": 100,
       "extra": 0
     },
     {
@@ -3186,8 +3186,8 @@
       "delay": 1,
       "wasOn": true,
       "background": true,
-      "defended": true,
-      "progress": 88.97444000000004,
+      "defended": false,
+      "progress": 100,
       "extra": 2
     },
     {
@@ -3197,7 +3197,7 @@
       "wasOn": false,
       "background": false,
       "defended": true,
-      "progress": 78.24000000000004,
+      "progress": 97.8,
       "extra": 0
     },
     {
@@ -3206,8 +3206,8 @@
       "delay": 2,
       "wasOn": false,
       "background": true,
-      "defended": true,
-      "progress": 82.08504,
+      "defended": false,
+      "progress": 100,
       "extra": 2
     },
     {
@@ -3216,8 +3216,8 @@
       "delay": 2,
       "wasOn": true,
       "background": false,
-      "defended": true,
-      "progress": 90.30940000000001,
+      "defended": false,
+      "progress": 100,
       "extra": 0
     },
     {
@@ -3226,8 +3226,8 @@
       "delay": 2,
       "wasOn": true,
       "background": true,
-      "defended": true,
-      "progress": 94.15444000000001,
+      "defended": false,
+      "progress": 100,
       "extra": 2
     },
     {
@@ -3237,7 +3237,7 @@
       "wasOn": false,
       "background": false,
       "defended": true,
-      "progress": 78.24000000000004,
+      "progress": 97.8,
       "extra": 0
     },
     {
@@ -3246,8 +3246,8 @@
       "delay": 3,
       "wasOn": false,
       "background": true,
-      "defended": true,
-      "progress": 82.08504,
+      "defended": false,
+      "progress": 100,
       "extra": 2
     },
     {
@@ -3256,8 +3256,8 @@
       "delay": 3,
       "wasOn": true,
       "background": false,
-      "defended": true,
-      "progress": 95.48940000000003,
+      "defended": false,
+      "progress": 100,
       "extra": 0
     },
     {
@@ -3266,8 +3266,8 @@
       "delay": 3,
       "wasOn": true,
       "background": true,
-      "defended": true,
-      "progress": 99.33444,
+      "defended": false,
+      "progress": 100,
       "extra": 2
     },
     {
@@ -3277,7 +3277,7 @@
       "wasOn": false,
       "background": false,
       "defended": true,
-      "progress": 78.24000000000004,
+      "progress": 97.8,
       "extra": 0
     },
     {
@@ -3286,8 +3286,8 @@
       "delay": 4,
       "wasOn": false,
       "background": true,
-      "defended": true,
-      "progress": 82.08504,
+      "defended": false,
+      "progress": 100,
       "extra": 2
     },
     {
@@ -3317,7 +3317,7 @@
       "wasOn": false,
       "background": false,
       "defended": true,
-      "progress": 78.24000000000004,
+      "progress": 97.80000000000001,
       "extra": 0
     },
     {
@@ -3326,8 +3326,8 @@
       "delay": 5,
       "wasOn": false,
       "background": true,
-      "defended": true,
-      "progress": 82.08503999999999,
+      "defended": false,
+      "progress": 100,
       "extra": 2
     },
     {
@@ -3357,7 +3357,7 @@
       "wasOn": false,
       "background": false,
       "defended": true,
-      "progress": 78.24000000000004,
+      "progress": 97.80000000000001,
       "extra": 0
     },
     {
@@ -3366,8 +3366,8 @@
       "delay": 6,
       "wasOn": false,
       "background": true,
-      "defended": true,
-      "progress": 82.08504,
+      "defended": false,
+      "progress": 100,
       "extra": 2
     },
     {
@@ -3397,7 +3397,7 @@
       "wasOn": false,
       "background": false,
       "defended": true,
-      "progress": 78.24000000000004,
+      "progress": 97.80000000000001,
       "extra": 0
     },
     {
@@ -3406,8 +3406,8 @@
       "delay": 8,
       "wasOn": false,
       "background": true,
-      "defended": true,
-      "progress": 82.08503999999998,
+      "defended": false,
+      "progress": 100,
       "extra": 2
     },
     {
@@ -4461,64 +4461,64 @@
       "route": "corridor",
       "delay": 0,
       "trials": 1000,
-      "defended": 1000,
-      "invasions": 0
+      "defended": 0,
+      "invasions": 1000
     },
     {
       "key": "maid",
       "route": "corridor",
       "delay": 1,
       "trials": 1000,
-      "defended": 1000,
-      "invasions": 0
+      "defended": 0,
+      "invasions": 1000
     },
     {
       "key": "maid",
       "route": "corridor",
       "delay": 2,
       "trials": 1000,
-      "defended": 1000,
-      "invasions": 0
+      "defended": 0,
+      "invasions": 1000
     },
     {
       "key": "maid",
       "route": "corridor",
       "delay": 3,
       "trials": 1000,
-      "defended": 1000,
-      "invasions": 0
+      "defended": 0,
+      "invasions": 1000
     },
     {
       "key": "maid",
       "route": "corridor",
       "delay": 4,
       "trials": 1000,
-      "defended": 496,
-      "invasions": 504
+      "defended": 0,
+      "invasions": 1000
     },
     {
       "key": "maid",
       "route": "corridor",
       "delay": 5,
       "trials": 1000,
-      "defended": 496,
-      "invasions": 504
+      "defended": 0,
+      "invasions": 1000
     },
     {
       "key": "maid",
       "route": "corridor",
       "delay": 6,
       "trials": 1000,
-      "defended": 496,
-      "invasions": 504
+      "defended": 0,
+      "invasions": 1000
     },
     {
       "key": "maid",
       "route": "corridor",
       "delay": 8,
       "trials": 1000,
-      "defended": 496,
-      "invasions": 504
+      "defended": 0,
+      "invasions": 1000
     },
     {
       "key": "gatinha",
@@ -4657,27 +4657,27 @@
       "wins": 0,
       "losses": 1000,
       "causes": {
-        "palhaca": 894,
-        "gatinha": 106
+        "palhaca": 875,
+        "gatinha": 125
       },
-      "firstLoss": 68.46360936014077,
-      "lastLoss": 94.32432432432518,
+      "firstLoss": 79.36810936014162,
+      "lastLoss": 116.32008784317264,
       "scope": "Passive engine negative control. Does not estimate human win rate or reactive UI play."
     },
     {
       "kind": "night6",
       "radio": true,
       "trials": 1000,
-      "wins": 1,
-      "losses": 999,
+      "wins": 0,
+      "losses": 1000,
       "causes": {
-        "gotica": 240,
-        "maid": 379,
-        "yandere": 201,
-        "padrao": 179
+        "gotica": 232,
+        "maid": 385,
+        "yandere": 192,
+        "padrao": 191
       },
-      "firstLoss": 76.1453351899049,
-      "lastLoss": 324.5683805394409,
+      "firstLoss": 85.38533518990032,
+      "lastLoss": 386.6335666611612,
       "scope": "Passive engine negative control. Does not estimate human win rate or reactive UI play."
     },
     {
@@ -4687,11 +4687,11 @@
       "wins": 0,
       "losses": 1000,
       "causes": {
-        "palhaca": 774,
-        "gatinha": 226
+        "palhaca": 707,
+        "gatinha": 293
       },
-      "firstLoss": 34.13810936012771,
-      "lastLoss": 63.46153846153848,
+      "firstLoss": 49.38810936012773,
+      "lastLoss": 90.45468468734835,
       "scope": "Passive engine negative control. Does not estimate human win rate or reactive UI play."
     },
     {
@@ -4701,13 +4701,13 @@
       "wins": 0,
       "losses": 1000,
       "causes": {
-        "maid": 416,
-        "gotica": 197,
-        "padrao": 187,
-        "yandere": 200
+        "maid": 378,
+        "padrao": 188,
+        "yandere": 219,
+        "gotica": 215
       },
-      "firstLoss": 37.42480462908745,
-      "lastLoss": 247.2068617144644,
+      "firstLoss": 51.724804629087494,
+      "lastLoss": 243.352513922872,
       "scope": "Passive engine negative control. Does not estimate human win rate or reactive UI play."
     }
   ],

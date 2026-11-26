@@ -252,6 +252,7 @@ function createThreats(config, levels, random, emit, reactionReduction = () => 0
         invasions.delete(actor);
         officeExited(now);
         retreat(actor);
+        if (invasions.size === 0) emit('fearRecovery');
       }
     }
   }
@@ -284,7 +285,8 @@ function createApproach(map, effects, random, observingLeft = () => false, curre
     corridor: [map.back, map.front, map.office],
     stock: [map.leftApproach, map.left, map.office]
   };
-  const limit = rules.durationSeconds ?? 24;
+  const duration = actor => rules.durationOverrides?.[actor.key] ?? rules.durationSeconds ?? 24;
+  const advancedProgress = rules.advancedProgress;
 
   function begin(actor, objective) {
     if (actor.position !== stages[objective]?.[0]) return false;
@@ -335,13 +337,13 @@ function createApproach(map, effects, random, observingLeft = () => false, curre
 
   function expired(actor) {
     return actor.approach && actor.approach.phase !== 'invasion' && !completed(actor)
-      && actor.approach.elapsed >= limit - 1e-9;
+      && actor.approach.elapsed >= duration(actor) - 1e-9;
   }
 
   function integrate(actor, dt) {
     const attack = actor.approach;
     if (!attack || attack.phase === 'invasion' || completed(actor) || dt <= 0) return;
-    dt = Math.min(dt, Math.max(0, limit - attack.elapsed));
+    dt = Math.min(dt, Math.max(0, duration(actor) - attack.elapsed));
     const rising = risingWindow(actor, dt);
     if (progressAfter(actor, rising) >= 100) {
       let low = 0, high = rising;
@@ -355,15 +357,15 @@ function createApproach(map, effects, random, observingLeft = () => false, curre
     attack.progress = Math.min(100, progressAfter(actor, dt));
     attack.elapsed += dt;
     // One-way visual latch avoids flicker when defenses regress the same bar.
-    if (attack.progress >= 50 - 1e-9) attack.advanced = true;
+    if (attack.progress >= advancedProgress - 1e-9) attack.advanced = true;
   }
 
   function nextDeadline(actor, now) {
     const attack = actor.approach;
     if (!attack || attack.phase === 'invasion' || completed(actor)) return Infinity;
-    let dt = Math.min(rules.stepSeconds ?? .1, Math.max(0, limit - attack.elapsed));
+    let dt = Math.min(rules.stepSeconds ?? .1, Math.max(0, duration(actor) - attack.elapsed));
     const warning = rules.warningProgress;
-    const target = !attack.advanced ? 50
+    const target = !attack.advanced ? advancedProgress
       : actor.key === 'padrao' && warning && !attack.warningReported && attack.progress < warning - 1e-9 ? warning : 100;
     const rising = risingWindow(actor, dt);
     if (progressAfter(actor, rising) >= target) {
@@ -382,7 +384,7 @@ function createApproach(map, effects, random, observingLeft = () => false, curre
     if (actor.approach && actor.position === map.office) actor.approach.phase = 'invasion';
   }
 
-  return { begin, options, integrate, completed, expired, arrive, nextDeadline };
+  return { begin, options, integrate, completed, expired, arrive, nextDeadline, duration };
 }
 
 Object.assign(window.NathGame, { createThreats, createSmores, createApproach });

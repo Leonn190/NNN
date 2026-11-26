@@ -85,11 +85,11 @@ const CLOWN_RIGHT_IMAGE = './public/images/jumpscares/palhaca-direita.gif';
 const CLOWN_BOTTOM_IMAGE = './public/images/jumpscares/palhaca-baixo.gif';
 const SHADOW_IMAGE = config.shadow.jumpscare;
 const JUMPSCARE_AUDIO = './public/audio/jumpscares/';
-const { corridorAttackSound, stockAttackSound, officeGateKnockSound, flashlight, invasion, closetVentSound, clownWarningSound,
+const { corridorAttackSound, stockAttackSound, officeGateKnockSound, flashlight, closetVentSound, clownWarningSound,
   yandereSabotageSound, yandereSurpriseSound, padraoInvasionSound, mapGateCloseSound, smoresRoomSound } = config.effects;
 const { image: cameraScareImage, sound: cameraScareSound } = config.threats.yandereCameraScare;
 const attackSamples = [...corridorAttackSound.files, ...stockAttackSound.files, officeGateKnockSound.file,
-  invasion.file, closetVentSound.file,
+  ...Object.values(config.effects.fear.tracks).map(track => track.file), closetVentSound.file,
   ...Object.values(config.effects.eventSounds).flatMap(rule => rule.files ?? [rule.file]),
   yandereSabotageSound.file, yandereSurpriseSound.file, ...padraoInvasionSound.files, cameraScareSound, smoresRoomSound.file];
 const corridorSoundVoices = Object.keys(config.characters).length;
@@ -315,6 +315,7 @@ const movement = createMovement(config, {
       const { files, volume } = padraoInvasionSound;
       sound.playSample(files[Math.floor(Math.random() * files.length)], volume);
     } else if (event === 'cameraScareStart') {
+      clearCameraInterference();
       nextHudUpdate = 0;
       dom.cameraScare.hidden = false;
       if (cameraScareBlob) cameraScareUrl = URL.createObjectURL(cameraScareBlob);
@@ -1660,13 +1661,13 @@ function renderGameFrame(frame, now) {
     }
   }
   const office = movement.officeState();
+  sound.updateFear(office.invasionActive, office.imminentAttack, now / 1000);
   sound.updateNightAudio(frame.sanity, now / 1000, office.invasionActive || shadowAttacking);
   if (dom.invasionFlash.hidden === office.flash) {
     dom.invasionFlash.hidden = !office.flash;
     officeChanged = true;
   }
   syncMovement(now, office);
-  sound.setInvasionLoop(office.invasionActive && !frame.hidden, invasion);
   renderClosetVent(frame.closetVent === 'closetVent');
   renderHallucination(frame.hallucination);
   updateClockUI(frame.hours);

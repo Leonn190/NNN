@@ -167,6 +167,10 @@
     "officeGateRetrySeconds": 3,
     "bar": {
       "durationSeconds": 24,
+      "durationOverrides": {
+        "maid": 30
+      },
+      "advancedProgress": 55,
       "stepSeconds": 0.1,
       "speeds": {
         "padrao": {

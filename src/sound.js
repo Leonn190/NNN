@@ -40,6 +40,8 @@ class SoundEngine {
   prepareShift(settings, number, effects) {
     this.stopNightAudio();
     this.nightAudio = settings;
+    this.fearRules = effects?.fear;
+    this.fearLayers = new Map();
     const file = settings.phone.files[number];
     this.phone = { file, status: file ? 'pending' : 'unavailable', finishedAt: -Infinity };
     this.eventSounds = effects?.eventSounds;
@@ -78,7 +80,8 @@ class SoundEngine {
     return true;
   }
   handleGameAudioEvent(event, value) {
-    if (event === 'defended') this.playSpecialVoice('defense');
+    if (event === 'fearRecovery') this.requestFearRecovery();
+    else if (event === 'defended') this.playSpecialVoice('defense');
     else if (event === 'padraoAttackWarning') this.playSpecialVoice('attackWarning');
     else if (event === 'invasion' && value.key === 'padrao' && this.specialVoices) {
       this.specialVoices.padraoInvasion = this.playSpecialVoice('invasion', this.specialVoiceRules?.invasion.chance);
@@ -98,14 +101,14 @@ class SoundEngine {
     }
   }
   randomInterval(range) { return range[0] + Math.random() * (range[1] - range[0]); }
-  nightClip(file) {
-    if (!this.nightMedia.has(file)) {
+  nightClip(file, key = file) {
+    if (!this.nightMedia.has(key)) {
       const audio = new Audio(`./public/${file}`);
       audio.preload = 'metadata';
       audio.onerror = () => { audio.nightPlaybackFailed = true; };
-      this.nightMedia.set(file, audio);
+      this.nightMedia.set(key, audio);
     }
-    return this.nightMedia.get(file);
+    return this.nightMedia.get(key);
   }
   playNightClip(audio) {
     const epoch = this.mediaEpoch;
@@ -117,10 +120,14 @@ class SoundEngine {
   }
   isNightClipActive(audio) {
     return this.ambienceVoice?.audio === audio || this.retiringAmbience?.audio === audio
-      || this.sanityMusicBox?.audio === audio;
+      || this.sanityMusicBox?.audio === audio
+      || [...(this.fearLayers?.values() ?? [])].some(layer => layer.voices.some(voice => voice.playing && voice.audio === audio));
   }
   stopNightAudio() {
     this.mediaEpoch++;
+    this.fearLayers?.clear();
+    this.fearState = null;
+    this.fearRecoveryUntil = 0;
     for (const cancel of this.pendingSampleEvents) cancel();
     this.specialVoices = null;
     for (const audio of this.nightMedia.values()) {
@@ -198,7 +205,8 @@ class SoundEngine {
     }
     const targetDuck = Math.min(['playing', 'ending'].includes(this.phone?.status) ? mix.phoneDuck : 1,
       critical || now < this.criticalUntil ? mix.criticalDuck : 1,
-      this.sanityMusicBox ? 1 - intensity * (1 - mix.musicBoxDuck) : 1);
+      this.sanityMusicBox ? 1 - intensity * (1 - mix.musicBoxDuck) : 1,
+      this.fearState ? this.fearRules.ambientDuck : 1);
     this.ambienceDuck += (targetDuck - this.ambienceDuck)
       * (1 - Math.exp(-dt / (targetDuck < this.ambienceDuck ? mix.duckSeconds : mix.releaseSeconds)));
     if (this.ambient) this.ambient.gain.gain.setTargetAtTime(options.humVolume * this.ambienceDuck, this.context.currentTime, .1);
@@ -319,45 +327,82 @@ class SoundEngine {
   }
   stopSamples() {
     this.stopNightAudio();
-    this.stopInvasionLoop();
     this.stopExclusiveSample();
     for (const file of this.samples.keys()) this.stopSample(file);
     for (const voices of this.sampleVoices.values()) for (const audio of voices) audio.pause();
     for (const voices of this.pannedSamples.values()) for (const { audio } of voices) audio.pause();
   }
-  setInvasionLoop(active, { file, volume, fadeOutSeconds }) {
-    const audio = this.samples.get(file);
-    if (!audio || !this.active) return;
-    if (active) {
-      if (this.invasionAudio === audio && this.invasionFade === undefined) return;
-      if (this.invasionFade !== undefined) {
-        clearInterval(this.invasionFade);
-        this.invasionFade = undefined;
-      }
-      audio.volume = volume;
-      if (this.invasionAudio === audio) return;
-      this.invasionAudio = audio;
-      audio.loop = true;
-      this.playSample(file, volume);
-    } else if (this.invasionAudio && this.invasionFade === undefined) {
-      const start = performance.now();
-      const initialVolume = audio.volume;
-      this.invasionFade = setInterval(() => {
-        const remaining = Math.max(0, 1 - (performance.now() - start) / (fadeOutSeconds * 1000));
-        audio.volume = initialVolume * remaining;
-        if (remaining === 0) this.stopInvasionLoop();
-      }, 20);
-    }
+  requestFearRecovery() {
+    if (!this.active || !this.fearRules) return;
+    // Absolute expiry, never a queue waiting behind a more urgent threat.
+    this.fearRecoveryUntil = performance.now() / 1000 + this.fearRules.recoverySeconds;
   }
-  stopInvasionLoop() {
-    if (this.invasionFade !== undefined) {
-      clearInterval(this.invasionFade);
-      this.invasionFade = undefined;
+  updateFear(invasion, imminent, now) {
+    if (!this.active || !this.fearRules) return;
+    if (!this.fearLayers.size) {
+      for (const [name, rule] of Object.entries(this.fearRules.tracks)) {
+        this.fearLayers.set(name, { voices: [0, 1].map(index => {
+          const audio = this.nightClip(rule.file, `fear:${name}:${index}`);
+          audio.preload = 'auto';
+          return { audio };
+        }), envelope: 0 });
+      }
     }
-    if (!this.invasionAudio) return;
-    this.invasionAudio.loop = false;
-    this.invasionAudio.pause();
-    this.invasionAudio = undefined;
+    const state = invasion ? 'invasion' : imminent ? 'imminent'
+      : now < this.fearRecoveryUntil ? 'recovery' : null;
+    if (invasion || imminent) this.fearRecoveryUntil = 0;
+    this.fearState = state;
+    for (const [name, layer] of this.fearLayers) {
+      const rule = this.fearRules.tracks[name];
+      const target = Number(name === state);
+      // Reversing a release resumes the same voices at their current positions.
+      // The real >55% threshold stays exact, including during brief oscillation.
+      const seconds = target ? rule.fadeInSeconds
+        : state === 'invasion' ? this.fearRules.tracks.invasion.fadeInSeconds : rule.fadeOutSeconds;
+      if (layer.changedAt !== undefined) {
+        const blend = Math.min(1, Math.max(0, (now - layer.changedAt) / layer.seconds));
+        layer.envelope = layer.from + (layer.target - layer.from) * blend;
+      }
+      if (layer.target !== target || layer.seconds !== seconds) {
+        layer.from = layer.envelope;
+        layer.target = target;
+        layer.seconds = seconds;
+        layer.changedAt = now;
+      }
+      if (!target && layer.envelope === 0) {
+        for (const voice of layer.voices) { voice.playing = false; voice.audio.pause(); }
+        layer.current = undefined;
+        continue;
+      }
+      if (layer.current === undefined) {
+        layer.current = 0;
+        const voice = layer.voices[0];
+        voice.audio.currentTime = 0;
+        voice.audio.volume = 0;
+        voice.playing = true;
+        this.playNightClip(voice.audio);
+      }
+      const current = layer.voices[layer.current];
+      const other = layer.voices[1 - layer.current];
+      const overlap = this.fearRules.loopCrossfadeSeconds;
+      const remaining = current.audio.duration - current.audio.currentTime;
+      if (!other.playing && (remaining <= overlap || current.audio.ended)) {
+        other.audio.currentTime = 0;
+        other.audio.volume = 0;
+        other.playing = true;
+        this.playNightClip(other.audio);
+      }
+      // Follow actual playback rather than a timer: loading/autoplay delays cannot
+      // advance the loop envelope ahead of the incoming recording.
+      const blend = other.playing ? Math.min(1, other.audio.currentTime / overlap) : 0;
+      current.audio.volume = rule.volume * layer.envelope * (1 - blend);
+      other.audio.volume = rule.volume * layer.envelope * blend;
+      if (other.playing && (blend === 1 || current.audio.ended)) {
+        current.playing = false;
+        current.audio.pause();
+        layer.current = 1 - layer.current;
+      }
+    }
   }
   cameraMeow(sanity) {
     const clips = cameraMeows[Number(sanity < 50)];
@@ -573,7 +618,7 @@ class SoundEngine {
       for (const audio of voices) if (!audio.paused) playingSamples++;
     }
     return { context: this.context?.state ?? 'unavailable', tones: this.tones.size,
-      ambience: Boolean(this.ambient), radio: Boolean(this.radio), playingSamples, samples };
+      ambience: Boolean(this.ambient), radio: Boolean(this.radio), fear: this.fearState ?? 'normal', playingSamples, samples };
   }
 }
 

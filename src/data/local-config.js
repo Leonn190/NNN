@@ -474,9 +474,6 @@ window.NathGame.localConfig = {
       "volume": 0.45
     },
     "invasion": {
-      "file": "audio/effects/invasion/invasao.ogg",
-      "volume": 0.45,
-      "fadeOutSeconds": 1,
       "flashMs": 120
     },
     "closetVentSound": {
@@ -594,6 +591,31 @@ window.NathGame.localConfig = {
         "file": "audio/characters/padrao/birthday.ogg",
         "volume": 0.27,
         "chance": 0.01
+      }
+    },
+    "fear": {
+      "recoverySeconds": 7,
+      "loopCrossfadeSeconds": 0.4,
+      "ambientDuck": 0.25,
+      "tracks": {
+        "recovery": {
+          "file": "audio/Medo1.mp3",
+          "volume": 0.45,
+          "fadeInSeconds": 0.7,
+          "fadeOutSeconds": 0.8
+        },
+        "imminent": {
+          "file": "audio/Medo2.mp3",
+          "volume": 0.7,
+          "fadeInSeconds": 0.35,
+          "fadeOutSeconds": 0.6
+        },
+        "invasion": {
+          "file": "audio/Medo3.mp3",
+          "volume": 0.82,
+          "fadeInSeconds": 0.08,
+          "fadeOutSeconds": 0.8
+        }
       }
     }
   },
@@ -1336,6 +1358,10 @@ window.NathGame.localConfig = {
       "officeGateRetrySeconds": 3,
       "bar": {
         "durationSeconds": 24,
+        "durationOverrides": {
+          "maid": 30
+        },
+        "advancedProgress": 55,
         "stepSeconds": 0.1,
         "speeds": {
           "padrao": {

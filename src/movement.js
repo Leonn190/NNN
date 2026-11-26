@@ -16,8 +16,8 @@ function createMovement(config, { random = Math.random, hallucinationRandom = Ma
   const officeGate = routes.gate(front, office);
   const cameraIds = CAMERAS.map(cam => cam.id);
   let roster, actors, effects, threats, resources, shadow, smores, gates, electrical, input, now, outcome, sanityEnabled;
-  let movementDelay, maxClosedGates, approach, hallucinations, stopped;
-  let watchedCamera, watchedSince, cameraScareEnds, cameraScareSeconds;
+  let movementDelay, maxClosedGates, approach, hallucinations, stopped, frameUntil;
+  let watchedCamera, watchedSince, cameraScareEnds, cameraScareSeconds, cameraScareCause, cameraScareSabotage;
   let closetAttack, flashUntil, smoresVisibleAt, pendingClosetAt;
   let hunters, favored, penalized;
   let yandere, surpriseLimit, surprisesUsed, inactivityEnds, surprise;
@@ -87,13 +87,13 @@ function createMovement(config, { random = Math.random, hallucinationRandom = Ma
   }
 
   function reset(levels = {}, initialInput = {}, rules = night) {
-    now = 0;
+    now = frameUntil = 0;
     outcome = null;
     stopped = false;
     closetAttack = null;
     pendingClosetAt = Infinity;
     flashUntil = smoresVisibleAt = 0;
-    watchedCamera = watchedSince = cameraScareEnds = undefined;
+    watchedCamera = watchedSince = cameraScareEnds = cameraScareCause = cameraScareSabotage = undefined;
     sanityEnabled = rules.sanityEnabled;
     hallucinations = createHallucinations(config.sanity.hallucinations, sanityEnabled, hallucinationRandom,
       () => emit('hallucinationLaugh'));
@@ -329,8 +329,15 @@ function createMovement(config, { random = Math.random, hallucinationRandom = Ma
     }
     if (actor.route.objective === 'electrical') {
       recover(actor);
-      if (electrical.trip()) {
-        resources.applyEvent('electricalFault', now);
+      const watching = Boolean(watchingCamera() && !input.closet && !input.cameraObservationBlocked);
+      if (electrical.trip(watching)) {
+        resources.applyEvent('electricalFault', now, { loseSanity: watching });
+        if (watching) {
+          // Reuse an ongoing scare without stacking animation, audio or penalties.
+          // Like the observation scare, keep the full animation after a long frame.
+          if (cameraScareEnds === undefined) startCameraScare('sabotage', frameUntil);
+          cameraScareSabotage = true;
+        }
         emit('electricalFault');
         emit('yandereSabotage', false);
       }
@@ -755,12 +762,17 @@ function createMovement(config, { random = Math.random, hallucinationRandom = Ma
 
   function updateCameraScare(camera, until = now) {
     if (cameraScareEnds !== undefined) {
-      if (now >= cameraScareEnds || !resources.computerOn()) {
-        const wasOn = resources.computerOn();
-        resources.turnComputerOff();
-        electrical.powerChanged(wasOn, false);
-        cameraScareEnds = undefined;
-        emit('cameraScareEnd');
+      if (now >= cameraScareEnds || (!cameraScareSabotage && !resources.computerOn())) {
+        const cause = cameraScareCause;
+        if (cameraScareSabotage) electrical.reveal();
+        if (cause === 'observation') {
+          const wasOn = resources.computerOn();
+          resources.turnComputerOff();
+          electrical.powerChanged(wasOn, false);
+        }
+        cameraScareEnds = cameraScareCause = cameraScareSabotage = undefined;
+        emit('cameraScareEnd', cause);
+        emit('fearRecovery');
       }
       return cameraScareEnds ?? Infinity;
     }
@@ -773,12 +785,17 @@ function createMovement(config, { random = Math.random, hallucinationRandom = Ma
     const deadline = watchedSince + cameraScareSeconds;
     // At the exact threshold the player can still break observation.
     if (now < deadline || until <= deadline) return deadline;
-    watchedCamera = undefined;
     // Keep the full animation visible when a frame crosses the deadline late.
-    cameraScareEnds = until + cameraScare.durationSeconds;
-    resources.applyEvent('yandereCameraScare', now);
-    emit('cameraScareStart');
+    startCameraScare('observation', until);
     return cameraScareEnds;
+  }
+
+  function startCameraScare(cause, startedAt = now) {
+    watchedCamera = undefined;
+    cameraScareCause = cause;
+    cameraScareEnds = startedAt + cameraScare.durationSeconds;
+    if (cause === 'observation') resources.applyEvent('yandereCameraScare', now);
+    emit('cameraScareStart', cause);
   }
 
   function observeSanity(computerOn, corridorLight, clownLight, camera) {
@@ -840,7 +857,7 @@ function createMovement(config, { random = Math.random, hallucinationRandom = Ma
 
   function advance(until, nextInput, action, { hallucinationsAudible = true } = {}) {
     if (outcome || stopped) return;
-    until = Math.max(now, until);
+    until = frameUntil = Math.max(now, until);
     while (now < until) {
       let due = Math.min(until, movementDelay);
       if (!movementPaused()) {
@@ -1073,7 +1090,7 @@ function createMovement(config, { random = Math.random, hallucinationRandom = Ma
     if (!actor.approach || actor.approach.phase === 'invasion') return null;
     if (approach.completed(actor)) return 'tentativa de invasão · sujeita a bloqueios';
     const speed = approach.options(actor).speed;
-    const remaining = Math.max(0, movement.attack.bar.durationSeconds - actor.approach.elapsed);
+    const remaining = Math.max(0, approach.duration(actor) - actor.approach.elapsed);
     const seconds = speed > 0 ? (100 - actor.approach.progress) / speed : Infinity;
     return seconds <= remaining ? `invasão em ~${seconds.toFixed(1)} s · sujeita a bloqueios`
       : `recuo em ~${remaining.toFixed(1)} s`;
@@ -1142,7 +1159,7 @@ function createMovement(config, { random = Math.random, hallucinationRandom = Ma
       noise: effects.perceivedNoise(), light: actor.light ?? 0,
       attackProgress: actor.approach?.progress ?? null,
       attackElapsed: actor.approach?.elapsed ?? null,
-      attackRemaining: actor.approach ? Math.max(0, movement.attack.bar.durationSeconds - actor.approach.elapsed) : null,
+      attackRemaining: actor.approach ? Math.max(0, approach.duration(actor) - actor.approach.elapsed) : null,
       attackSpeed: actor.approach && actor.approach.phase !== 'invasion' ? approach.options(actor).speed : null,
       attackModifiers: actor.approach && actor.approach.phase !== 'invasion' ? approach.options(actor).modifiers : null,
       attackPrediction: attackPrediction(actor),
@@ -1186,7 +1203,7 @@ function createMovement(config, { random = Math.random, hallucinationRandom = Ma
       stopped = true;
       shadow.stop();
       hallucinations.stop();
-      watchedCamera = watchedSince = cameraScareEnds = undefined;
+      watchedCamera = watchedSince = cameraScareEnds = cameraScareCause = cameraScareSabotage = undefined;
     },
     isGateClosed: id => gates.closed.has(id),
     electricalFault: () => electrical.failed(), gateControlsAvailable,
@@ -1200,6 +1217,8 @@ function createMovement(config, { random = Math.random, hallucinationRandom = Ma
         room: invaders.filter(actor => now >= actor.visibleAt).map(actor => actor.rule.artId),
         // Smores has his own room audio; only real animatronic invaders use the invasion loop.
         invasionActive: invaders.length > 0,
+        imminentAttack: actors.some(actor => actor.approach?.phase !== 'invasion'
+          && actor.approach?.progress > movement.attack.bar.advancedProgress),
         flash: now < flashUntil,
         doorway: occupants(left)[0]?.rule.artId ?? null,
         front: occupants(front).map(actor => actor.rule.artId),

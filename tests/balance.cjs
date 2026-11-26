@@ -572,17 +572,94 @@ test('empty-office clown entry honors other occupants and all three seconds afte
   assert.equal(threats.entryAttacker({ key: 'maid' }, true, 33), 'palhaca');
 });
 
-test('both routes retreat after 24 seconds even at zero or negative speed', () => {
-  for (const objective of ['corridor', 'stock']) for (const speed of [-5, 0, 3]) {
-    const approach = window.NathGame.createApproach(base.map, { attackBar: () => ({ speed }) },
-      () => 0, () => false, () => 0, base.movement.attack.bar);
-    const actor = { key: 'gatinha', position: objective === 'corridor' ? base.map.back : base.map.leftApproach };
-    approach.begin(actor, objective);
-    approach.integrate(actor, 23.9);
-    assert(!approach.expired(actor));
-    approach.integrate(actor, 10);
-    assert(approach.expired(actor));
-    near(actor.approach.elapsed, 24);
-    near(actor.approach.progress, Math.max(0, 24 * speed));
+test('attack duration is 30 seconds only for Maid, independent of level and speed', () => {
+  for (const key of Object.keys(base.movement.attack.bar.speeds)) for (const level of [1, 6, 11])
+    for (const objective of Object.keys(base.movement.attack.bar.speeds[key])) for (const speed of [-5, 0, 3]) {
+      const approach = window.NathGame.createApproach(base.map, { attackBar: () => ({ speed }) },
+        () => 0, () => false, () => 0, base.movement.attack.bar);
+      const actor = { key, level, position: objective === 'corridor' ? base.map.back : base.map.leftApproach };
+      const duration = key === 'maid' ? 30 : 24;
+      approach.begin(actor, objective);
+      approach.integrate(actor, duration - .1);
+      assert(!approach.expired(actor));
+      near(approach.nextDeadline(actor, 0), .1);
+      approach.integrate(actor, 10);
+      assert(approach.expired(actor));
+      near(actor.approach.elapsed, duration);
+      near(actor.approach.progress, Math.max(0, duration * speed));
+    }
+});
+
+test('electrical sabotage separates camera scare penalties, defers the fault and survives leaving cameras', () => {
+  const tune = config => {
+    Object.assign(config.characters.yandere, { start: 19, positions: [19, 21], interval: 5,
+      firstIntervalReduction: [0, 0], routes: { EE: 100 } });
+    config.night.movementDelay = 0;
+    config.night.sanityEnabled = true;
+    config.sanity.recovery.passive = 0;
+    config.sanity.loss.camera = 0;
+    config.sanity.loss.yandereCamera = 0;
+    config.sanity.loss.closet = 0;
+  };
+  for (const input of [{ view: 'office' }, { view: 'closet-back', closet: true },
+    { view: 'desktop', computer: true }, { camera: 'CAM01', cameraObservationBlocked: true },
+    { camera: 'CAM01', view: 'cameras' }]) {
+    const viewing = Boolean(input.camera && !input.cameraObservationBlocked);
+    const run = scenario({ yandere: 1 }, input, tune);
+    const arrival = run.actor('yandere').remaining;
+    run.at(arrival - .001);
+    const before = run.game.snapshot({ hud: true });
+    run.at(arrival);
+    const after = run.game.snapshot();
+    near(after.energy, before.energy - 10 - .001 * before.energyLossPerSecond);
+    near(after.sanity, before.sanity - (viewing ? 5 : 0));
+    assert.equal(run.emitted('cameraScareStart').length, Number(viewing));
+    assert.equal(run.game.electricalFault(), !viewing);
+    if (viewing) {
+      run.at(arrival + .5, { view: 'office' });
+      assert.equal(run.game.electricalFault(), false);
+      run.at(arrival + base.threats.yandereCameraScare.durationSeconds + .001, { view: 'office' });
+      assert.equal(run.emitted('cameraScareEnd').length, 1);
+      assert.equal(run.emitted('fearRecovery').length, 1);
+      assert.equal(run.game.snapshot().computerOn, true);
+      assert.equal(run.game.electricalFault(), true);
+    }
+    const time = run.game.snapshot().now;
+    const desktop = { computerInterface: true, view: 'desktop' };
+    run.at(time, desktop, { type: 'computerPower' });
+    run.at(time, desktop, { type: 'computerPower' });
+    assert.equal(run.game.electricalFault(), false);
   }
+  const camera = { camera: 'CAM01', view: 'cameras' };
+  const longFrame = scenario({ yandere: 1 }, camera, tune);
+  longFrame.at(longFrame.actor('yandere').remaining + 3);
+  assert.equal(longFrame.emitted('cameraScareEnd').length, 0);
+  assert.equal(longFrame.game.electricalFault(), false);
+  longFrame.at(longFrame.game.snapshot().now + base.threats.yandereCameraScare.durationSeconds);
+  assert.equal(longFrame.game.electricalFault(), true);
+  const blackout = scenario({ yandere: 1 }, camera, config => { tune(config); config.power.initial = 5; });
+  const arrival = blackout.actor('yandere').remaining;
+  blackout.at(arrival);
+  assert.equal(blackout.game.snapshot().blackout, true);
+  assert.equal(blackout.emitted('cameraScareEnd').length, 0);
+  blackout.at(arrival + base.threats.yandereCameraScare.durationSeconds);
+  assert.equal(blackout.game.electricalFault(), true);
+  assert.equal(blackout.game.snapshot().computerOn, false);
+  const stopped = scenario({ yandere: 1 }, camera, tune);
+  stopped.at(stopped.actor('yandere').remaining);
+  stopped.game.stop();
+  stopped.at(100);
+  assert.equal(stopped.emitted('fearRecovery').length, 0);
+  const observation = scenario({ yandere: 1 }, { camera: 'CAM10' }, config => {
+    tune(config);
+    Object.assign(config.characters.yandere, { start: 17, positions: [17], interval: 100 });
+    config.sanity.cameraLossOverrides = {};
+  });
+  observation.at(8.001);
+  assert.deepEqual(observation.emitted('cameraScareStart'), ['observation']);
+  near(observation.game.snapshot().sanity, 85);
+  assert.equal(observation.game.snapshot().computerOn, true);
+  observation.at(9.212);
+  assert.equal(observation.game.snapshot().computerOn, false);
+  assert.equal(observation.emitted('fearRecovery').length, 1);
 });
